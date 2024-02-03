@@ -10,7 +10,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    # Add Cloudflare provider is we want to use a Cloudflare hosted domain
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
   }
 }
 
@@ -30,6 +33,9 @@ terraform {
 provider "aws" {
   region = "us-east-1"
 }
+
+# Cloudflare Provider
+#  Only thing the provider needs is CLOUDFLARE_API_KEY
 
 ###################
 # LOCAL VARIABLES #
@@ -70,12 +76,30 @@ locals {
     dev = "https://api-dev.example.com"
     prod = "https://api.example.com"
   }
+
+  record_custom_domain_name = {
+    dev = "istm689-dev"
+    prod = "istm689"
+  }
 }
 
 
 #############
 # RESOURCES #
 #############
+
+# Cloudflare resources
+
+# _93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev.joaquingimenez.com. CNAME _e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws.
+
+resource "cloudflare_record" "custom-domain" {
+  zone_id = "2b0969f800003e0e97156368605bd575"
+  name    = "_93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev"
+  value   = "_e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws"
+  type    = "CNAME"
+  proxied = false
+  ttl     = 1
+}
 
 # AWS resources
 resource "aws_budgets_budget" "general-budget" {
