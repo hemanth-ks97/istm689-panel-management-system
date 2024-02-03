@@ -90,8 +90,6 @@ locals {
 # RESOURCES #
 #############
 
-
-
 # AWS resources
 resource "aws_budgets_budget" "general-budget" {
   name              = "${terraform.workspace}-istm689-general-budget"
@@ -161,17 +159,17 @@ resource "aws_amplify_branch" "frontend-branch" {
   framework = "React"
 }
 
-# TODO: read output of the resource and put the values in Cloudflare
-resource "aws_amplify_domain_association" "frontend-domain-association" {
-  app_id      = aws_amplify_app.frontend-app.id
-  domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
-  wait_for_verification = false
+# # TODO: read output of the resource and put the values in Cloudflare
+# resource "aws_amplify_domain_association" "frontend-domain-association" {
+#   app_id      = aws_amplify_app.frontend-app.id
+#   domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
+#   wait_for_verification = false
 
-  sub_domain {
-    branch_name = local.amplify_branch_branch_name[terraform.workspace]
-    prefix      = ""
-  }
-}
+#   sub_domain {
+#     branch_name = local.amplify_branch_branch_name[terraform.workspace]
+#     prefix      = ""
+#   }
+# }
 
 # Cloudflare resources
 
