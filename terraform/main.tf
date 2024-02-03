@@ -54,14 +54,14 @@ resource "aws_dynamodb_table" "gamesscores-dynamodb-table" {
     type = "S"
   }
 
-    attribute {
-    name = "FirstName"
-    type = "S"
-  }
+#     attribute {
+#     name = "FirstName"
+#     type = "S"
+#   }
 
-  attribute {
-    name = "LastName"
-    type = "S"
-  }
+#   attribute {
+#     name = "LastName"
+#     type = "S"
+#   }
 
 }
