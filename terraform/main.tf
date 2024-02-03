@@ -95,6 +95,10 @@ resource "aws_amplify_app" "frontend-app" {
   # TODO: Need to figure a better way to pass the token!
   oauth_token = local.amplify_app_oauth_token
 
+  auto_branch_creation_config {
+    framework = "React"
+  }
+
   # # The default build_spec added by the Amplify Console for React.
   # build_spec = <<-EOT
   #   version: 1
@@ -135,12 +139,13 @@ resource "aws_amplify_app" "frontend-app" {
 resource "aws_amplify_branch" "frontend-branch" {
   app_id      = aws_amplify_app.frontend-app.id
   branch_name = local.amplify_branch_branch_name[terraform.workspace]
-  framework = "React"
+  # framework = "React"
   
   #HERE We pass the env vars for the workspaces
-  environment_variables = {
-    REACT_APP_API_SERVER = "https://api.example.com"
-  }
+  # We may no need this because we have two different apps!!
+  # environment_variables = {
+  #   REACT_APP_API_SERVER = "https://api.example.com"
+  # }
 
 }
 
