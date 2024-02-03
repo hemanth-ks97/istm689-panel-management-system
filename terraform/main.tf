@@ -35,7 +35,7 @@ provider "aws" {
 }
 
 # Cloudflare Provider
-#  Only thing the provider needs is CLOUDFLARE_API_KEY
+#  Only thing the provider needs is CLOUDFLARE_API_TOKEN
 
 ###################
 # LOCAL VARIABLES #
@@ -92,7 +92,7 @@ locals {
 
 # _93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev.joaquingimenez.com. CNAME _e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws.
 
-resource "cloudflare_record" "custom-domain" {
+resource "cloudflare_record" "custom-domain-verification" {
   zone_id = "2b0969f800003e0e97156368605bd575"
   name    = "_93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev"
   value   = "_e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws"
@@ -100,6 +100,16 @@ resource "cloudflare_record" "custom-domain" {
   proxied = false
   ttl     = 1
 }
+
+resource "cloudflare_record" "custom-domain" {
+  zone_id = "2b0969f800003e0e97156368605bd575"
+  name    = "istm689-dev"
+  value   = "d1zs7hxqqgt1u2.cloudfront.net"
+  type    = "CNAME"
+  proxied = false
+  ttl     = 1
+}
+
 
 # AWS resources
 resource "aws_budgets_budget" "general-budget" {
