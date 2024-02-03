@@ -23,9 +23,7 @@ terraform {
 ##################
 
 # AWS Provider
-
 # To make this provider work we added enviroment variables to terraform cloud
-# 
 # Link: https://app.terraform.io/app/istm689-panel-management-system-org/workspaces
 # Sensitive environment variables
 # - AWS_ACCESS_KEY_ID
@@ -35,7 +33,10 @@ provider "aws" {
 }
 
 # Cloudflare Provider
-#  Only thing the provider needs is CLOUDFLARE_API_TOKEN
+# To make this provider work we added enviroment variables to terraform cloud
+# Link: https://app.terraform.io/app/istm689-panel-management-system-org/workspaces
+# Sensitive environment variable
+# - CLOUDFLARE_API_TOKEN
 
 ###################
 # LOCAL VARIABLES #
@@ -85,7 +86,6 @@ locals {
   }
 }
 
-
 #############
 # RESOURCES #
 #############
@@ -97,7 +97,6 @@ resource "aws_budgets_budget" "general-budget" {
   limit_amount      = local.budgets_budget_limit_amount[terraform.workspace]
   limit_unit        = "USD"
   time_unit         = "MONTHLY"
-
 
   notification {
     comparison_operator        = "GREATER_THAN"
@@ -195,10 +194,7 @@ resource "aws_amplify_branch" "frontend-branch" {
 #   ttl     = 1
 # }
 
-
-
-
-# # Great test table. Deleting now
+# # Great test table for demo.
 # resource "aws_dynamodb_table" "gamesscores-test-dynamodb-table" {
 #   name           = "${terraform.workspace}-GameScores"
 #   billing_mode   = "PROVISIONED"
