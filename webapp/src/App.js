@@ -1,13 +1,18 @@
-import logo from "./logo.svg";
-import "./App.css";
+import React from "react";
+
+// Themer & theme
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import { tamuTheme } from "./themes/tamuTheme";
+
+// Components
+import AppLayout from "./components/layout/AppLayout";
 
 const App = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-      </header>
-    </div>
+    <ThemeProvider theme={tamuTheme}>
+      <CssBaseline enableColorScheme />
+      <AppLayout />
+    </ThemeProvider>
   );
 };
 
