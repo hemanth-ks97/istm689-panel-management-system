@@ -96,32 +96,28 @@ resource "aws_amplify_app" "frontend-app" {
   # TODO: Need to figure a better way to pass the token!
   oauth_token = local.amplify_app_oauth_token
 
-  auto_branch_creation_config {
-    framework = "React"
-  }
-
-  # # The default build_spec added by the Amplify Console for React.
-  # build_spec = <<-EOT
-  #   version: 1
-  #   applications:
-  #     - frontend:
-  #         phases:
-  #           preBuild:
-  #             commands:
-  #               - npm install
-  #               - npm ci
-  #           build:
-  #             commands:
-  #               - npm run build
-  #         artifacts:
-  #           baseDirectory: build
-  #           files:
-  #             - '**/*'
-  #         cache:
-  #           paths:
-  #             - node_modules/**/*
-  #       appRoot: webapp
-  # EOT
+  # The default build_spec added by the Amplify Console for React.
+  build_spec = <<-EOT
+    version: 1
+    applications:
+      - frontend:
+          phases:
+            preBuild:
+              commands:
+                - npm install
+                - npm ci
+            build:
+              commands:
+                - npm run build
+          artifacts:
+            baseDirectory: build
+            files:
+              - '**/*'
+          cache:
+            paths:
+              - node_modules/**/*
+        appRoot: webapp
+  EOT
 
   # The default rewrites and redirects added by the Amplify Console.
   custom_rule {
