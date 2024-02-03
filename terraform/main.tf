@@ -1,12 +1,25 @@
 terraform {
+
+#############
+# PROVIDERS #
+#############
+
+# Providers are "plugins" that allows terraform to communicate with different cloud services. Like AWS, Cloudflare, Azure, etc.
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    # Add Cloudflare provider is we want to use a Cloudflare hosted domain
   }
 }
-# Configure the AWS Provider
+
+
+##################
+# PROVIDER SETUP #
+##################
+
+# AWS Provider
 
 # To make this provider work we added enviroment variables to terraform cloud
 # 
@@ -16,9 +29,14 @@ terraform {
 # - AWS_SECRET_ACCESS_KEY
 provider "aws" {
   region = "us-east-1"
-
 }
 
+###################
+# LOCAL VARIABLES #
+###################
+
+# Local variables to configure a specific parameter taking into account the workspace name (dev, prod)
+# Naming of the variable should be the name of the resource without the provider prefix follow by the name of the variable
 locals {
   budgets_budget_limit_amount = {
     dev = "10"
@@ -34,10 +52,12 @@ locals {
   }
 }
 
-#################
-# AWS RESOURCES #
-#################
 
+#############
+# RESOURCES #
+#############
+
+# AWS resources
 resource "aws_budgets_budget" "general-budget" {
   name              = "${terraform.workspace}-istm689-general-budget"
   budget_type       = "COST"
