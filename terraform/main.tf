@@ -89,65 +89,65 @@ resource "aws_budgets_budget" "general-budget" {
     subscriber_email_addresses = ["joaquin.gimenez@tamu.edu"]
   }
 }
-resource "aws_amplify_app" "frontend-app" {
-  name       = "${terraform.workspace}-frontend-app"
-  repository = local.amplify_app_repository
-  # TODO: Need to figure a better way to pass the token!
-  oauth_token = local.amplify_app_oauth_token
+# resource "aws_amplify_app" "frontend-app" {
+#   name       = "${terraform.workspace}-frontend-app"
+#   repository = local.amplify_app_repository
+#   # TODO: Need to figure a better way to pass the token!
+#   oauth_token = local.amplify_app_oauth_token
 
-  auto_branch_creation_config {
-    framework = "React"
-  }
+#   auto_branch_creation_config {
+#     framework = "React"
+#   }
 
-  # # The default build_spec added by the Amplify Console for React.
-  # build_spec = <<-EOT
-  #   version: 1
-  #   applications:
-  #     - frontend:
-  #         phases:
-  #           preBuild:
-  #             commands:
-  #               - npm install
-  #               - npm ci
-  #           build:
-  #             commands:
-  #               - npm run build
-  #         artifacts:
-  #           baseDirectory: build
-  #           files:
-  #             - '**/*'
-  #         cache:
-  #           paths:
-  #             - node_modules/**/*
-  #       appRoot: webapp
-  # EOT
+#   # # The default build_spec added by the Amplify Console for React.
+#   # build_spec = <<-EOT
+#   #   version: 1
+#   #   applications:
+#   #     - frontend:
+#   #         phases:
+#   #           preBuild:
+#   #             commands:
+#   #               - npm install
+#   #               - npm ci
+#   #           build:
+#   #             commands:
+#   #               - npm run build
+#   #         artifacts:
+#   #           baseDirectory: build
+#   #           files:
+#   #             - '**/*'
+#   #         cache:
+#   #           paths:
+#   #             - node_modules/**/*
+#   #       appRoot: webapp
+#   # EOT
 
-  # The default rewrites and redirects added by the Amplify Console.
-  custom_rule {
-    source = "/<*>"
-    status = "404"
-    target = "/index.html"
-  }
+#   # The default rewrites and redirects added by the Amplify Console.
+#   custom_rule {
+#     source = "/<*>"
+#     status = "404"
+#     target = "/index.html"
+#   }
 
 
-# This enviroments variables will be pass to the web app!!! 
-# we should use this to pass the API URL, IDs, somethign we need!
-  environment_variables = {
-    ENV = terraform.workspace
-  }
-}
-resource "aws_amplify_branch" "frontend-branch" {
-  app_id      = aws_amplify_app.frontend-app.id
-  branch_name = local.amplify_branch_branch_name[terraform.workspace]
-  # framework = "React"
+# # This enviroments variables will be pass to the web app!!! 
+# # we should use this to pass the API URL, IDs, somethign we need!
+#   environment_variables = {
+#     ENV = terraform.workspace
+#   }
+# }
+# resource "aws_amplify_branch" "frontend-branch" {
+#   app_id      = aws_amplify_app.frontend-app.id
+#   branch_name = local.amplify_branch_branch_name[terraform.workspace]
+#   # framework = "React"
   
-  #HERE We pass the env vars for the workspaces
-  # We may no need this because we have two different apps!!
-  # environment_variables = {
-  #   REACT_APP_API_SERVER = "https://api.example.com"
-  # }
+#   #HERE We pass the env vars for the workspaces
+#   # We may no need this because we have two different apps!!
+#   # environment_variables = {
+#   #   REACT_APP_API_SERVER = "https://api.example.com"
+#   # }
 
-}
+# }
 
 
 
