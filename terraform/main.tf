@@ -66,7 +66,7 @@ locals {
   }
 
 # TODO, need to be the base URL from the API gateway instance
-  aws_amplify_branch_environment_variables_REACT_APP_API_SERVER = {
+  amplify_branch_environment_variables_REACT_APP_API_SERVER = {
     dev = "https://api-dev.example.com"
     prod = "https://api.example.com"
   }
@@ -136,7 +136,7 @@ resource "aws_amplify_app" "frontend-app" {
 # we should use this to pass the API URL, IDs, somethign we need!
   environment_variables = {
     ENV = terraform.workspace
-    REACT_APP_API_SERVER = aws_amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
+    REACT_APP_API_SERVER = amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
     REACT_APP_ENV = terraform.workspace
   }
 }
