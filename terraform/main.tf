@@ -90,26 +90,26 @@ resource "aws_budgets_budget" "general-budget" {
   }
 }
 
-resource "aws_amplify_app" "frontend-app" {
-  name       = "${terraform.workspace}-web-app"
-  repository = local.amplify_app_repository
-  oauth_token = local.amplify_app_oauth_token
-}
-resource "aws_amplify_branch" "frontend-branch" {
-  app_id      = aws_amplify_app.frontend-app.id
-  branch_name = local.amplify_branch_branch_name[terraform.workspace]
-}
-resource "aws_amplify_domain_association" "domain_association" {
-  app_id      = aws_amplify_app.frontend-app.id
-  domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
-  wait_for_verification = false
+# resource "aws_amplify_app" "frontend-app" {
+#   name       = "${terraform.workspace}-frontend-app"
+#   repository = local.amplify_app_repository
+#   oauth_token = local.amplify_app_oauth_token
+# }
+# resource "aws_amplify_branch" "frontend-branch" {
+#   app_id      = aws_amplify_app.frontend-app.id
+#   branch_name = local.amplify_branch_branch_name[terraform.workspace]
+# }
+# resource "aws_amplify_domain_association" "domain_association" {
+#   app_id      = aws_amplify_app.frontend-app.id
+#   domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
+#   wait_for_verification = false
 
-  sub_domain {
-    branch_name = local.amplify_branch_branch_name[terraform.workspace]
-    prefix      = terraform.workspace
-  }
+#   sub_domain {
+#     branch_name = local.amplify_branch_branch_name[terraform.workspace]
+#     prefix      = terraform.workspace
+#   }
 
-}
+# }
 
 
 # # Great test table. Deleting now
