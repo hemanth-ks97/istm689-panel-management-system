@@ -161,17 +161,17 @@ resource "aws_amplify_branch" "frontend-branch" {
   framework = "React"
 }
 
-# # TODO: read output of the resource and put the values in Cloudflare
-# resource "aws_amplify_domain_association" "frontend-domain-association" {
-#   app_id      = aws_amplify_app.frontend-app.id
-#   domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
-#   wait_for_verification = false
+# TODO: read output of the resource and put the values in Cloudflare
+resource "aws_amplify_domain_association" "frontend-domain-association" {
+  app_id      = aws_amplify_app.frontend-app.id
+  domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
+  wait_for_verification = false
 
-#   sub_domain {
-#     branch_name = local.amplify_branch_branch_name[terraform.workspace]
-#     prefix      = ""
-#   }
-# }
+  sub_domain {
+    branch_name = local.amplify_branch_branch_name[terraform.workspace]
+    prefix      = ""
+  }
+}
 
 # Cloudflare resources
 
@@ -213,12 +213,18 @@ resource "aws_amplify_branch" "frontend-branch" {
 #   }
 # }
 
+##########
+# OUTPUT #
+##########
 
-# # OUTPUT #
-# output "amplify_app_id" {
-#   value = aws_amplify_app.amplify_app.id
-# }
+output "amplify_app_id" {
+  value = aws_amplify_app.frontend-app.id
+}
 
-# output "amplify_app_url" {
-#   value = aws_amplify_domain_association.domain_association.domain_name
-# }
+output "amplify_app_url" {
+  value = aws_amplify_domain_association.frontend-domain-association.domain_name
+}
+
+output "amplify_custom_domain_verification record" {
+  value = aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record
+}
