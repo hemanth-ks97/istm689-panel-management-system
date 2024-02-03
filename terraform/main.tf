@@ -19,6 +19,13 @@ provider "aws" {
 
 }
 
+locals {
+  budget_limit_amount = {
+    dev = "10"
+    prod = "20"
+  }
+}
+
 #################
 # AWS RESOURCES #
 #################
@@ -26,7 +33,7 @@ provider "aws" {
 resource "aws_budgets_budget" "general-budget" {
   name              = "${terraform.workspace}-istm689-general-budget"
   budget_type       = "COST"
-  limit_amount      = "20"
+  limit_amount      = local.budget_limit_amount[terraform.workspace]
   limit_unit        = "USD"
   time_unit         = "MONTHLY"
 
