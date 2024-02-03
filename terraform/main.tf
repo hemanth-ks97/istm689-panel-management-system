@@ -181,12 +181,11 @@ resource "cloudflare_record" "custom-domain-verification" {
   ttl             = 1
 }
 
-# istm689-dev     CNAME    d30l47ryom46pz.cloudfront.net
 resource "cloudflare_record" "custom-domain" {
   zone_id = local.cloudflare_zone_id
   name    = local.amplify_domain_association_domain_name[terraform.workspace]
-  value   = "d1zs7hxqqgt1u2.cloudfront.net"
-  type    = "CNAME"
+  value   = tolist(split(" ", trimspace(aws_amplify_domain_association.frontend-domain-association.sub_domain[dns_record])))[1]
+  type    = tolist(split(" ", trimspace(aws_amplify_domain_association.frontend-domain-association.sub_domain[dns_record])))[0]
   proxied = false
   ttl     = 1
 }
@@ -221,6 +220,9 @@ output "amplify_app_url" {
 }
 
 output "amplify_app_dns_record" {
-  value = aws_amplify_domain_association.frontend-domain-association.sub_domain
+  value = aws_amplify_domain_association.frontend-domain-association.sub_domain[dns_record]
 }
 
+output "amplify_app_dns_record_list" {
+  value = tolist(split(" ", trimspace(aws_amplify_domain_association.frontend-domain-association.sub_domain[dns_record])))
+}
