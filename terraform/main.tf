@@ -28,3 +28,21 @@ provider "aws" {
 # resource "aws_vpc" "test2-vpc" {
 #   cidr_block = "10.30.1.0/24"
 # }
+
+
+resource "aws_budgets_budget" "general-budget" {
+  name              = "istm689-general-budget"
+  budget_type       = "COST"
+  limit_amount      = "20"
+  limit_unit        = "USD"
+  time_unit         = "MONTHLY"
+
+
+  notification {
+    comparison_operator        = "GREATER_THAN"
+    threshold                  = 70
+    threshold_type             = "PERCENTAGE"
+    notification_type          = "FORECASTED"
+    subscriber_email_addresses = ["joaquin.gimenez@tamu.edu"]
+  }
+}
