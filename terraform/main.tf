@@ -178,9 +178,9 @@ resource "aws_amplify_domain_association" "frontend-domain-association" {
 # TODO: read record from domain association output
 resource "cloudflare_record" "custom-domain-verification" {
   zone_id = local.cloudflare_zone_id
-  name = tolist(aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record)[0]
-  value   = tolist(aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record)[2]
-  type    = tolist(aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record)[1]
+  name = tolist(split(" ",aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[0]
+  value   = tolist(split(" ",aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[2]
+  type    = tolist(split(" ",aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[1]
   proxied = false
   ttl     = 1
 }
