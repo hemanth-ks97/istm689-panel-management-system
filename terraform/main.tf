@@ -220,7 +220,7 @@ output "amplify_app_url" {
 }
 
 output "amplify_app_dns_record" {
-  value = aws_amplify_domain_association.frontend-domain-association.sub_domain[0].dns_record
+  value = aws_amplify_domain_association.frontend-domain-association.sub_domain.get[0]
 }
 
 # output "amplify_app_dns_record_list" {
