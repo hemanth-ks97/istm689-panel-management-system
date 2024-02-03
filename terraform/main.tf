@@ -6,7 +6,6 @@ terraform {
     }
   }
 }
-
 # Configure the AWS Provider
 
 # To make this provider work we added enviroment variables to terraform cloud
@@ -20,15 +19,9 @@ provider "aws" {
 
 }
 
-# # Create a VPC
-# resource "aws_vpc" "test-vpc" {
-#   cidr_block = "10.20.1.0/24"
-# }
-
-# resource "aws_vpc" "test2-vpc" {
-#   cidr_block = "10.30.1.0/24"
-# }
-
+#################
+# AWS RESOURCES #
+#################
 
 resource "aws_budgets_budget" "general-budget" {
   name              = "istm689-general-budget"
@@ -45,4 +38,30 @@ resource "aws_budgets_budget" "general-budget" {
     notification_type          = "FORECASTED"
     subscriber_email_addresses = ["joaquin.gimenez@tamu.edu"]
   }
+}
+
+
+resource "aws_dynamodb_table" "gamesscores-dynamodb-table" {
+  name           = "GameScores"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "UserId"
+  range_key      = "GameTitle"
+
+  attribute {
+    name = "UserId"
+    type = "S"
+  }
+
+    attribute {
+    name = "FirstName"
+    type = "S"
+  }
+
+  attribute {
+    name = "LastName"
+    type = "S"
+  }
+
 }
