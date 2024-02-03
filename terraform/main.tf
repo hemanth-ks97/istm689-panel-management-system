@@ -44,6 +44,8 @@ provider "aws" {
 # Local variables to configure a specific parameter taking into account the workspace name (dev, prod)
 # Naming of the variable should be the name of the resource without the provider prefix follow by the name of the variable
 locals {
+  cloudflare_zone_id = "2b0969f800003e0e97156368605bd575"
+
   budgets_budget_limit_amount = {
     dev = "10"
     prod = "20"
@@ -91,9 +93,11 @@ locals {
 # Cloudflare resources
 
 # _93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev.joaquingimenez.com. CNAME _e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws.
+# certificate_verification_dns_record - The DNS record for certificate verificatio
 
+# TODO: read record from domain association output
 resource "cloudflare_record" "custom-domain-verification" {
-  zone_id = "2b0969f800003e0e97156368605bd575"
+  zone_id = local.cloudflare_zone_id
   name    = "_93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev"
   value   = "_e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws"
   type    = "CNAME"
@@ -102,7 +106,7 @@ resource "cloudflare_record" "custom-domain-verification" {
 }
 
 resource "cloudflare_record" "custom-domain" {
-  zone_id = "2b0969f800003e0e97156368605bd575"
+  zone_id = local.cloudflare_zone_id
   name    = "istm689-dev"
   value   = "d1zs7hxqqgt1u2.cloudfront.net"
   type    = "CNAME"
