@@ -181,14 +181,15 @@ resource "cloudflare_record" "custom-domain-verification" {
   ttl             = 1
 }
 
-# resource "cloudflare_record" "custom-domain" {
-#   zone_id = local.cloudflare_zone_id
-#   name    = "istm689-dev"
-#   value   = "d1zs7hxqqgt1u2.cloudfront.net"
-#   type    = "CNAME"
-#   proxied = false
-#   ttl     = 1
-# }
+# istm689-dev     CNAME    d30l47ryom46pz.cloudfront.net
+resource "cloudflare_record" "custom-domain" {
+  zone_id = local.cloudflare_zone_id
+  name    = local.amplify_domain_association_domain_name[terraform.workspace]
+  value   = "d1zs7hxqqgt1u2.cloudfront.net"
+  type    = "CNAME"
+  proxied = false
+  ttl     = 1
+}
 
 # # Great test table for demo.
 # resource "aws_dynamodb_table" "gamesscores-test-dynamodb-table" {
@@ -211,10 +212,15 @@ output "amplify_app_id" {
   value = aws_amplify_app.frontend-app.id
 }
 
+output "amplify_app_default_domain" {
+  value = aws_amplify_app.frontend-app.default_domain
+}
+
 output "amplify_app_url" {
   value = aws_amplify_domain_association.frontend-domain-association.domain_name
 }
 
-output "amplify_custom_domain_verification_record" {
-  value = aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record
+output "amplify_app_dns_record" {
+  value = aws_amplify_domain_association.frontend-domain-association.dns_record
 }
+
