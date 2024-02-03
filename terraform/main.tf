@@ -90,29 +90,6 @@ locals {
 # RESOURCES #
 #############
 
-# Cloudflare resources
-
-# _93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev.joaquingimenez.com. CNAME _e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws.
-# certificate_verification_dns_record - The DNS record for certificate verificatio
-
-# TODO: read record from domain association output
-resource "cloudflare_record" "custom-domain-verification" {
-  zone_id = local.cloudflare_zone_id
-  name    = "_93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev"
-  value   = "_e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws"
-  type    = "CNAME"
-  proxied = false
-  ttl     = 1
-}
-
-resource "cloudflare_record" "custom-domain" {
-  zone_id = local.cloudflare_zone_id
-  name    = "istm689-dev"
-  value   = "d1zs7hxqqgt1u2.cloudfront.net"
-  type    = "CNAME"
-  proxied = false
-  ttl     = 1
-}
 
 
 # AWS resources
@@ -184,17 +161,41 @@ resource "aws_amplify_branch" "frontend-branch" {
   framework = "React"
 }
 
-resource "aws_amplify_domain_association" "frontend-domain-association" {
-  app_id      = aws_amplify_app.frontend-app.id
-  domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
-  wait_for_verification = false
+# # TODO: read output of the resource and put the values in Cloudflare
+# resource "aws_amplify_domain_association" "frontend-domain-association" {
+#   app_id      = aws_amplify_app.frontend-app.id
+#   domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
+#   wait_for_verification = false
 
-  sub_domain {
-    branch_name = local.amplify_branch_branch_name[terraform.workspace]
-    prefix      = ""
-  }
+#   sub_domain {
+#     branch_name = local.amplify_branch_branch_name[terraform.workspace]
+#     prefix      = ""
+#   }
+# }
 
-}
+# Cloudflare resources
+
+# _93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev.joaquingimenez.com. CNAME _e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws.
+# certificate_verification_dns_record - The DNS record for certificate verificatio
+
+# # TODO: read record from domain association output
+# resource "cloudflare_record" "custom-domain-verification" {
+#   zone_id = local.cloudflare_zone_id
+#   name    = "_93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev"
+#   value   = "_e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws"
+#   type    = "CNAME"
+#   proxied = false
+#   ttl     = 1
+# }
+
+# resource "cloudflare_record" "custom-domain" {
+#   zone_id = local.cloudflare_zone_id
+#   name    = "istm689-dev"
+#   value   = "d1zs7hxqqgt1u2.cloudfront.net"
+#   type    = "CNAME"
+#   proxied = false
+#   ttl     = 1
+# }
 
 
 
