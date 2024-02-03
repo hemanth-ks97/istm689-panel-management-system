@@ -61,10 +61,15 @@ locals {
   }
 
   amplify_domain_association_domain_name = {
-    dev = "awsamplifyapp.com"
-    prod = "awsamplifyapp.com"
+    dev = "istm689-dev.joaquingimenez.com"
+    prod = "istm689.joaquingimenez.com"
   }
 
+# TODO, need to be the base URL from the API gateway instance
+  aws_amplify_branch_environment_variables_REACT_APP_API_SERVER = {
+    dev = "https://api-dev.example.com"
+    prod = "https://api.example.com"
+  }
 }
 
 
@@ -131,43 +136,27 @@ resource "aws_amplify_app" "frontend-app" {
 # we should use this to pass the API URL, IDs, somethign we need!
   environment_variables = {
     ENV = terraform.workspace
+    REACT_APP_API_SERVER = aws_amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
+    REACT_APP_ENV = terraform.workspace
   }
 }
 resource "aws_amplify_branch" "frontend-branch" {
   app_id      = aws_amplify_app.frontend-app.id
   branch_name = local.amplify_branch_branch_name[terraform.workspace]
-  # framework = "React"
-  
-  #HERE We pass the env vars for the workspaces
-  # We may no need this because we have two different apps!!
-  # environment_variables = {
-  #   REACT_APP_API_SERVER = "https://api.example.com"
-  # }
-
+  framework = "React"
 }
 
+resource "aws_amplify_domain_association" "frontend-domain-association" {
+  app_id      = aws_amplify_app.frontend-app.id
+  domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
+  wait_for_verification = false
 
+  sub_domain {
+    branch_name = local.amplify_branch_branch_name[terraform.workspace]
+    prefix      = ""
+  }
 
-# resource "aws_amplify_app" "frontend-app" {
-#   name       = "${terraform.workspace}-frontend-app"
-#   repository = local.amplify_app_repository
-#   oauth_token = local.amplify_app_oauth_token
-# }
-# resource "aws_amplify_branch" "frontend-branch" {
-#   app_id      = aws_amplify_app.frontend-app.id
-#   branch_name = local.amplify_branch_branch_name[terraform.workspace]
-# }
-# resource "aws_amplify_domain_association" "domain_association" {
-#   app_id      = aws_amplify_app.frontend-app.id
-#   domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
-#   wait_for_verification = false
-
-#   sub_domain {
-#     branch_name = local.amplify_branch_branch_name[terraform.workspace]
-#     prefix      = terraform.workspace
-#   }
-
-# }
+}
 
 
 
