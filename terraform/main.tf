@@ -55,15 +55,15 @@ resource "aws_budgets_budget" "general-budget" {
   }
 }
 
-# Great test table. Deleting now
-resource "aws_dynamodb_table" "gamesscores-test-dynamodb-table" {
-  name           = "${terraform.workspace}-GameScores"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = local.dynamodb_table_read_capacity[terraform.workspace]
-  write_capacity = local.dynamodb_table_write_capacity[terraform.workspace]
-  hash_key       = "UserId"
-  attribute {
-    name = "UserId"
-    type = "S"
-  }
-}
+# # Great test table. Deleting now
+# resource "aws_dynamodb_table" "gamesscores-test-dynamodb-table" {
+#   name           = "${terraform.workspace}-GameScores"
+#   billing_mode   = "PROVISIONED"
+#   read_capacity  = local.dynamodb_table_read_capacity[terraform.workspace]
+#   write_capacity = local.dynamodb_table_write_capacity[terraform.workspace]
+#   hash_key       = "UserId"
+#   attribute {
+#     name = "UserId"
+#     type = "S"
+#   }
+# }
