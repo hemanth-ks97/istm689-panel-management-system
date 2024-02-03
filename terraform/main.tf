@@ -158,32 +158,32 @@ resource "aws_amplify_branch" "frontend-branch" {
   framework = "React"
 }
 
-# # TODO: read output of the resource and put the values in Cloudflare
-# resource "aws_amplify_domain_association" "frontend-domain-association" {
-#   app_id      = aws_amplify_app.frontend-app.id
-#   domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
-#   wait_for_verification = false
+# TODO: read output of the resource and put the values in Cloudflare
+resource "aws_amplify_domain_association" "frontend-domain-association" {
+  app_id      = aws_amplify_app.frontend-app.id
+  domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
+  wait_for_verification = false
 
-#   sub_domain {
-#     branch_name = local.amplify_branch_branch_name[terraform.workspace]
-#     prefix      = ""
-#   }
-# }
+  sub_domain {
+    branch_name = local.amplify_branch_branch_name[terraform.workspace]
+    prefix      = ""
+  }
+}
 
 # Cloudflare resources
 
 # _93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev.joaquingimenez.com. CNAME _e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws.
 # certificate_verification_dns_record - The DNS record for certificate verificatio
 
-# # TODO: read record from domain association output
-# resource "cloudflare_record" "custom-domain-verification" {
-#   zone_id = local.cloudflare_zone_id
-#   name    = "_93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev"
-#   value   = "_e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws"
-#   type    = "CNAME"
-#   proxied = false
-#   ttl     = 1
-# }
+# TODO: read record from domain association output
+resource "cloudflare_record" "custom-domain-verification" {
+  zone_id = local.cloudflare_zone_id
+  name = tolist(aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record)[0]
+  value   = tolist(aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record)[2]
+  type    = tolist(aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record)[1]
+  proxied = false
+  ttl     = 1
+}
 
 # resource "cloudflare_record" "custom-domain" {
 #   zone_id = local.cloudflare_zone_id
@@ -215,10 +215,10 @@ output "amplify_app_id" {
   value = aws_amplify_app.frontend-app.id
 }
 
-# output "amplify_app_url" {
-#   value = aws_amplify_domain_association.frontend-domain-association.domain_name
-# }
+output "amplify_app_url" {
+  value = aws_amplify_domain_association.frontend-domain-association.domain_name
+}
 
-# output "amplify_custom_domain_verification_record" {
-#   value = aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record
-# }
+output "amplify_custom_domain_verification_record" {
+  value = aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record
+}
