@@ -105,7 +105,6 @@ resource "aws_amplify_app" "crazy-package" {
           phases:
             preBuild:
               commands:
-                - npm install
                 - npm ci
             build:
               commands:
