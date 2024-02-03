@@ -24,7 +24,7 @@ provider "aws" {
 #################
 
 resource "aws_budgets_budget" "general-budget" {
-  name              = "istm689-general-budget"
+  name              = "${terraform.workspace}-istm689-general-budget"
   budget_type       = "COST"
   limit_amount      = "20"
   limit_unit        = "USD"
@@ -40,15 +40,15 @@ resource "aws_budgets_budget" "general-budget" {
   }
 }
 
-# # Great test table. Deleting now
-# resource "aws_dynamodb_table" "gamesscores-test-dynamodb-table" {
-#   name           = "GameScores"
-#   billing_mode   = "PROVISIONED"
-#   read_capacity  = 1
-#   write_capacity = 1
-#   hash_key       = "UserId"
-#   attribute {
-#     name = "UserId"
-#     type = "S"
-#   }
-# }
+# Great test table. Deleting now
+resource "aws_dynamodb_table" "gamesscores-test-dynamodb-table" {
+  name           = "${terraform.workspace}-GameScores"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "UserId"
+  attribute {
+    name = "UserId"
+    type = "S"
+  }
+}
