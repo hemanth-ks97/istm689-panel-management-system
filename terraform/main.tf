@@ -90,46 +90,45 @@ resource "aws_budgets_budget" "general-budget" {
   }
 }
 
+# resource "aws_amplify_app" "crazy-package" {
+#   name       = "${terraform.workspace}-frontend-app"
+#   repository = local.amplify_app_repository
+#   oauth_token = local.amplify_app_oauth_token
 
+#   # The default build_spec added by the Amplify Console for React.
+#   build_spec = <<-EOT
+#     version: 1
+#     applications:
+#       - frontend:
+#           phases:
+#             preBuild:
+#               commands:
+#                 - npm install
+#                 - npm ci
+#             build:
+#               commands:
+#                 - npm run build
+#           artifacts:
+#             baseDirectory: build
+#             files:
+#               - '**/*'
+#           cache:
+#             paths:
+#               - node_modules/**/*
+#         appRoot: webapp
+#   EOT
 
-resource "aws_amplify_app" "crazy-package" {
-  name       = "${terraform.workspace}-frontend-app"
-  repository = local.amplify_app_repository
-  oauth_token = local.amplify_app_oauth_token
+#   # The default rewrites and redirects added by the Amplify Console.
+#   custom_rule {
+#     source = "/<*>"
+#     status = "404"
+#     target = "/index.html"
+#   }
 
-  # The default build_spec added by the Amplify Console for React.
-  build_spec = <<-EOT
-    version: 1
-    applications:
-      - frontend:
-          phases:
-            preBuild:
-              commands:
-                - npm ci
-            build:
-              commands:
-                - npm run build
-          artifacts:
-            baseDirectory: build
-            files:
-              - '**/*'
-          cache:
-            paths:
-              - node_modules/**/*
-        appRoot: webapp
-  EOT
-
-  # The default rewrites and redirects added by the Amplify Console.
-  custom_rule {
-    source = "/<*>"
-    status = "404"
-    target = "/index.html"
-  }
-
-  environment_variables = {
-    ENV = terraform.workspace
-  }
-}
+#   environment_variables = {
+#     ENV = terraform.workspace
+#   }
+# }
 
 
 
