@@ -1,2 +1,2 @@
-# istm689-panel-system
-Monorepo Panel System project for ISTM 689
+# istm689-panel-management-system
+Monorepo Panel Management System project for ISTM 689
