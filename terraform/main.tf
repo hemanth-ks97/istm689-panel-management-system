@@ -225,6 +225,6 @@ output "amplify_app_url" {
   value = aws_amplify_domain_association.frontend-domain-association.domain_name
 }
 
-output "amplify_custom_domain_verification record" {
+output "amplify_custom_domain_verification_record" {
   value = aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record
 }
