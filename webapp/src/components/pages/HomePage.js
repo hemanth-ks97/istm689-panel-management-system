@@ -6,7 +6,8 @@ import Box from "@mui/material/Box";
 const HomePage = () => {
   return (
     <Box sx={{ flexGrow: 1 }}>
-      This is the HomePage component. Autodeploy with custom domain
+      <p>This is the HomePage component. Autodeploy with custom domain</p>
+      Enviroment variable: {process.env.REACT_APP_ENV}
     </Box>
   );
 };
