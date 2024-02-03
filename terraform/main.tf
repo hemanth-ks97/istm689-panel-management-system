@@ -19,6 +19,21 @@ provider "aws" {
 
 }
 
+locals {
+  budgets_budget_limit_amount = {
+    dev = "10"
+    prod = "20"
+  }
+  dynamodb_table_read_capacity = {
+    dev = 1
+    prod = 2
+  }
+  dynamodb_table_write_capacity = {
+    dev = 1
+    prod = 2
+  }
+}
+
 #################
 # AWS RESOURCES #
 #################
@@ -26,7 +41,7 @@ provider "aws" {
 resource "aws_budgets_budget" "general-budget" {
   name              = "${terraform.workspace}-istm689-general-budget"
   budget_type       = "COST"
-  limit_amount      = "20"
+  limit_amount      = local.budgets_budget_limit_amount[terraform.workspace]
   limit_unit        = "USD"
   time_unit         = "MONTHLY"
 
@@ -40,15 +55,15 @@ resource "aws_budgets_budget" "general-budget" {
   }
 }
 
-# # Great test table. Deleting now
-# resource "aws_dynamodb_table" "gamesscores-test-dynamodb-table" {
-#   name           = "${terraform.workspace}-GameScores"
-#   billing_mode   = "PROVISIONED"
-#   read_capacity  = 1
-#   write_capacity = 1
-#   hash_key       = "UserId"
-#   attribute {
-#     name = "UserId"
-#     type = "S"
-#   }
-# }
+# Great test table. Deleting now
+resource "aws_dynamodb_table" "gamesscores-test-dynamodb-table" {
+  name           = "${terraform.workspace}-GameScores"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = local.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = local.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "UserId"
+  attribute {
+    name = "UserId"
+    type = "S"
+  }
+}
