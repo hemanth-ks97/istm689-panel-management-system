@@ -19,10 +19,8 @@ variable "TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA" {
   description = "Enviroment variable provided by Terraform Cloud"
 }
 
-# TF_VAR_amplify_app_oauth_token defined in Terraform Cloud
-variable "TF_VAR_amplify_app_oauth_token" {
+variable "TF_VAR_GITHUB_TOKEN" {
   type        = string
-  description = "value"
-  #   default     = "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"
-  sensitive = true
+  description = "Enviroment variable with access to the project repository"
+  sensitive   = true
 }
