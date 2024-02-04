@@ -1,8 +1,8 @@
 terraform {
 
-  #############
-  # PROVIDERS #
-  #############
+  ##################################################
+  # PROVIDERS DECLARATION
+  ##################################################
 
   # Providers are "plugins" that allows terraform to communicate with different cloud services. Like AWS, Cloudflare, Azure, etc.
   required_providers {
@@ -17,12 +17,14 @@ terraform {
   }
 }
 
+##################################################
+# PROVIDER SETUP
+##################################################
 
-##################
-# PROVIDER SETUP #
-##################
-
+##########################
 # AWS Provider
+##########################
+
 # To make this provider work we added enviroment variables to terraform cloud
 # Link: https://app.terraform.io/app/istm689-panel-management-system-org/workspaces
 # Sensitive environment variables
@@ -32,61 +34,66 @@ provider "aws" {
   region = "us-east-1"
 }
 
+##########################
 # Cloudflare Provider
+##########################
+
 # To make this provider work we added enviroment variables to terraform cloud
 # Link: https://app.terraform.io/app/istm689-panel-management-system-org/workspaces
 # Sensitive environment variable
 # - CLOUDFLARE_API_TOKEN
 
-###################
-# LOCAL VARIABLES #
-###################
+##################################################
+# LOCAL VARIABLES
+##################################################
 
 # Local variables to configure a specific parameter taking into account the workspace name (dev, prod)
 # Naming of the variable should be the name of the resource without the provider prefix follow by the name of the variable
 locals {
-  cloudflare_zone_id = "2b0969f800003e0e97156368605bd575"
-
   budgets_budget_limit_amount = {
     dev  = "10"
     prod = "20"
   }
+
   dynamodb_table_read_capacity = {
     dev  = 1
-    prod = 2
-  }
-  dynamodb_table_write_capacity = {
-    dev  = 1
-    prod = 2
+    prod = 1
   }
 
-  amplify_app_repository = "https://github.com/JoaquinGimenez1/istm689-panel-management-system"
-  # needs to be a secret
-  amplify_app_oauth_token = "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"
+  dynamodb_table_write_capacity = {
+    dev  = 1
+    prod = 1
+  }
 
   amplify_branch_branch_name = {
     dev  = "dev"
     prod = "main"
   }
+
   amplify_domain_association_domain_name = {
     dev  = "istm689-dev.joaquingimenez.com"
     prod = "istm689.joaquingimenez.com"
   }
 
-  # TODO, need to be the base URL from the API gateway instance
+  # TODO: After creating an API Gateway, we need to use the output values to determine de API URL.
+  # Similar to what we did for the DNS zone records
   amplify_branch_environment_variables_REACT_APP_API_SERVER = {
     dev  = "https://api-dev.example.com"
     prod = "https://api.example.com"
   }
+
+  custom_domain_parse_output = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))
+
+  custom_domain_verification_parse_output = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))
 }
 
-variable "TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA" {}
+##################################################
+# RESOURCES
+##################################################
 
-#############
-# RESOURCES #
-#############
-
+##########################
 # AWS resources
+##########################
 resource "aws_budgets_budget" "general-budget" {
   name         = "${terraform.workspace}-istm689-general-budget"
   budget_type  = "COST"
@@ -104,10 +111,9 @@ resource "aws_budgets_budget" "general-budget" {
 }
 
 resource "aws_amplify_app" "frontend-app" {
-  name       = "${terraform.workspace}-frontend-app"
-  repository = local.amplify_app_repository
-  # TODO: Need to figure a better way to pass the token!
-  oauth_token = local.amplify_app_oauth_token
+  name        = "${terraform.workspace}-frontend-app"
+  repository  = var.amplify_app_repository
+  oauth_token = var.TF_VAR_GITHUB_TOKEN
 
   # The default build_spec added by the Amplify Console for React.
   build_spec = <<-EOT
@@ -165,29 +171,12 @@ resource "aws_amplify_domain_association" "frontend-domain-association" {
   }
 }
 
-# Cloudflare resources
-resource "cloudflare_record" "custom-domain-verification" {
-  zone_id         = local.cloudflare_zone_id
-  name            = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[0]
-  value           = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[2]
-  type            = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[1]
-  proxied         = false
-  allow_overwrite = true
-  ttl             = 1
-}
-
-resource "cloudflare_record" "custom-domain" {
-  zone_id = local.cloudflare_zone_id
-  name    = local.amplify_domain_association_domain_name[terraform.workspace]
-  value   = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[1]
-  type    = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[0]
-  proxied = false
-  ttl     = 1
-}
-
+##########################
+# AWS TEST STUFF
+##########################
 # # Great test table for demo.
-# resource "aws_dynamodb_table" "gamesscores-test-dynamodb-table" {
-#   name           = "${terraform.workspace}-GameScores"
+# resource "aws_dynamodb_table" "test-dynamodb-table" {
+#   name           = "${terraform.workspace}-TestTable"
 #   billing_mode   = "PROVISIONED"
 #   read_capacity  = local.dynamodb_table_read_capacity[terraform.workspace]
 #   write_capacity = local.dynamodb_table_write_capacity[terraform.workspace]
@@ -198,22 +187,24 @@ resource "cloudflare_record" "custom-domain" {
 #   }
 # }
 
-##########
-# OUTPUT #
-##########
-
-# output "amplify_app_id" {
-#   value = aws_amplify_app.frontend-app.id
-# }
-
-# output "amplify_app_default_domain" {
-#   value = aws_amplify_app.frontend-app.default_domain
-# }
-
-output "amplify_app_url" {
-  value = aws_amplify_domain_association.frontend-domain-association.domain_name
+##########################
+# Cloudflare resources
+##########################
+resource "cloudflare_record" "custom-domain-verification" {
+  zone_id         = var.cf_zone_id
+  name            = local.custom_domain_verification_parse_output[0]
+  value           = local.custom_domain_verification_parse_output[2]
+  type            = local.custom_domain_verification_parse_output[1]
+  proxied         = false
+  allow_overwrite = true
+  ttl             = 1
 }
 
-# output "amplify_app_dns_record" {
-#   value = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[1]
-# }
+resource "cloudflare_record" "custom-domain" {
+  zone_id = var.cf_zone_id
+  name    = local.amplify_domain_association_domain_name[terraform.workspace]
+  value   = local.custom_domain_parse_output[1]
+  type    = local.custom_domain_parse_output[0]
+  proxied = false
+  ttl     = 1
+}

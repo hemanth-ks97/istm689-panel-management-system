@@ -9,7 +9,12 @@ import Typography from "@mui/material/Typography";
 const TopBar = () => {
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="sticky">
+      <AppBar
+        position="sticky"
+        // Clearly differentiate from prod and dev environments
+        // TODO: Need to have a config file to better handle this
+        color={process.env.REACT_APP_ENV === "prod" ? "primary" : "secondary"}
+      >
         <Toolbar>
           <Typography
             color="white"
