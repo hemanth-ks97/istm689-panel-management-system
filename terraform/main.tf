@@ -47,41 +47,9 @@ provider "aws" {
 # LOCAL VARIABLES
 ##################################################
 
-# Local variables to configure a specific parameter taking into account the workspace name (dev, prod)
+# Local variables are used for interpolation of resource output so we can use it somewhere else
 # Naming of the variable should be the name of the resource without the provider prefix follow by the name of the variable
 locals {
-  budgets_budget_limit_amount = {
-    dev  = "10"
-    prod = "20"
-  }
-
-  dynamodb_table_read_capacity = {
-    dev  = 1
-    prod = 1
-  }
-
-  dynamodb_table_write_capacity = {
-    dev  = 1
-    prod = 1
-  }
-
-  amplify_branch_branch_name = {
-    dev  = "dev"
-    prod = "main"
-  }
-
-  amplify_domain_association_domain_name = {
-    dev  = "istm689-dev.joaquingimenez.com"
-    prod = "istm689.joaquingimenez.com"
-  }
-
-  # TODO: After creating an API Gateway, we need to use the output values to determine de API URL.
-  # Similar to what we did for the DNS zone records
-  amplify_branch_environment_variables_REACT_APP_API_SERVER = {
-    dev  = "https://api-dev.example.com"
-    prod = "https://api.example.com"
-  }
-
   custom_domain_parse_output = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))
 
   custom_domain_verification_parse_output = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))
@@ -97,7 +65,7 @@ locals {
 resource "aws_budgets_budget" "general-budget" {
   name         = "${terraform.workspace}-istm689-general-budget"
   budget_type  = "COST"
-  limit_amount = local.budgets_budget_limit_amount[terraform.workspace]
+  limit_amount = var.budgets_budget_limit_amount[terraform.workspace]
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
@@ -149,24 +117,24 @@ resource "aws_amplify_app" "frontend-app" {
   # we should use this to pass the API URL, IDs, somethign we need!
   environment_variables = {
     ENV                      = terraform.workspace
-    REACT_APP_API_SERVER     = local.amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
+    REACT_APP_API_SERVER     = var.amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
     REACT_APP_ENV            = terraform.workspace
     REACT_APP_GIT_COMMIT_SHA = var.TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA
   }
 }
 resource "aws_amplify_branch" "frontend-branch" {
   app_id      = aws_amplify_app.frontend-app.id
-  branch_name = local.amplify_branch_branch_name[terraform.workspace]
+  branch_name = var.amplify_branch_branch_name[terraform.workspace]
   framework   = "React"
 }
 
 resource "aws_amplify_domain_association" "frontend-domain-association" {
   app_id                = aws_amplify_app.frontend-app.id
-  domain_name           = local.amplify_domain_association_domain_name[terraform.workspace]
+  domain_name           = var.amplify_domain_association_domain_name[terraform.workspace]
   wait_for_verification = false
 
   sub_domain {
-    branch_name = local.amplify_branch_branch_name[terraform.workspace]
+    branch_name = var.amplify_branch_branch_name[terraform.workspace]
     prefix      = ""
   }
 }
@@ -202,7 +170,7 @@ resource "cloudflare_record" "custom-domain-verification" {
 
 resource "cloudflare_record" "custom-domain" {
   zone_id = var.cf_zone_id
-  name    = local.amplify_domain_association_domain_name[terraform.workspace]
+  name    = var.amplify_domain_association_domain_name[terraform.workspace]
   value   = local.custom_domain_parse_output[1]
   type    = local.custom_domain_parse_output[0]
   proxied = false
