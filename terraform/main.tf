@@ -52,11 +52,11 @@ locals {
   }
   dynamodb_table_read_capacity = {
     dev  = 1
-    prod = 2
+    prod = 1
   }
   dynamodb_table_write_capacity = {
     dev  = 1
-    prod = 2
+    prod = 1
   }
 
   amplify_branch_branch_name = {
@@ -193,22 +193,3 @@ resource "cloudflare_record" "custom-domain" {
 #   }
 # }
 
-##########
-# OUTPUT #
-##########
-
-# output "amplify_app_id" {
-#   value = aws_amplify_app.frontend-app.id
-# }
-
-# output "amplify_app_default_domain" {
-#   value = aws_amplify_app.frontend-app.default_domain
-# }
-
-output "amplify_app_url" {
-  value = aws_amplify_domain_association.frontend-domain-association.domain_name
-}
-
-# output "amplify_app_dns_record" {
-#   value = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[1]
-# }
