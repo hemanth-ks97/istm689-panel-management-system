@@ -23,6 +23,7 @@ variable "budgets_budget_limit_amount" {
     prod = "20"
   }
 }
+
 variable "dynamodb_table_read_capacity" {
   description = "Read Capacity limit for every enviroment"
   type = object({
@@ -84,7 +85,6 @@ variable "amplify_branch_environment_variables_REACT_APP_API_SERVER" {
     prod = "https://api.example.com"
   }
 }
-
 
 ##################################################
 # Cloudflare
