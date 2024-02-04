@@ -102,7 +102,7 @@ resource "aws_amplify_app" "frontend-app" {
   name       = "${terraform.workspace}-frontend-app"
   repository = var.amplify_app_repository
   # TODO: Need to figure a better way to pass the token!
-  oauth_token = var.amplify_app_oauth_token
+  oauth_token = var.TF_VAR_amplify_app_oauth_token
 
   # The default build_spec added by the Amplify Console for React.
   build_spec = <<-EOT
