@@ -54,10 +54,12 @@ locals {
     dev  = "10"
     prod = "20"
   }
+
   dynamodb_table_read_capacity = {
     dev  = 1
     prod = 1
   }
+
   dynamodb_table_write_capacity = {
     dev  = 1
     prod = 1
@@ -67,12 +69,14 @@ locals {
     dev  = "dev"
     prod = "main"
   }
+
   amplify_domain_association_domain_name = {
     dev  = "istm689-dev.joaquingimenez.com"
     prod = "istm689.joaquingimenez.com"
   }
 
-  # TODO, need to be the base URL from the API gateway instance
+  # TODO: After creating an API Gateway, we need to use the output values to determine de API URL.
+  # Similar to what we did for the DNS zone records
   amplify_branch_environment_variables_REACT_APP_API_SERVER = {
     dev  = "https://api-dev.example.com"
     prod = "https://api.example.com"
@@ -82,8 +86,6 @@ locals {
 
   custom_domain_verification_parse_output = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))
 }
-
-
 
 ##################################################
 # RESOURCES
@@ -172,18 +174,18 @@ resource "aws_amplify_domain_association" "frontend-domain-association" {
 ##########################
 # AWS TEST STUFF
 ##########################
-# Great test table for demo.
-resource "aws_dynamodb_table" "test-dynamodb-table" {
-  name           = "${terraform.workspace}-TestTable"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = local.dynamodb_table_read_capacity[terraform.workspace]
-  write_capacity = local.dynamodb_table_write_capacity[terraform.workspace]
-  hash_key       = "UserId"
-  attribute {
-    name = "UserId"
-    type = "S"
-  }
-}
+# # Great test table for demo.
+# resource "aws_dynamodb_table" "test-dynamodb-table" {
+#   name           = "${terraform.workspace}-TestTable"
+#   billing_mode   = "PROVISIONED"
+#   read_capacity  = local.dynamodb_table_read_capacity[terraform.workspace]
+#   write_capacity = local.dynamodb_table_write_capacity[terraform.workspace]
+#   hash_key       = "UserId"
+#   attribute {
+#     name = "UserId"
+#     type = "S"
+#   }
+# }
 
 ##########################
 # Cloudflare resources
