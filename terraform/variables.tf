@@ -20,7 +20,7 @@ variable "TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA" {
 }
 
 # TF_VAR_amplify_app_oauth_token defined in Terraform Cloud
-variable "amplify_app_oauth_token" {
+variable "TF_VAR_amplify_app_oauth_token" {
   type        = string
   description = "value"
   #   default     = "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"
