@@ -1,10 +1,8 @@
-# main.tf
-
 terraform {
 
-  #############
-  # PROVIDERS #
-  #############
+  ##################################################
+  # PROVIDERS DECLARATION
+  ##################################################
 
   # Providers are "plugins" that allows terraform to communicate with different cloud services. Like AWS, Cloudflare, Azure, etc.
   required_providers {
@@ -19,11 +17,14 @@ terraform {
   }
 }
 
-##################
-# PROVIDER SETUP #
-##################
+##################################################
+# PROVIDER SETUP
+##################################################
 
+##########################
 # AWS Provider
+##########################
+
 # To make this provider work we added enviroment variables to terraform cloud
 # Link: https://app.terraform.io/app/istm689-panel-management-system-org/workspaces
 # Sensitive environment variables
@@ -33,15 +34,18 @@ provider "aws" {
   region = "us-east-1"
 }
 
+##########################
 # Cloudflare Provider
+##########################
+
 # To make this provider work we added enviroment variables to terraform cloud
 # Link: https://app.terraform.io/app/istm689-panel-management-system-org/workspaces
 # Sensitive environment variable
 # - CLOUDFLARE_API_TOKEN
 
-###################
-# LOCAL VARIABLES #
-###################
+##################################################
+# LOCAL VARIABLES
+##################################################
 
 # Local variables to configure a specific parameter taking into account the workspace name (dev, prod)
 # Naming of the variable should be the name of the resource without the provider prefix follow by the name of the variable
@@ -81,11 +85,13 @@ locals {
 
 
 
-#############
-# RESOURCES #
-#############
+##################################################
+# RESOURCES
+##################################################
 
+##########################
 # AWS resources
+##########################
 resource "aws_budgets_budget" "general-budget" {
   name         = "${terraform.workspace}-istm689-general-budget"
   budget_type  = "COST"
@@ -163,7 +169,25 @@ resource "aws_amplify_domain_association" "frontend-domain-association" {
   }
 }
 
+##########################
+# AWS TEST STUFF
+##########################
+# Great test table for demo.
+resource "aws_dynamodb_table" "test-dynamodb-table" {
+  name           = "${terraform.workspace}-TestTable"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = local.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = local.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "UserId"
+  attribute {
+    name = "UserId"
+    type = "S"
+  }
+}
+
+##########################
 # Cloudflare resources
+##########################
 resource "cloudflare_record" "custom-domain-verification" {
   zone_id         = var.cf_zone_id
   name            = local.custom_domain_verification_parse_output[0]
@@ -182,17 +206,3 @@ resource "cloudflare_record" "custom-domain" {
   proxied = false
   ttl     = 1
 }
-
-# Great test table for demo.
-resource "aws_dynamodb_table" "test-dynamodb-table" {
-  name           = "${terraform.workspace}-TestTable"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = local.dynamodb_table_read_capacity[terraform.workspace]
-  write_capacity = local.dynamodb_table_write_capacity[terraform.workspace]
-  hash_key       = "UserId"
-  attribute {
-    name = "UserId"
-    type = "S"
-  }
-}
-
