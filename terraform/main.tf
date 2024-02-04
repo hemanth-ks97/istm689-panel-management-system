@@ -141,9 +141,10 @@ resource "aws_amplify_app" "frontend-app" {
   # This enviroments variables will be pass to the web app!!! 
   # we should use this to pass the API URL, IDs, somethign we need!
   environment_variables = {
-    ENV                  = terraform.workspace
-    REACT_APP_API_SERVER = local.amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
-    REACT_APP_ENV        = terraform.workspace
+    ENV                      = terraform.workspace
+    REACT_APP_API_SERVER     = local.amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
+    REACT_APP_ENV            = terraform.workspace
+    REACT_APP_GIT_COMMIT_SHA = vars.TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA
   }
 }
 resource "aws_amplify_branch" "frontend-branch" {
@@ -151,7 +152,7 @@ resource "aws_amplify_branch" "frontend-branch" {
   branch_name = local.amplify_branch_branch_name[terraform.workspace]
   framework   = "React"
 }
-  
+
 resource "aws_amplify_domain_association" "frontend-domain-association" {
   app_id                = aws_amplify_app.frontend-app.id
   domain_name           = local.amplify_domain_association_domain_name[terraform.workspace]
