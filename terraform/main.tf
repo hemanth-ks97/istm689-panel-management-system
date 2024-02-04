@@ -79,11 +79,6 @@ locals {
     dev  = "https://api-dev.example.com"
     prod = "https://api.example.com"
   }
-
-  record_custom_domain_name = {
-    dev  = "istm689-dev"
-    prod = "istm689"
-  }
 }
 
 #############
@@ -143,7 +138,6 @@ resource "aws_amplify_app" "frontend-app" {
     target = "/index.html"
   }
 
-
   # This enviroments variables will be pass to the web app!!! 
   # we should use this to pass the API URL, IDs, somethign we need!
   environment_variables = {
@@ -157,8 +151,7 @@ resource "aws_amplify_branch" "frontend-branch" {
   branch_name = local.amplify_branch_branch_name[terraform.workspace]
   framework   = "React"
 }
-
-# TODO: read output of the resource and put the values in Cloudflare
+  
 resource "aws_amplify_domain_association" "frontend-domain-association" {
   app_id                = aws_amplify_app.frontend-app.id
   domain_name           = local.amplify_domain_association_domain_name[terraform.workspace]
@@ -207,22 +200,18 @@ resource "cloudflare_record" "custom-domain" {
 # OUTPUT #
 ##########
 
-output "amplify_app_id" {
-  value = aws_amplify_app.frontend-app.id
-}
+# output "amplify_app_id" {
+#   value = aws_amplify_app.frontend-app.id
+# }
 
-output "amplify_app_default_domain" {
-  value = aws_amplify_app.frontend-app.default_domain
-}
+# output "amplify_app_default_domain" {
+#   value = aws_amplify_app.frontend-app.default_domain
+# }
 
 output "amplify_app_url" {
   value = aws_amplify_domain_association.frontend-domain-association.domain_name
 }
 
-output "amplify_app_dns_record" {
-  value = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[1]
-}
-
-# output "amplify_app_dns_record_list" {
-#   value = tolist(split(" ", trimspace(aws_amplify_domain_association.frontend-domain-association.sub_domain[dns_record])))
+# output "amplify_app_dns_record" {
+#   value = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[1]
 # }
