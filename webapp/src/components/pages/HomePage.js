@@ -14,7 +14,7 @@ const HomePage = () => {
       </Typography>
 
       <Typography variant="body2">
-        Git commit: {process.env.REACT_APP_GIT_COMMIT_SHA || "not available"}
+        API Endpoint: {process.env.REACT_APP_API_SERVER || "not available"}
       </Typography>
     </Box>
   );
