@@ -220,7 +220,7 @@ output "amplify_app_url" {
 }
 
 output "amplify_app_dns_record" {
-  value = tolist(split(" ", trim(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[1]
+  value = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[1]
 }
 
 # output "amplify_app_dns_record_list" {
