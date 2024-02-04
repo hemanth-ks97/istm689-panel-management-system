@@ -371,3 +371,6 @@ terraform.rc
 /build
 # misc
 .DS_Store
+
+## Prevent to commit local terraform files to repo
+.terraform.lock.hcl

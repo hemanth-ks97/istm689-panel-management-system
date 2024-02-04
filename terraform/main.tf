@@ -74,9 +74,7 @@ locals {
     prod = "https://api.example.com"
   }
 
-
   custom_domain_parse_output = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))
-
 
   custom_domain_verification_parse_output = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))
 }
@@ -185,16 +183,16 @@ resource "cloudflare_record" "custom-domain" {
   ttl     = 1
 }
 
-# # Great test table for demo.
-# resource "aws_dynamodb_table" "gamesscores-test-dynamodb-table" {
-#   name           = "${terraform.workspace}-GameScores"
-#   billing_mode   = "PROVISIONED"
-#   read_capacity  = local.dynamodb_table_read_capacity[terraform.workspace]
-#   write_capacity = local.dynamodb_table_write_capacity[terraform.workspace]
-#   hash_key       = "UserId"
-#   attribute {
-#     name = "UserId"
-#     type = "S"
-#   }
-# }
+# Great test table for demo.
+resource "aws_dynamodb_table" "test-dynamodb-table" {
+  name           = "${terraform.workspace}-TestTable"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = local.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = local.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "UserId"
+  attribute {
+    name = "UserId"
+    type = "S"
+  }
+}
 
