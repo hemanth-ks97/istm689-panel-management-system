@@ -1,10 +1,10 @@
 terraform {
 
-#############
-# PROVIDERS #
-#############
+  #############
+  # PROVIDERS #
+  #############
 
-# Providers are "plugins" that allows terraform to communicate with different cloud services. Like AWS, Cloudflare, Azure, etc.
+  # Providers are "plugins" that allows terraform to communicate with different cloud services. Like AWS, Cloudflare, Azure, etc.
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -48,15 +48,15 @@ locals {
   cloudflare_zone_id = "2b0969f800003e0e97156368605bd575"
 
   budgets_budget_limit_amount = {
-    dev = "10"
+    dev  = "10"
     prod = "20"
   }
   dynamodb_table_read_capacity = {
-    dev = 1
+    dev  = 1
     prod = 2
   }
   dynamodb_table_write_capacity = {
-    dev = 1
+    dev  = 1
     prod = 2
   }
 
@@ -65,26 +65,22 @@ locals {
   amplify_app_oauth_token = "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"
 
   amplify_branch_branch_name = {
-    dev = "dev"
+    dev  = "dev"
     prod = "main"
   }
-
   amplify_domain_association_domain_name = {
-    dev = "istm689-dev.joaquingimenez.com"
+    dev  = "istm689-dev.joaquingimenez.com"
     prod = "istm689.joaquingimenez.com"
   }
 
-# TODO, need to be the base URL from the API gateway instance
+  # TODO, need to be the base URL from the API gateway instance
   amplify_branch_environment_variables_REACT_APP_API_SERVER = {
-    dev = "https://api-dev.example.com"
+    dev  = "https://api-dev.example.com"
     prod = "https://api.example.com"
   }
-
-  record_custom_domain_name = {
-    dev = "istm689-dev"
-    prod = "istm689"
-  }
 }
+
+variable "TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA" {}
 
 #############
 # RESOURCES #
@@ -92,11 +88,11 @@ locals {
 
 # AWS resources
 resource "aws_budgets_budget" "general-budget" {
-  name              = "${terraform.workspace}-istm689-general-budget"
-  budget_type       = "COST"
-  limit_amount      = local.budgets_budget_limit_amount[terraform.workspace]
-  limit_unit        = "USD"
-  time_unit         = "MONTHLY"
+  name         = "${terraform.workspace}-istm689-general-budget"
+  budget_type  = "COST"
+  limit_amount = local.budgets_budget_limit_amount[terraform.workspace]
+  limit_unit   = "USD"
+  time_unit    = "MONTHLY"
 
   notification {
     comparison_operator        = "GREATER_THAN"
@@ -143,56 +139,51 @@ resource "aws_amplify_app" "frontend-app" {
     target = "/index.html"
   }
 
-
-# This enviroments variables will be pass to the web app!!! 
-# we should use this to pass the API URL, IDs, somethign we need!
+  # This enviroments variables will be pass to the web app!!! 
+  # we should use this to pass the API URL, IDs, somethign we need!
   environment_variables = {
-    ENV = terraform.workspace
-    REACT_APP_API_SERVER = local.amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
-    REACT_APP_ENV = terraform.workspace
+    ENV                      = terraform.workspace
+    REACT_APP_API_SERVER     = local.amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
+    REACT_APP_ENV            = terraform.workspace
+    REACT_APP_GIT_COMMIT_SHA = var.TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA
   }
 }
 resource "aws_amplify_branch" "frontend-branch" {
   app_id      = aws_amplify_app.frontend-app.id
   branch_name = local.amplify_branch_branch_name[terraform.workspace]
-  framework = "React"
+  framework   = "React"
 }
 
-# # TODO: read output of the resource and put the values in Cloudflare
-# resource "aws_amplify_domain_association" "frontend-domain-association" {
-#   app_id      = aws_amplify_app.frontend-app.id
-#   domain_name = local.amplify_domain_association_domain_name[terraform.workspace]
-#   wait_for_verification = false
+resource "aws_amplify_domain_association" "frontend-domain-association" {
+  app_id                = aws_amplify_app.frontend-app.id
+  domain_name           = local.amplify_domain_association_domain_name[terraform.workspace]
+  wait_for_verification = false
 
-#   sub_domain {
-#     branch_name = local.amplify_branch_branch_name[terraform.workspace]
-#     prefix      = ""
-#   }
-# }
+  sub_domain {
+    branch_name = local.amplify_branch_branch_name[terraform.workspace]
+    prefix      = ""
+  }
+}
 
 # Cloudflare resources
+resource "cloudflare_record" "custom-domain-verification" {
+  zone_id         = local.cloudflare_zone_id
+  name            = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[0]
+  value           = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[2]
+  type            = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[1]
+  proxied         = false
+  allow_overwrite = true
+  ttl             = 1
+}
 
-# _93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev.joaquingimenez.com. CNAME _e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws.
-# certificate_verification_dns_record - The DNS record for certificate verificatio
-
-# # TODO: read record from domain association output
-# resource "cloudflare_record" "custom-domain-verification" {
-#   zone_id = local.cloudflare_zone_id
-#   name    = "_93edc41fc0ad492e526f8b36e2f13e7a.istm689-dev"
-#   value   = "_e6d5e738444e23a5b36736444b68701e.mhbtsbpdnt.acm-validations.aws"
-#   type    = "CNAME"
-#   proxied = false
-#   ttl     = 1
-# }
-
-# resource "cloudflare_record" "custom-domain" {
-#   zone_id = local.cloudflare_zone_id
-#   name    = "istm689-dev"
-#   value   = "d1zs7hxqqgt1u2.cloudfront.net"
-#   type    = "CNAME"
-#   proxied = false
-#   ttl     = 1
-# }
+resource "cloudflare_record" "custom-domain" {
+  zone_id = local.cloudflare_zone_id
+  name    = local.amplify_domain_association_domain_name[terraform.workspace]
+  value   = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[1]
+  type    = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[0]
+  proxied = false
+  ttl     = 1
+}
 
 # # Great test table for demo.
 # resource "aws_dynamodb_table" "gamesscores-test-dynamodb-table" {
@@ -211,14 +202,18 @@ resource "aws_amplify_branch" "frontend-branch" {
 # OUTPUT #
 ##########
 
-output "amplify_app_id" {
-  value = aws_amplify_app.frontend-app.id
-}
-
-# output "amplify_app_url" {
-#   value = aws_amplify_domain_association.frontend-domain-association.domain_name
+# output "amplify_app_id" {
+#   value = aws_amplify_app.frontend-app.id
 # }
 
-# output "amplify_custom_domain_verification_record" {
-#   value = aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record
+# output "amplify_app_default_domain" {
+#   value = aws_amplify_app.frontend-app.default_domain
+# }
+
+output "amplify_app_url" {
+  value = aws_amplify_domain_association.frontend-domain-association.domain_name
+}
+
+# output "amplify_app_dns_record" {
+#   value = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[1]
 # }
