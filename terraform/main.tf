@@ -73,6 +73,12 @@ locals {
     dev  = "https://api-dev.example.com"
     prod = "https://api.example.com"
   }
+
+
+  custom_domain_parse_output = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))
+
+
+  custom_domain_verification_parse_output = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))
 }
 
 
@@ -99,9 +105,8 @@ resource "aws_budgets_budget" "general-budget" {
 }
 
 resource "aws_amplify_app" "frontend-app" {
-  name       = "${terraform.workspace}-frontend-app"
-  repository = var.amplify_app_repository
-  # TODO: Need to figure a better way to pass the token!
+  name        = "${terraform.workspace}-frontend-app"
+  repository  = var.amplify_app_repository
   oauth_token = var.TF_VAR_GITHUB_TOKEN
 
   # The default build_spec added by the Amplify Console for React.
@@ -163,9 +168,9 @@ resource "aws_amplify_domain_association" "frontend-domain-association" {
 # Cloudflare resources
 resource "cloudflare_record" "custom-domain-verification" {
   zone_id         = var.cf_zone_id
-  name            = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[0]
-  value           = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[2]
-  type            = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[1]
+  name            = local.custom_domain_verification_parse_output[0]
+  value           = local.custom_domain_verification_parse_output[2]
+  type            = local.custom_domain_verification_parse_output[1]
   proxied         = false
   allow_overwrite = true
   ttl             = 1
@@ -174,8 +179,8 @@ resource "cloudflare_record" "custom-domain-verification" {
 resource "cloudflare_record" "custom-domain" {
   zone_id = var.cf_zone_id
   name    = local.amplify_domain_association_domain_name[terraform.workspace]
-  value   = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[1]
-  type    = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[0]
+  value   = local.custom_domain_parse_output[1]
+  type    = local.custom_domain_parse_output[0]
   proxied = false
   ttl     = 1
 }
