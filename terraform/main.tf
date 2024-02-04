@@ -1,3 +1,5 @@
+# main.tf
+
 terraform {
 
   #############
@@ -16,7 +18,6 @@ terraform {
     }
   }
 }
-
 
 ##################
 # PROVIDER SETUP #
@@ -45,8 +46,6 @@ provider "aws" {
 # Local variables to configure a specific parameter taking into account the workspace name (dev, prod)
 # Naming of the variable should be the name of the resource without the provider prefix follow by the name of the variable
 locals {
-  cloudflare_zone_id = "2b0969f800003e0e97156368605bd575"
-
   budgets_budget_limit_amount = {
     dev  = "10"
     prod = "20"
@@ -59,10 +58,6 @@ locals {
     dev  = 1
     prod = 2
   }
-
-  amplify_app_repository = "https://github.com/JoaquinGimenez1/istm689-panel-management-system"
-  # needs to be a secret
-  amplify_app_oauth_token = "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"
 
   amplify_branch_branch_name = {
     dev  = "dev"
@@ -80,7 +75,7 @@ locals {
   }
 }
 
-variable "TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA" {}
+
 
 #############
 # RESOURCES #
@@ -105,9 +100,9 @@ resource "aws_budgets_budget" "general-budget" {
 
 resource "aws_amplify_app" "frontend-app" {
   name       = "${terraform.workspace}-frontend-app"
-  repository = local.amplify_app_repository
+  repository = var.amplify_app_repository
   # TODO: Need to figure a better way to pass the token!
-  oauth_token = local.amplify_app_oauth_token
+  oauth_token = var.amplify_app_oauth_token
 
   # The default build_spec added by the Amplify Console for React.
   build_spec = <<-EOT
@@ -167,7 +162,7 @@ resource "aws_amplify_domain_association" "frontend-domain-association" {
 
 # Cloudflare resources
 resource "cloudflare_record" "custom-domain-verification" {
-  zone_id         = local.cloudflare_zone_id
+  zone_id         = var.cf_zone_id
   name            = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[0]
   value           = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[2]
   type            = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))[1]
@@ -177,7 +172,7 @@ resource "cloudflare_record" "custom-domain-verification" {
 }
 
 resource "cloudflare_record" "custom-domain" {
-  zone_id = local.cloudflare_zone_id
+  zone_id = var.cf_zone_id
   name    = local.amplify_domain_association_domain_name[terraform.workspace]
   value   = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[1]
   type    = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[0]
