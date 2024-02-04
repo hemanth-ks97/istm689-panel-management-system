@@ -68,7 +68,6 @@ locals {
     dev  = "dev"
     prod = "main"
   }
-
   amplify_domain_association_domain_name = {
     dev  = "istm689-dev.joaquingimenez.com"
     prod = "istm689.joaquingimenez.com"
@@ -80,6 +79,8 @@ locals {
     prod = "https://api.example.com"
   }
 }
+
+variable "TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA" {}
 
 #############
 # RESOURCES #
@@ -144,7 +145,7 @@ resource "aws_amplify_app" "frontend-app" {
     ENV                      = terraform.workspace
     REACT_APP_API_SERVER     = local.amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
     REACT_APP_ENV            = terraform.workspace
-    REACT_APP_GIT_COMMIT_SHA = vars.TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA
+    REACT_APP_GIT_COMMIT_SHA = var.TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA
   }
 }
 resource "aws_amplify_branch" "frontend-branch" {
