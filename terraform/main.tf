@@ -181,14 +181,14 @@ resource "cloudflare_record" "custom-domain-verification" {
   ttl             = 1
 }
 
-# resource "cloudflare_record" "custom-domain" {
-#   zone_id = local.cloudflare_zone_id
-#   name    = local.amplify_domain_association_domain_name[terraform.workspace]
-#   value   = tolist(split(" ", trimspace(aws_amplify_domain_association.frontend-domain-association.sub_domain[dns_record])))[1]
-#   type    = tolist(split(" ", trimspace(aws_amplify_domain_association.frontend-domain-association.sub_domain[dns_record])))[0]
-#   proxied = false
-#   ttl     = 1
-# }
+resource "cloudflare_record" "custom-domain" {
+  zone_id = local.cloudflare_zone_id
+  name    = local.amplify_domain_association_domain_name[terraform.workspace]
+  value   = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[1]
+  type    = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))[0]
+  proxied = false
+  ttl     = 1
+}
 
 # # Great test table for demo.
 # resource "aws_dynamodb_table" "gamesscores-test-dynamodb-table" {
