@@ -100,10 +100,6 @@ variable "cf_zone_id" {
 # Terraform Cloud
 ##################################################
 
-variable "TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA" {
-  description = "Enviroment variable provided by Terraform Cloud"
-}
-
 variable "TFC_CONFIGURATION_VERSION_GIT_TAG" {
   description = "Enviroment variable provided by Terraform Cloud"
 }

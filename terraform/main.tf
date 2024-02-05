@@ -83,8 +83,8 @@ resource "aws_amplify_app" "frontend-app" {
   repository  = var.amplify_app_repository
   oauth_token = var.TF_VAR_GITHUB_TOKEN
   # Protect enviroment with simple username and password
-  enable_basic_auth      = terraform.workspace == "dev" ? false : true
-  basic_auth_credentials = base64encode("developer:istm689")
+  # enable_basic_auth      = terraform.workspace == "prod" ? false : true
+  # basic_auth_credentials = base64encode("developer:istm689")
 
   # The default build_spec added by the Amplify Console for React.
   build_spec = <<-EOT
@@ -119,11 +119,10 @@ resource "aws_amplify_app" "frontend-app" {
   # This enviroments variables will be pass to the web app!!! 
   # we should use this to pass the API URL, IDs, somethign we need!
   environment_variables = {
-    ENV                      = terraform.workspace
-    REACT_APP_API_SERVER     = var.amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
-    REACT_APP_ENV            = terraform.workspace
-    REACT_APP_GIT_COMMIT_SHA = var.TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA
-    REACT_APP_GIT_TAG        = var.TFC_CONFIGURATION_VERSION_GIT_TAG
+    ENV                  = terraform.workspace
+    REACT_APP_API_SERVER = var.amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
+    REACT_APP_ENV        = terraform.workspace
+    REACT_APP_GIT_TAG    = var.TFC_CONFIGURATION_VERSION_GIT_TAG
   }
 }
 resource "aws_amplify_branch" "frontend-branch" {
