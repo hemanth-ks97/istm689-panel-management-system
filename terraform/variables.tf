@@ -104,6 +104,10 @@ variable "TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA" {
   description = "Enviroment variable provided by Terraform Cloud"
 }
 
+variable "TFC_CONFIGURATION_VERSION_GIT_TAG" {
+  description = "Enviroment variable provided by Terraform Cloud"
+}
+
 variable "TF_VAR_GITHUB_TOKEN" {
   type        = string
   description = "Enviroment variable with access to the project repository"

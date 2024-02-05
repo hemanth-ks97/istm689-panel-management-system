@@ -120,6 +120,7 @@ resource "aws_amplify_app" "frontend-app" {
     REACT_APP_API_SERVER     = var.amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
     REACT_APP_ENV            = terraform.workspace
     REACT_APP_GIT_COMMIT_SHA = var.TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA
+    REACT_APP_GIT_TAG        = var.TFC_CONFIGURATION_VERSION_GIT_TAG
   }
 }
 resource "aws_amplify_branch" "frontend-branch" {
