@@ -13,7 +13,9 @@ const TopBar = () => {
         position="sticky"
         // Clearly differentiate from prod and dev environments
         // TODO: Need to have a config file to better handle this
-        color={process.env.REACT_APP_ENV === "prod" ? "primary" : "secondary"}
+        color={
+          process.env.REACT_APP_ENV === "production" ? "primary" : "secondary"
+        }
       >
         <Toolbar>
           <Typography

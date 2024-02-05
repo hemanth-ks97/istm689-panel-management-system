@@ -15,60 +15,60 @@ variable "amplify_app_repository" {
 variable "budgets_budget_limit_amount" {
   description = "Budget limit amount for every enviroment"
   type = object({
-    dev  = string
-    prod = string
+    dev        = string
+    production = string
   })
   default = {
-    dev  = "10"
-    prod = "20"
+    dev        = "10"
+    production = "20"
   }
 }
 
 variable "dynamodb_table_read_capacity" {
   description = "Read Capacity limit for every enviroment"
   type = object({
-    dev  = number
-    prod = number
+    dev        = number
+    production = number
   })
   default = {
-    dev  = 1
-    prod = 1
+    dev        = 1
+    production = 1
   }
 }
 
 variable "dynamodb_table_write_capacity" {
   description = "Read Capacity limit for every enviroment"
   type = object({
-    dev  = number
-    prod = number
+    dev        = number
+    production = number
   })
   default = {
-    dev  = 1
-    prod = 1
+    dev        = 1
+    production = 1
   }
 }
 
 variable "amplify_branch_branch_name" {
   description = "Branch name for the webapp repo"
   type = object({
-    dev  = string
-    prod = string
+    dev        = string
+    production = string
   })
   default = {
-    dev  = "dev"
-    prod = "main"
+    dev        = "dev"
+    production = "main"
   }
 }
 
 variable "amplify_domain_association_domain_name" {
   description = "Custom domain name for the webapp"
   type = object({
-    dev  = string
-    prod = string
+    dev        = string
+    production = string
   })
   default = {
-    dev  = "istm689-dev.joaquingimenez.com"
-    prod = "istm689.joaquingimenez.com"
+    dev        = "istm689-dev.joaquingimenez.com"
+    production = "istm689.joaquingimenez.com"
   }
 }
 
@@ -77,12 +77,12 @@ variable "amplify_domain_association_domain_name" {
 variable "amplify_branch_environment_variables_REACT_APP_API_SERVER" {
   description = "API URL for the webapp"
   type = object({
-    dev  = string
-    prod = string
+    dev        = string
+    production = string
   })
   default = {
-    dev  = "https://api-dev.example.com"
-    prod = "https://api.example.com"
+    dev        = "https://api-dev.example.com"
+    production = "https://api.example.com"
   }
 }
 
@@ -99,10 +99,6 @@ variable "cf_zone_id" {
 ##################################################
 # Terraform Cloud
 ##################################################
-
-variable "TFC_CONFIGURATION_VERSION_GIT_COMMIT_SHA" {
-  description = "Enviroment variable provided by Terraform Cloud"
-}
 
 variable "TFC_CONFIGURATION_VERSION_GIT_TAG" {
   description = "Enviroment variable provided by Terraform Cloud"
