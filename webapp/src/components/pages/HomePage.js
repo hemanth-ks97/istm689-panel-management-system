@@ -3,6 +3,7 @@ import React from "react";
 // MUI
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import User from "../widgets/User";
 
 const HomePage = () => {
   return (
@@ -14,7 +15,8 @@ const HomePage = () => {
 
       <Typography variant="body2">
         API Endpoint: {process.env.REACT_APP_API_SERVER || "not available"}
-      </Typography>
+      </Typography>      
+      <User />
     </Box>
   );
 };
