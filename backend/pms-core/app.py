@@ -13,11 +13,11 @@ def index():
 #
 # Here are a few more examples:
 #
-# @app.route('/hello/{name}')
-# def hello_name(name):
-#    # '/hello/james' -> {"hello": "james"}
-#    return {'hello': name}
-#
+@app.route('/hello/{name}')
+def hello_name(name):
+   # '/hello/james' -> {"hello": "james"}
+   return {'hello': name}
+
 # @app.route('/users', methods=['POST'])
 # def create_user():
 #     # This is the JSON body the user sent in their POST request.
