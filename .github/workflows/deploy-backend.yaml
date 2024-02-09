@@ -5,7 +5,7 @@ on:
     branches:
       - dev
 
-name: Deploy branch to Chalice JGM
+name: Deploy Chalice backend
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -26,6 +26,9 @@ jobs:
 
       - name: Install and deploy Chalice
         run: |
+          echo "Moving to Chalice directory"
           cd backend/pms-core
+          echo "Install Chalice"
           python -m pip install chalice
+          echo "Deploy using Chalice command"
           chalice deploy
