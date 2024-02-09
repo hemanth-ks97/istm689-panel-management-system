@@ -374,3 +374,6 @@ terraform.rc
 
 ## Prevent to commit local terraform files to repo
 .terraform.lock.hcl
+
+## Prevent to commit python venv
+venv311/
