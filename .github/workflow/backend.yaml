@@ -1,5 +1,10 @@
 ## Manually deploy the code
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
 name: Deploy branch to Chalice
 jobs:
   deploy:
