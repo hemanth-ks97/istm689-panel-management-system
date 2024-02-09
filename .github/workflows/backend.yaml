@@ -2,7 +2,6 @@
 on:
   push:
     branches:
-      - main
       - dev
   workflow_dispatch:
 
@@ -12,7 +11,7 @@ jobs:
     name: deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
       - name: chalice deploy
         uses: jayef0/chalice-extended-action@release-v0.2.1
         env:
