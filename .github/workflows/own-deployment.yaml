@@ -1,0 +1,31 @@
+## Manually deploy the code
+on:
+  workflow_dispatch:
+
+name: Deploy branch to Chalice
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-1
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone the repo
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Move to directory
+        run: cd backend/pms-core
+
+      - name: Install Chalice
+        run: python -m pip install chalice
+
+      - name: Deploy Chalice
+        run: chalice deploy
