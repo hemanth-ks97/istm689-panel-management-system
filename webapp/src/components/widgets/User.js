@@ -9,7 +9,7 @@ const User = () => {
     <>
       {user && (
         <div>
-          <div> You are sign in as: {user.email}</div>
+          <div> You are signed in as: {user.email}</div>
           <Avatar src = {user.picture}/>
           <div>Click this to sign out </div>
           <Button variant="contained" onClick={signOut}>Sign out</Button>
