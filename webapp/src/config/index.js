@@ -7,4 +7,4 @@ export const USER_TABLE = process.env.REACT_APP_USER_TABLE || "users";
 
 export const GOOGLE_CLIENT_ID =
   process.env.REACT_APP_GOOGLE_CLIENT_ID ||
-  "979252554614-0gjt8bjrpkht2n0le6uoo12nhs8pgrv3.apps.googleusercontent.com";
+  "370940936724-4qh7n4qh6vrgli6bsf3je6kbe2lsotef.apps.googleusercontent.com";
