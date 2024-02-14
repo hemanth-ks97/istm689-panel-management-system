@@ -1,21 +1,27 @@
 import React from "react";
-
-// Components
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
+// MUI
+import {
+  Avatar,
+  AppBar,
+  Box,
+  Toolbar,
+  IconButton,
+  Typography,
+} from "@mui/material";
+// Redux
+import { useSelector } from "react-redux";
+// Enviroment
+import { ENV } from "../../config";
 
 const TopBar = () => {
+  const { user } = useSelector((state) => state.user);
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar
-        position="sticky"
+        position="static"
         // Clearly differentiate from prod and dev environments
-        // TODO: Need to have a config file to better handle this
-        color={
-          process.env.REACT_APP_ENV === "production" ? "primary" : "secondary"
-        }
+        color={ENV === "production" ? "primary" : "secondary"}
       >
         <Toolbar>
           <Typography
@@ -26,6 +32,11 @@ const TopBar = () => {
           >
             Panel Management System
           </Typography>
+          {user && (
+            <IconButton size="large" color="inherit">
+              <Avatar src={user.picture} />
+            </IconButton>
+          )}
         </Toolbar>
       </AppBar>
     </Box>

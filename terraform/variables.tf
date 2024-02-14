@@ -109,3 +109,19 @@ variable "TF_VAR_GITHUB_TOKEN" {
   description = "Enviroment variable with access to the project repository"
   sensitive   = true
 }
+
+
+variable "amplify_branch_environment_variables_REACT_APP_GOOGLE_CLIENT_ID" {
+  description = "Client ID for Google Sign-In for the webapp"
+  type = object({
+    dev        = string
+    production = string
+  })
+  default = {
+    dev        = "370940936724-4qh7n4qh6vrgli6bsf3je6kbe2lsotef.apps.googleusercontent.com"
+    production = "TODO"
+  }
+}
+
+
+
