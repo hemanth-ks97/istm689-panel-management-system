@@ -146,17 +146,17 @@ resource "aws_amplify_domain_association" "frontend-domain-association" {
 # AWS TEST STUFF
 ##########################
 # # Great test table for demo.
-# resource "aws_dynamodb_table" "test-dynamodb-table" {
-#   name           = "${terraform.workspace}-TestTable"
-#   billing_mode   = "PROVISIONED"
-#   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
-#   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
-#   hash_key       = "UserId"
-#   attribute {
-#     name = "UserId"
-#     type = "S"
-#   }
-# }
+ resource "aws_dynamodb_table" "test-dynamodb-table" {
+   name           = "${terraform.workspace}-TestTable"
+   billing_mode   = "PROVISIONED"
+   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+   hash_key       = "UserId"
+   attribute {
+     name = "UserId"
+     type = "S"
+   }
+ }
 
 ##########################
 # Cloudflare resources
