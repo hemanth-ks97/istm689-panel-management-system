@@ -3,7 +3,10 @@
   "app_name": "pms-core",
   "stages": {
     "dev": {
-      "api_gateway_stage": "api"
+      "api_gateway_stage": "api",
+      "environment_variables": {
+        "GOOGLE_AUTH_CLIENT_ID": "370940936724-4qh7n4qh6vrgli6bsf3je6kbe2lsotef.apps.googleusercontent.com"
+      }
     }
   }
 }
