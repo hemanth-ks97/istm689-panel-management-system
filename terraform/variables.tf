@@ -7,8 +7,8 @@
 ##################################################
 
 variable "amplify_app_repository" {
-  type        = string
   description = "The repository of the Amplify app"
+  type        = string
   default     = "https://github.com/JoaquinGimenez1/istm689-panel-management-system"
 }
 
@@ -91,9 +91,9 @@ variable "amplify_branch_environment_variables_REACT_APP_API_SERVER" {
 ##################################################
 
 variable "cf_zone_id" {
+  description = "DNS Zone ID from Cloudflare"
   type        = string
   default     = "2b0969f800003e0e97156368605bd575"
-  description = "DNS Zone ID from Cloudflare"
 }
 
 ##################################################
@@ -105,8 +105,8 @@ variable "TFC_CONFIGURATION_VERSION_GIT_TAG" {
 }
 
 variable "TF_VAR_GITHUB_TOKEN" {
-  type        = string
   description = "Enviroment variable with access to the project repository"
+  type        = string
   sensitive   = true
 }
 
