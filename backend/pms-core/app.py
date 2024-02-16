@@ -4,7 +4,11 @@ import google.oauth2.id_token
 from google.auth import exceptions
 import os
 
-app = Chalice(app_name='pms-core')
+# Enviroment variables with default values
+ENV = os.environ.get('ENV', "dev")
+GOOGLE_AUTH_CLIENT_ID = os.environ.get('GOOGLE_AUTH_CLIENT_ID', "370940936724-4qh7n4qh6vrgli6bsf3je6kbe2lsotef.apps.googleusercontent.com")
+
+app = Chalice(app_name=f"{ENV}-pms-core")
 
 @app.authorizer()
 def google_oauth2_authorizer(auth_request):
@@ -13,7 +17,7 @@ def google_oauth2_authorizer(auth_request):
     try:
         # Validate the JWT token using Google's OAuth2 v2 API
         request = google.auth.transport.requests.Request()
-        id_info = google.oauth2.id_token.verify_oauth2_token(token, request, os.environ.get("GOOGLE_AUTH_CLIENT_ID"))
+        id_info = google.oauth2.id_token.verify_oauth2_token(token, request, GOOGLE_AUTH_CLIENT_ID)
         
         # Token is valid, so return an AuthResponse with routes accessible
         return AuthResponse(routes=['*'], principal_id=id_info['sub'])
@@ -34,16 +38,24 @@ def protectedHello():
 def index():
     return {'hello': 'world'}
 
+@app.route('/users', methods=['GET'], authorizer=google_oauth2_authorizer)
+def users():
+    return {'users': [{'name': 'Test', 'id': 'test@test.com'}, {'name': 'Test 2', 'id': 'test2@test.com'}]}
+
+
+@app.route('/panel', methods=['GET'], authorizer=google_oauth2_authorizer)
+def users():
+    return {'panel': [{'name': 'Panel 1', 'id': '001'}, {'name': 'Panel 2', 'id': '002'}]}
 
 # The view function above will return {"hello": "world"}
 # whenever you make an HTTP GET request to '/'.
 #
 # Here are a few more examples:
 #
-@app.route('/hello/{name}')
-def hello_name(name):
-   # '/hello/james' -> {"hello": "james"}
-   return {'hello': name}
+# @app.route('/hello/{name}')
+# def hello_name(name):
+#    # '/hello/james' -> {"hello": "james"}
+#    return {'hello': name}
 
 # @app.route('/users', methods=['POST'])
 # def create_user():
