@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 // MUI
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Typography, Snackbar } from "@mui/material";
 // Router
 import { Link } from "react-router-dom";
 // Redux
@@ -13,16 +13,19 @@ import UserCard from "../widgets/UserCard";
 import { httpClient } from "../../client";
 
 const HomePage = () => {
+  const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
+  const [apiResponse, setApiResponse] = useState("");
+
   const { user } = useSelector((state) => state.user);
 
   const handleOnClick = () => {
     httpClient
       .get("/")
-      .then((response) => {
-        console.log(response);
-        alert(JSON.stringify(response?.data, null, 2));
-      })
-      .catch((err) => console.log(err));
+      .then((response) =>
+        setApiResponse(JSON.stringify(response?.data, null, 2))
+      )
+      .catch((err) => setApiResponse(JSON.stringify(err.message, null, 2)))
+      .finally(() => setIsSnackbarOpen(true));
   };
 
   const handleOnClickPrivate = () => {
@@ -33,11 +36,11 @@ const HomePage = () => {
           "Content-Type": "application/json",
         },
       })
-      .then((response) => {
-        console.log(response);
-        alert(JSON.stringify(response?.data, null, 2));
-      })
-      .catch((err) => console.log(err));
+      .then((response) =>
+        setApiResponse(JSON.stringify(response?.data, null, 2))
+      )
+      .catch((err) => setApiResponse(JSON.stringify(err.message, null, 2)))
+      .finally(() => setIsSnackbarOpen(true));
   };
 
   return (
@@ -71,6 +74,12 @@ const HomePage = () => {
       {user && (
         <UserCard name={user.name} email={user.email} picture={user.picture} />
       )}
+      <Snackbar
+        open={isSnackbarOpen}
+        onClose={() => setIsSnackbarOpen(false)}
+        autoHideDuration={3000}
+        message={apiResponse}
+      />
     </Box>
   );
 };
