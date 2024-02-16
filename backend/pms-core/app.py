@@ -1,23 +1,33 @@
-from chalice import Chalice, AuthResponse
+from chalice import Chalice, AuthResponse, CORSConfig
+from google.auth import exceptions
 import google.auth.transport.requests
 import google.oauth2.id_token
-from google.auth import exceptions
-import os
+import config
 
-# Enviroment variables with default values
-ENV = os.environ.get('ENV', "dev")
-GOOGLE_AUTH_CLIENT_ID = os.environ.get('GOOGLE_AUTH_CLIENT_ID', "370940936724-4qh7n4qh6vrgli6bsf3je6kbe2lsotef.apps.googleusercontent.com")
+app = Chalice(app_name=f"{config.ENV}-pms-core")
 
-app = Chalice(app_name=f"{ENV}-pms-core")
+cors_config = CORSConfig(
+    allow_origin=config.ALLOW_ORIGIN,
+)
+
+app.api.cors = cors_config
 
 @app.authorizer()
 def google_oauth2_authorizer(auth_request):
-    # Expects token in the "Authorization" header of incoming request ---> Format: "{"Authorization": "<token>"}" 
-    token = (auth_request.token)
+    # Expects token in the "Authorization" header of incoming request ---> Format: "{"Authorization": "Bearer <token>"}" 
+
+    # Extract the token from the incoming request
+    auth_header = auth_request.token.split()
+
+    if auth_header[0] not in config.ALLOWED_AUTHORIZATION_TYPES:
+        app.log.error(f"Invalid Authorization Header Type: {auth_header[0]}")
+        return AuthResponse(routes=[], principal_id='user')
+
+    token = auth_header[1]
     try:
         # Validate the JWT token using Google's OAuth2 v2 API
         request = google.auth.transport.requests.Request()
-        id_info = google.oauth2.id_token.verify_oauth2_token(token, request, GOOGLE_AUTH_CLIENT_ID)
+        id_info = google.oauth2.id_token.verify_oauth2_token(token, request, config.GOOGLE_AUTH_CLIENT_ID)
         
         # Token is valid, so return an AuthResponse with routes accessible
         return AuthResponse(routes=['*'], principal_id=id_info['sub'])
