@@ -94,7 +94,7 @@ resource "aws_amplify_app" "frontend-app" {
   # we should use this to pass the API URL, IDs, somethign we need!
   environment_variables = {
     ENV                        = terraform.workspace
-    REACT_APP_API_SERVER       = var.amplify_branch_environment_variables_REACT_APP_API_SERVER[terraform.workspace]
+    REACT_APP_API_BASE_URL     = var.amplify_branch_environment_variables_REACT_APP_API_BASE_URL[terraform.workspace]
     REACT_APP_ENV              = terraform.workspace
     REACT_APP_GOOGLE_CLIENT_ID = var.amplify_branch_environment_variables_REACT_APP_GOOGLE_CLIENT_ID[terraform.workspace]
   }
