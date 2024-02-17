@@ -15,20 +15,26 @@ import { httpClient } from "../../client";
 const HomePage = () => {
   const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
   const [apiResponse, setApiResponse] = useState("");
+  const [isApiWaiting, setIsApiWaiting] = useState(false);
 
   const { user } = useSelector((state) => state.user);
 
   const handleOnClick = () => {
+    setIsApiWaiting(true);
     httpClient
       .get("/")
       .then((response) =>
         setApiResponse(JSON.stringify(response?.data, null, 2))
       )
       .catch((err) => setApiResponse(JSON.stringify(err.message, null, 2)))
-      .finally(() => setIsSnackbarOpen(true));
+      .finally(() => {
+        setIsSnackbarOpen(true);
+        setIsApiWaiting(false);
+      });
   };
 
   const handleOnClickPrivate = () => {
+    setIsApiWaiting(true);
     httpClient
       .get("/protected", {
         headers: {
@@ -40,7 +46,10 @@ const HomePage = () => {
         setApiResponse(JSON.stringify(response?.data, null, 2))
       )
       .catch((err) => setApiResponse(JSON.stringify(err.message, null, 2)))
-      .finally(() => setIsSnackbarOpen(true));
+      .finally(() => {
+        setIsApiWaiting(false);
+        setIsSnackbarOpen(true);
+      });
   };
 
   return (
@@ -61,11 +70,19 @@ const HomePage = () => {
       </Typography>
       <p></p>
 
-      <Button variant="contained" onClick={handleOnClick}>
+      <Button
+        variant="contained"
+        onClick={handleOnClick}
+        disabled={isApiWaiting}
+      >
         Call Public API
       </Button>
 
-      <Button variant="contained" onClick={handleOnClickPrivate}>
+      <Button
+        variant="contained"
+        onClick={handleOnClickPrivate}
+        disabled={isApiWaiting}
+      >
         Call Private API
       </Button>
 

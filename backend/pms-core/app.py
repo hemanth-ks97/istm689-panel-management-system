@@ -1,9 +1,8 @@
 from chalice import Chalice, AuthResponse, CORSConfig
-from google.auth import exceptions
 from chalicelib.config import ENV, GOOGLE_AUTH_CLIENT_ID, ALLOW_ORIGIN, ALLOWED_AUTHORIZATION_TYPES
-
-import google.auth.transport.requests
-import google.oauth2.id_token
+from google.auth import exceptions
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 app = Chalice(app_name=f"{ENV}-pms-core")
 
@@ -25,10 +24,13 @@ def google_oauth2_authorizer(auth_request):
             return AuthResponse(routes=[], principal_id='user')
 
         token = auth_header[1]
-            # Validate the JWT token using Google's OAuth2 v2 API
-        request = google.auth.transport.requests.Request()
-        id_info = google.oauth2.id_token.verify_oauth2_token(token, request, GOOGLE_AUTH_CLIENT_ID)
-            
+        # Validate the JWT token using Google's OAuth2 v2 API
+        request = requests.Request()
+        id_info = id_token.verify_oauth2_token(token, request, GOOGLE_AUTH_CLIENT_ID)
+        # Valida the audience of the token
+        if id_info['aud'] != GOOGLE_AUTH_CLIENT_ID:
+            raise ValueError('Could not verify audience.')
+
         # Token is valid, so return an AuthResponse with routes accessible
         return AuthResponse(routes=['*'], principal_id=id_info['sub'])
     except exceptions.GoogleAuthError as e:
