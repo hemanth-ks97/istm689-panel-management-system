@@ -58,7 +58,7 @@ resource "aws_amplify_app" "frontend-app" {
   oauth_token = var.TF_VAR_GITHUB_TOKEN
   # Protect enviroment with simple username and password
   enable_basic_auth      = true
-  basic_auth_credentials = base64encode("panel:panel")
+  basic_auth_credentials = base64encode("panel:panel2024")
 
   # The default build_spec added by the Amplify Console for React.
   build_spec = <<-EOT
