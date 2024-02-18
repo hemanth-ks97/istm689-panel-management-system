@@ -7,3 +7,5 @@ ALLOW_ORIGIN = os.environ.get('ALLOW_ORIGIN', "http://localhost:3000")
 
 # Can add more later, like basic auth for development purposes, etc
 ALLOWED_AUTHORIZATION_TYPES = ('Bearer')
+# Can add more later if we need to change
+ALLOWED_CLIENT_IDS = (GOOGLE_AUTH_CLIENT_ID)
