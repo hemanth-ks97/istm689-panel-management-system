@@ -3,10 +3,29 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import { tamuTheme } from "./themes/tamuTheme";
+
+// Google Provider
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
+// Enviroment variables
+import { GOOGLE_CLIENT_ID } from "./config";
+
+import { Provider } from "react-redux";
+import store from "./store";
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <App />
+    <Provider store={store}>
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <ThemeProvider theme={tamuTheme}>
+          <CssBaseline enableColorScheme />
+          <App />
+        </ThemeProvider>
+      </GoogleOAuthProvider>
+    </Provider>
   </React.StrictMode>
 );
 

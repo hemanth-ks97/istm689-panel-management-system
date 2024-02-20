@@ -1,31 +1,45 @@
 import React from "react";
-
-// Themer & theme
-import { CssBaseline, ThemeProvider } from "@mui/material";
-import { tamuTheme } from "./themes/tamuTheme";
-
-// Google Provider
-import { GoogleOAuthProvider } from "@react-oauth/google";
-
-// Enviroment variables
-import { GOOGLE_CLIENT_ID } from "./config";
-
+// React Router
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+// Redux
+import { useSelector } from "react-redux";
 // Components
-import AppLayout from "./components/layout/AppLayout";
-
-import { Provider } from "react-redux";
-import store from "./store";
+import PublicLayout from "./components/layout/PublicLayout";
+import PrivateRoutes from "./components/utils/PrivateRoutes";
+import HomePage from "./components/pages/HomePage";
+import LoginPage from "./components/pages/LoginPage";
+import ProfilePage from "./components/pages/ProfilePage";
+import AdminPage from "./components/pages/AdminPage";
+import PrivacyPage from "./components/pages/PrivacyPage";
+import TermsPage from "./components/pages/TermsPage";
 
 const App = () => {
+  const { user } = useSelector((state) => state.user);
+
   return (
-    <Provider store={store}>
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <ThemeProvider theme={tamuTheme}>
-          <CssBaseline enableColorScheme />
-          <AppLayout />
-        </ThemeProvider>
-      </GoogleOAuthProvider>
-    </Provider>
+    <BrowserRouter>
+      <Routes>
+        {/* Need auth users to visit these pages */}
+        <Route element={<PrivateRoutes isAllowed={!!user} />}>
+          <Route element={<HomePage />} path="/" exact />
+          <Route element={<ProfilePage />} path="/profile" />
+        </Route>
+        <Route element={<PrivateRoutes isAllowed={!!user} />}>
+          <Route element={<AdminPage />} path="/admin" />
+        </Route>
+
+        <Route element={<PublicLayout />}>
+          {/* Public pages */}
+          <Route element={<LoginPage />} path="/login" />
+          {/* Privacy and Terms are required to use Google oAuth2 client */}
+          <Route element={<PrivacyPage />} path="/privacy" />
+          <Route element={<TermsPage />} path="/terms" />
+        </Route>
+
+        {/* Default redirect to home page */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 

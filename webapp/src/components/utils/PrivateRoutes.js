@@ -1,13 +1,14 @@
 import React from "react";
 // Router
-import { Outlet, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
+import AppLayout from "../layout/AppLayout";
 
-const PrivateRoutes = ({ isAllowed, redirectPath = "/login", children }) => {
+const PrivateRoutes = ({ isAllowed, redirectPath = "/login" }) => {
   if (!isAllowed) {
     return <Navigate to={redirectPath} replace />;
   }
 
-  return children ? children : <Outlet />;
+  return <AppLayout />;
 };
 
 export default PrivateRoutes;
