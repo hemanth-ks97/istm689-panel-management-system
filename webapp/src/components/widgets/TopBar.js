@@ -33,19 +33,29 @@ const TopBar = () => {
     setAnchorEl(null);
   };
 
-  const handleGoToProfile = () => {
-    navigate("/profile");
-    handleClose();
-  };
-  const handleGoToAccount = () => {
-    navigate("/");
-    handleClose();
-  };
-
-  const handleLogout = () => {
-    dispatch(clearUser());
-    handleClose();
-  };
+  const settings = [
+    {
+      name: "Profile",
+      handleOnClick: () => {
+        navigate("/profile");
+        handleClose();
+      },
+    },
+    {
+      name: "My account",
+      handleOnClick: () => {
+        navigate("/");
+        handleClose();
+      },
+    },
+    {
+      name: "Logout",
+      handleOnClick: () => {
+        dispatch(clearUser());
+        handleClose();
+      },
+    },
+  ];
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -90,9 +100,11 @@ const TopBar = () => {
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
               >
-                <MenuItem onClick={handleGoToProfile}>Profile</MenuItem>
-                <MenuItem onClick={handleGoToAccount}>My account</MenuItem>
-                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                {settings.map((setting) => (
+                  <MenuItem key={setting.name} onClick={setting.handleOnClick}>
+                    <Typography textAlign="center">{setting.name}</Typography>
+                  </MenuItem>
+                ))}
               </Menu>
             </div>
           )}
