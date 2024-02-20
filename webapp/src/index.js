@@ -6,6 +6,9 @@ import reportWebVitals from "./reportWebVitals";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { tamuTheme } from "./themes/tamuTheme";
 
+import { PersistGate } from "redux-persist/integration/react";
+import { persistStore } from "redux-persist";
+
 // Google Provider
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -15,16 +18,20 @@ import { GOOGLE_CLIENT_ID } from "./config";
 import { Provider } from "react-redux";
 import store from "./store";
 
+const persistor = persistStore(store);
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <Provider store={store}>
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <ThemeProvider theme={tamuTheme}>
-          <CssBaseline enableColorScheme />
-          <App />
-        </ThemeProvider>
-      </GoogleOAuthProvider>
+      <PersistGate loading={null} persistor={persistor}>
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+          <ThemeProvider theme={tamuTheme}>
+            <CssBaseline enableColorScheme />
+            <App />
+          </ThemeProvider>
+        </GoogleOAuthProvider>
+      </PersistGate>
     </Provider>
   </React.StrictMode>
 );
