@@ -3,19 +3,24 @@
     {
       "name": "default-role",
       "resource_type": "iam_role",
-      "role_arn": "arn:aws:iam::590183759964:role/pms-core-dev",
+      "role_arn": "arn:aws:iam::767397884806:role/pms-core-dev",
       "role_name": "pms-core-dev"
     },
     {
       "name": "api_handler",
       "resource_type": "lambda_function",
-      "lambda_arn": "arn:aws:lambda:us-east-1:590183759964:function:pms-core-dev"
+      "lambda_arn": "arn:aws:lambda:us-east-1:767397884806:function:pms-core-dev"
+    },
+    {
+      "name": "google_oauth2_authorizer",
+      "resource_type": "lambda_function",
+      "lambda_arn": "arn:aws:lambda:us-east-1:767397884806:function:pms-core-dev-google_oauth2_authorizer"
     },
     {
       "name": "rest_api",
       "resource_type": "rest_api",
-      "rest_api_id": "syt1bjj5g4",
-      "rest_api_url": "https://syt1bjj5g4.execute-api.us-east-1.amazonaws.com/api/"
+      "rest_api_id": "9ti9ei16i7",
+      "rest_api_url": "https://9ti9ei16i7.execute-api.us-east-1.amazonaws.com/dev/"
     }
   ],
   "schema_version": "2.0",

@@ -5,16 +5,18 @@ import { Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 // Widgets
 import UserCard from "../widgets/UserCard";
+import RenderJSON from "../utils/RenderJSON";
 
 const ProfilePage = () => {
   const { user } = useSelector((state) => state.user);
 
   return (
     <>
-      <Typography>ProfilePage component</Typography>
+      <Typography variant="h4">ProfilePage component</Typography>
       {user && (
         <UserCard name={user.name} email={user.email} picture={user.picture} />
       )}
+      <RenderJSON />
     </>
   );
 };

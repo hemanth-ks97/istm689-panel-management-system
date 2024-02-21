@@ -1,0 +1,28 @@
+{
+  "resources": [
+    {
+      "name": "default-role",
+      "resource_type": "iam_role",
+      "role_arn": "arn:aws:iam::767397884806:role/pms-core-production",
+      "role_name": "pms-core-production"
+    },
+    {
+      "name": "api_handler",
+      "resource_type": "lambda_function",
+      "lambda_arn": "arn:aws:lambda:us-east-1:767397884806:function:pms-core-production"
+    },
+    {
+      "name": "google_oauth2_authorizer",
+      "resource_type": "lambda_function",
+      "lambda_arn": "arn:aws:lambda:us-east-1:767397884806:function:pms-core-production-google_oauth2_authorizer"
+    },
+    {
+      "name": "rest_api",
+      "resource_type": "rest_api",
+      "rest_api_id": "77v6036nsb",
+      "rest_api_url": "https://77v6036nsb.execute-api.us-east-1.amazonaws.com/production/"
+    }
+  ],
+  "schema_version": "2.0",
+  "backend": "api"
+}

@@ -2,8 +2,32 @@
   "version": "2.0",
   "app_name": "pms-core",
   "stages": {
+    "production": {
+      "api_gateway_stage": "production",
+      "api_gateway_endpoint_type": "REGIONAL",
+      "environment_variables": {
+        "ENV": "production",
+        "GOOGLE_AUTH_CLIENT_ID": "979252554614-r05g1fdg6unklck10sjnamb3701r0u88.apps.googleusercontent.com",
+        "ALLOW_ORIGIN": "https://istm689.joaquingimenez.com"
+      }
+    },
     "dev": {
-      "api_gateway_stage": "api"
+      "api_gateway_stage": "dev",
+      "api_gateway_endpoint_type": "REGIONAL",
+      "environment_variables": {
+        "ENV": "dev",
+        "GOOGLE_AUTH_CLIENT_ID": "979252554614-0gjt8bjrpkht2n0le6uoo12nhs8pgrv3.apps.googleusercontent.com",
+        "ALLOW_ORIGIN": "https://istm689-dev.joaquingimenez.com"
+      }
+    },
+    "local": {
+      "api_gateway_stage": "local",
+      "api_gateway_endpoint_type": "REGIONAL",
+      "environment_variables": {
+        "ENV": "local",
+        "GOOGLE_AUTH_CLIENT_ID": "370940936724-4qh7n4qh6vrgli6bsf3je6kbe2lsotef.apps.googleusercontent.com",
+        "ALLOW_ORIGIN": "http://localhost:3000"
+      }
     }
   }
 }

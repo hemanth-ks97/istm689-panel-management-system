@@ -74,15 +74,15 @@ variable "amplify_domain_association_domain_name" {
 
 # TODO: After creating an API Gateway, we need to use the output values to determine de API URL.
 # Similar to what we did for the DNS zone records
-variable "amplify_branch_environment_variables_REACT_APP_API_SERVER" {
+variable "amplify_branch_environment_variables_REACT_APP_API_BASE_URL" {
   description = "API URL for the webapp"
   type = object({
     dev        = string
     production = string
   })
   default = {
-    dev        = "https://api-dev.example.com"
-    production = "https://api.example.com"
+    dev        = "https://i3sqr0pvs3.execute-api.us-east-1.amazonaws.com/dev/"
+    production = "https://77v6036nsb.execute-api.us-east-1.amazonaws.com/production/"
   }
 }
 

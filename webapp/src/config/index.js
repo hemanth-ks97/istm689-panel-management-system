@@ -1,7 +1,7 @@
-export const ENV = process.env.REACT_APP_ENV || "development";
+export const ENV = process.env.REACT_APP_ENV || "local";
 
-export const API_SERVER =
-  process.env.REACT_APP_API_SERVER || "https://api-dev.example.com";
+export const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
 
 export const USER_TABLE = process.env.REACT_APP_USER_TABLE || "users";
 
