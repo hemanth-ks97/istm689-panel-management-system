@@ -1,15 +1,9 @@
 import React, { useState } from "react";
 // MUI
 import { Box, Button, Typography, Snackbar } from "@mui/material";
-// Router
-import { Link } from "react-router-dom";
 // Redux
 import { useSelector } from "react-redux";
-// Enviroment
-import { ENV, API_BASE_URL } from "../../config";
-// Widgets
-import UserCard from "../widgets/UserCard";
-
+// HTTP Client
 import { httpClient } from "../../client";
 
 const HomePage = () => {
@@ -55,42 +49,23 @@ const HomePage = () => {
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Typography variant="h4">This is the HomePage component.</Typography>
-
-      <Link to={"profile"}>Profile</Link>
-      <p></p>
-      <Link to={"login"}>Login</Link>
-      <p></p>
-
-      <Typography variant="body2">
-        Enviroment: {ENV || "not defined"}
-      </Typography>
-
-      <Typography variant="body2">
-        API Endpoint: {API_BASE_URL || "not available"}
-      </Typography>
-      <p></p>
-
+      <Typography>Test API Call to backend!</Typography>
       <Button
         variant="contained"
         onClick={handleOnClick}
         disabled={isApiWaiting}
       >
-        Call Public API
+        Call Public API Route
       </Button>
-
+      <p></p>
       <Button
         variant="contained"
         onClick={handleOnClickPrivate}
         disabled={isApiWaiting}
       >
-        Call Private API
+        Call Private API Route
       </Button>
 
-      <p></p>
-
-      {user && (
-        <UserCard name={user.name} email={user.email} picture={user.picture} />
-      )}
       <Snackbar
         open={isSnackbarOpen}
         onClose={() => setIsSnackbarOpen(false)}
