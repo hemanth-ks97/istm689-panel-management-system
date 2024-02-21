@@ -11,6 +11,7 @@ from chalicelib.constants import BEARER_TYPE, BASIC_TYPE
 from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
+import boto3
 
 app = Chalice(app_name=f"{ENV}-pms-core")
 
@@ -88,9 +89,12 @@ def users():
     }
 
 
-@app.route("/panel", methods=["GET"], authorizer=google_oauth2_authorizer)
-def panel():
-    """Panel route, testing purposes."""
-    return {
-        "panel": [{"name": "Panel 1", "id": "001"}, {"name": "Panel 2", "id": "002"}]
-    }
+@app.route("/question", methods=["GET"], authorizer=google_oauth2_authorizer)
+def question():
+    """Question route, testing purposes."""
+
+    dynamodb = boto3.resource("dynamodb")
+    table = dynamodb.Table("Question")
+    result = table.scan()
+
+    return result["Items"]
