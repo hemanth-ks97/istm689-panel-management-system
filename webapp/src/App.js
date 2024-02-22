@@ -9,6 +9,7 @@ import PrivateRoutes from "./components/utils/PrivateRoutes";
 import HomePage from "./components/pages/HomePage";
 import LoginPage from "./components/pages/LoginPage";
 import ProfilePage from "./components/pages/ProfilePage";
+import QuestionPage from "./components/pages/QuestionPage";
 import AdminPage from "./components/pages/AdminPage";
 import PrivacyPage from "./components/pages/PrivacyPage";
 import TermsPage from "./components/pages/TermsPage";
@@ -20,10 +21,13 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         {/* Need auth users to visit these pages */}
+        {/* Student allowed routes */}
         <Route element={<PrivateRoutes isAllowed={!!user} />}>
           <Route element={<HomePage />} path="/" exact />
           <Route element={<ProfilePage />} path="/profile" />
+          <Route element={<QuestionPage />} path="/question" />
         </Route>
+        {/* TODO: Admin allowed routes */}
         <Route element={<PrivateRoutes isAllowed={!!user} />}>
           <Route element={<AdminPage />} path="/admin" />
         </Route>
