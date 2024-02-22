@@ -16,6 +16,7 @@ from chalicelib import db
 from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from datetime import datetime
 
 
 app = Chalice(app_name=f"{ENV}-pms-core")
@@ -183,6 +184,7 @@ def add_new_question():
         incoming_json["QuestionID"] = str(uuid.uuid4())
         incoming_json["GoogleID"] = google_id
         incoming_json["OriginIP"] = origin_ip
+        incoming_json["CreatedAt"] = datetime.now().isoformat()
         get_question_db().add_question(incoming_json)
         # Returns the result of put_item, kind of metadata and stuff
 
