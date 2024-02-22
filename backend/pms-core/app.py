@@ -194,6 +194,7 @@ def add_new_question():
         new_question["Question"] = incoming_json["question"]
         get_question_db().add_question(new_question)
         # Returns the result of put_item, kind of metadata and stuff
+        return {"message": "Question successfully inserted in the DB", "QuestionID": new_question["QuestionID"]}
 
     except Exception as e:
         return {"error": str(e)}
