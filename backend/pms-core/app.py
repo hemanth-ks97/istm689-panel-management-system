@@ -11,7 +11,7 @@ from chalicelib.config import (
     USER_TABLE_NAME,
     QUESTION_TABLE_NAME,
 )
-from chalicelib.constants import BEARER_TYPE, BASIC_TYPE, DYNAMODB_TYPE
+from chalicelib.constants import BOTO3_DYNAMODB_TYPE, REQUEST_CONTENT_TYPE_JSON
 from chalicelib import db
 from google.auth import exceptions
 from google.oauth2 import id_token
@@ -28,7 +28,7 @@ def get_user_db():
     try:
         if _USER_DB is None:
             _USER_DB = db.DynamoUserDB(
-                boto3.resource(DYNAMODB_TYPE).Table(USER_TABLE_NAME)
+                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(USER_TABLE_NAME)
             )
     except Exception as e:
         return {"error": str(e)}
@@ -40,7 +40,7 @@ def get_question_db():
     try:
         if _QUESTION_DB is None:
             _QUESTION_DB = db.DynamoQuestionDB(
-                boto3.resource(DYNAMODB_TYPE).Table(QUESTION_TABLE_NAME)
+                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(QUESTION_TABLE_NAME)
             )
     except Exception as e:
         return {"error": str(e)}
@@ -168,7 +168,7 @@ def get_question(id):
     "/question",
     methods=["POST"],
     authorizer=google_oauth2_authorizer,
-    content_types=["application/json"],
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def add_new_question():
     """Question route, testing purposes."""
@@ -192,37 +192,12 @@ def add_new_question():
 
 @app.route(
     "/user",
-    methods=["POST"],
-    authorizer=google_oauth2_authorizer,
-    content_types=["application/json"],
-)
-def add_new_user():
-    """Question route, testing purposes."""
-    try:
-        """`app.current_request.json_body` works because the request has the header `Content-Type: application/json` set."""
-        incoming_json = app.current_request.json_body
-        # Fetch principalID (Google ID) from incoming request.
-        google_id = app.current_request.context["authorizer"]["principalId"]
-        origin_ip = app.current_request.context["identity"]["sourceIp"]
-        # Add mandatory backend managed fields
-        incoming_json["UserID"] = str(uuid.uuid4())
-        incoming_json["GoogleID"] = google_id
-        incoming_json["OriginIP"] = origin_ip
-        get_user_db().add_user(incoming_json)
-        # Returns the result of put_item, kind of metadata and stuff
-
-    except Exception as e:
-        return {"error": str(e)}
-
-
-@app.route(
-    "/user",
     methods=["GET"],
     authorizer=google_oauth2_authorizer,
 )
 def get_all_users():
     """
-    Question route, testing purposes.
+    User route, testing purposes.
     """
 
     try:
@@ -238,9 +213,35 @@ def get_all_users():
 )
 def get_user(id):
     """
-    Question route, testing purposes.
+    User route, testing purposes.
     """
     item = get_user_db().get_user(user_id=id)
     if item is None:
         raise NotFoundError("User (%s) not found" % id)
     return item
+
+
+@app.route(
+    "/user",
+    methods=["POST"],
+    authorizer=google_oauth2_authorizer,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def add_new_user():
+    """User route, testing purposes."""
+    try:
+        """`app.current_request.json_body` works because the request has the header `Content-Type: application/json` set."""
+        incoming_json = app.current_request.json_body
+        # Fetch principalID (Google ID) from incoming request.
+        # Not a real case scenario
+        google_id = app.current_request.context["authorizer"]["principalId"]
+        origin_ip = app.current_request.context["identity"]["sourceIp"]
+        # Add mandatory backend managed fields
+        incoming_json["UserID"] = str(uuid.uuid4())
+        incoming_json["GoogleID"] = google_id
+        incoming_json["OriginIP"] = origin_ip
+        get_user_db().add_user(incoming_json)
+        # Returns the result of put_item, kind of metadata and stuff
+
+    except Exception as e:
+        return {"error": str(e)}
