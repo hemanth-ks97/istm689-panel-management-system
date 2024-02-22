@@ -11,9 +11,34 @@ from chalicelib.constants import BEARER_TYPE, BASIC_TYPE
 from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
+
 import boto3
+import uuid
 
 app = Chalice(app_name=f"{ENV}-pms-core")
+dynamodb = boto3.resource("dynamodb")
+
+
+def dummy():
+    """
+    Collection of all functions that we need.
+    The sole purpose is to force Chalice to generate the right permissions in the policy.
+    Does nothing and returns nothing.
+    """
+    # DynamoDB
+    dummy_db = boto3.client("dynamodb")
+    dummy_db.get_item()
+    dummy_db.put_item()
+    dummy_db.update_item()
+    dummy_db.scan()
+    dummy_db.query()
+    # S3
+    # dummy_s3 = boto3.client("s3")
+    # dummy_s3.put_object()
+    # dummy_s3.download_file()
+    # dummy_s3.get_object()
+    # dummy_s3.list_objects_v2()
+    # dummy_s3.get_bucket_location()
 
 
 app.api.cors = CORSConfig(
@@ -52,6 +77,7 @@ def google_oauth2_authorizer(auth_request):
 
             case "Basic":
                 # Decode Basic token and return allowed routes
+                # I'm thinking using panel@email.com:current-date
                 pass
             case _:
                 raise ValueError("Invalid Authorization Header Type")
@@ -69,32 +95,36 @@ def google_oauth2_authorizer(auth_request):
 @app.route("/")
 def index():
     """Index route, only for testing purposes."""
+
+    # Workaround to force chalice to generate all policies
+    # It never executes
+    if False:
+        dummy()
     return {"hello": "world"}
 
 
-@app.route("/protected", authorizer=google_oauth2_authorizer)
-def protected():
-    """Protected route, needs to have a valid and verified Google oAuth2 token before executing."""
-    return {"hello": "from protected world"}
-
-
-@app.route("/users", methods=["GET"], authorizer=google_oauth2_authorizer)
-def users():
-    """Users route, testing purposes."""
-    return {
-        "users": [
-            {"name": "Test", "id": "test@test.com"},
-            {"name": "Test 2", "id": "test2@test.com"},
-        ]
-    }
-
-
-@app.route("/question", methods=["GET"], authorizer=google_oauth2_authorizer)
-def question():
+@app.route("/question", methods=["GET"])
+def question_get():
     """Question route, testing purposes."""
+    try:
+        table = dynamodb.Table("joaquin-test-table")
+        all_questions = table.scan()
+        return all_questions["Items"]
+    except Exception as e:
+        return {"error": str(e)}
 
-    dynamodb = boto3.resource("dynamodb")
-    table = dynamodb.Table("Question")
-    result = table.scan()
 
-    return result["Items"]
+@app.route("/question", methods=["POST"])
+def question_post():
+    """Question route, testing purposes."""
+    try:
+        """`app.current_request.json_body` works because the request has the header `Content-Type: application/json` set."""
+        incoming_json = app.current_request.json_body
+        # Add mandatory field
+        incoming_json["UserID"] = str(uuid.uuid4())
+        table = dynamodb.Table("joaquin-test-table")
+        new_question = table.put_item(Item=incoming_json)
+        # Returns the result of put_item, kind of metadata and stuff
+        return new_question
+    except Exception as e:
+        return {"error": str(e)}
