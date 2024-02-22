@@ -2,7 +2,7 @@
 
 import boto3
 import uuid
-from chalice import Chalice, AuthResponse, CORSConfig, NotFoundError
+from chalice import Chalice, AuthResponse, CORSConfig, NotFoundError, BadRequestError
 from chalicelib.config import (
     ENV,
     GOOGLE_AUTH_CLIENT_ID,
@@ -176,16 +176,23 @@ def add_new_question():
     try:
         """`app.current_request.json_body` works because the request has the header `Content-Type: application/json` set."""
         incoming_json = app.current_request.json_body
+
+        # Check for all required fields
+        if "question" not in incoming_json:
+            raise BadRequestError("Key 'question' not found in incoming request")
+
         # Fetch principalID (Google ID) from incoming request.
         google_id = app.current_request.context["authorizer"]["principalId"]
+        # TODO: Add user db get UserID by GoogleID... It will be easier for us later on
         origin_ip = app.current_request.context["identity"]["sourceIp"]
-        # print(app.current_request.context["identity"])
-        # Add mandatory fields
-        incoming_json["QuestionID"] = str(uuid.uuid4())
-        incoming_json["GoogleID"] = google_id
-        incoming_json["OriginIP"] = origin_ip
-        incoming_json["CreatedAt"] = datetime.now().isoformat()
-        get_question_db().add_question(incoming_json)
+        # Build Question object for database
+        new_question = dict()
+        new_question["QuestionID"] = str(uuid.uuid4())
+        new_question["GoogleID"] = google_id
+        new_question["OriginIP"] = origin_ip
+        new_question["CreatedAt"] = datetime.now().isoformat()
+        new_question["Question"] = incoming_json["question"]
+        get_question_db().add_question(new_question)
         # Returns the result of put_item, kind of metadata and stuff
 
     except Exception as e:
@@ -234,15 +241,30 @@ def add_new_user():
     try:
         """`app.current_request.json_body` works because the request has the header `Content-Type: application/json` set."""
         incoming_json = app.current_request.json_body
+
+        # Check for all required fields
+        if "name" not in incoming_json:
+            raise BadRequestError("Key 'name' not found in incoming request")
+        if "lastname" not in incoming_json:
+            raise BadRequestError("Key 'lastname' not found in incoming request")
+        if "email" not in incoming_json:
+            raise BadRequestError("Key 'email' not found in incoming request")
+
         # Fetch principalID (Google ID) from incoming request.
         # Not a real case scenario
         google_id = app.current_request.context["authorizer"]["principalId"]
         origin_ip = app.current_request.context["identity"]["sourceIp"]
-        # Add mandatory backend managed fields
-        incoming_json["UserID"] = str(uuid.uuid4())
-        incoming_json["GoogleID"] = google_id
-        incoming_json["OriginIP"] = origin_ip
-        get_user_db().add_user(incoming_json)
+        # Build User object for database
+        new_user = dict()
+        new_user["UserID"] = str(uuid.uuid4())
+        new_user["GoogleID"] = google_id
+        new_user["OriginIP"] = origin_ip
+        new_user["CreatedAt"] = datetime.now().isoformat()
+        new_user["Name"] = incoming_json["name"]
+        new_user["LastName"] = incoming_json["lastname"]
+        new_user["Email"] = incoming_json["email"]
+
+        get_user_db().add_user(new_user)
         # Returns the result of put_item, kind of metadata and stuff
 
     except Exception as e:
