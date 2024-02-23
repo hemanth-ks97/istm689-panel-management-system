@@ -9,7 +9,15 @@ import {
   Typography,
   Menu,
   MenuItem,
+  Button,
+  List,
+  ListItem,
+  Drawer,
+  Container, 
+  Stack
 } from "@mui/material";
+//Icons
+import MenuIcon from '@mui/icons-material/Menu';
 // React Router
 import { useNavigate } from "react-router-dom";
 
@@ -19,11 +27,22 @@ import { clearUser } from "../../store/slices/userSlice";
 // Enviroment
 import { ENV } from "../../config";
 
+const drawerWidth = 240;
+const nav_buttons = ['Dashboard', 'Questions', 'Voting', 'Grades'];
 const TopBar = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [anchorElNav, setAnchorElNav] = React.useState(null);
   const { user } = useSelector((state) => state.user);
   const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleOpenNavMenu = (event) => {
+    setAnchorElNav(event.currentTarget);
+  };
+
+  const handleCloseNavMenu = () => {
+    setAnchorElNav(null);
+  };
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -58,21 +77,78 @@ const TopBar = () => {
   ];
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box>
       <AppBar
         position="static"
         // Clearly differentiate from prod and dev environments
         color={ENV === "production" ? "primary" : "secondary"}
       >
-        <Toolbar>
+        <Toolbar disableGutters>
           <Typography
             color="white"
             variant="h6"
             component="div"
-            sx={{ flexGrow: 1 }}
+            sx={{ flexGrow: 0.05, fontFamily: 'monospace',
+            fontWeight : '800',
+            letterSpacing: '.1rem' }}
           >
             Panel Management System
           </Typography>
+          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+            <IconButton
+              size="large"
+              aria-label="account of current user"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleOpenNavMenu}
+              color="inherit"
+            >
+              <MenuIcon />
+            </IconButton>
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorElNav}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'left',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'left',
+              }}
+              open={Boolean(anchorElNav)}
+              onClose={handleCloseNavMenu}
+              sx={{
+                display: { xs: 'block', md: 'none' },
+              }}
+            >
+              {nav_buttons.map((nav_btn) => (
+                <MenuItem key={nav_btn} onClick={handleCloseNavMenu}>
+                  <Typography textAlign="center">{nav_btn}</Typography>
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+            {nav_buttons.map((nav_btn) => (
+              <Button
+                key={nav_btn}
+                onClick={handleCloseNavMenu}
+                sx={{ my: 2, color: 'white', display: 'block' }}
+              >
+                {nav_btn}
+              </Button>
+            ))}
+          </Box>
+          {/*
+          <Stack display = "flex" spacing={2} direction="row" alignItems="flex-start" sx={{ flexGrow: 1 }}>
+            <Button id='btn-dashboard' variant="text" sx={{ color:"white" }}>Dashboard</Button>
+            <Button id='btn-questions' variant="text" sx={{ color:"white" }}>Questions</Button>
+            <Button id='btn-grades' name='btn-grades' variant="text" sx={{ color:"white" }}>Grades</Button>
+          </Stack>
+  */}
+
           {user && (
             <div>
               <IconButton
