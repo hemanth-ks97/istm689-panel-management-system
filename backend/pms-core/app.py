@@ -1,5 +1,8 @@
 """Main application file for the PMS Core API."""
 
+import jwt
+
+
 import boto3
 import uuid
 import pandas as pd
@@ -27,7 +30,8 @@ from chalicelib import db
 from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+from jwt.exceptions import ExpiredSignatureError
 
 app = Chalice(app_name=f"{ENV}-pms-core")
 _USER_DB = None
@@ -86,7 +90,7 @@ app.api.cors = CORSConfig(
 
 
 @app.authorizer()
-def google_oauth2_authorizer(auth_request):
+def token_authorizer(auth_request):
     """
     Lambda function to check authorization of incoming requests.
     """
@@ -145,9 +149,78 @@ def index():
 
 
 @app.route(
+    "/register",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def register():
+    google_id = app.current_request.context["authorizer"]["principalId"]
+
+    my_secret = "my_super_secret"
+
+    expiration = datetime.now(tz=timezone.utc) + timedelta(seconds=5)
+    payload_data = {"sub": google_id, "roles": ["admin"], "exp": expiration}
+
+    token = jwt.encode(
+        payload=payload_data,
+        key=my_secret,
+        algorithm="HS256",
+    )
+
+    header_data = jwt.get_unverified_header(token)
+
+    print(header_data)
+
+    decoded_token = jwt.decode(
+        token,
+        my_secret,
+        algorithms=[
+            header_data["alg"],
+        ],
+    )
+
+    print(decoded_token)
+    return {"token": token}
+
+
+@app.route(
+    "/verify",
+)
+def verification():
+
+    try:
+
+        my_secret = "my_super_secret"
+
+        json_body = app.current_request.json_body
+
+        token = json_body["token"]
+
+        print(token)
+
+        header_data = jwt.get_unverified_header(token)
+
+        print(header_data)
+
+        decoded_token = jwt.decode(
+            token,
+            my_secret,
+            algorithms=[
+                header_data["alg"],
+            ],
+        )
+
+        print(decoded_token)
+
+    except Exception as e:
+        return {"error": str(e)}
+    return {"token": decoded_token}
+
+
+@app.route(
     "/question",
     methods=["GET"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
 )
 def get_all_questions():
     """
@@ -163,7 +236,7 @@ def get_all_questions():
 @app.route(
     "/question/{id}",
     methods=["GET"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
 )
 def get_question(id):
     """
@@ -178,7 +251,7 @@ def get_question(id):
 @app.route(
     "/question",
     methods=["POST"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def add_new_question():
@@ -216,7 +289,7 @@ def add_new_question():
 @app.route(
     "/user",
     methods=["GET"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
 )
 def get_all_users():
     """
@@ -232,7 +305,7 @@ def get_all_users():
 @app.route(
     "/user/{id}",
     methods=["GET"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
 )
 def get_user(id):
     """
@@ -298,7 +371,7 @@ def get_student_data():
 @app.route(
     "/user",
     methods=["POST"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def add_new_user():
