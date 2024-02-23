@@ -5,6 +5,10 @@ Monorepo for the Panel Management System project. This files contains basic info
   - [Project Structure](#project-structure)
   - [Setup](#setup)
     - [Initial setup from scratch](#initial-setup-from-scratch)
+  - [Developer Setup](#developer-setup)
+    - [Requirements](#requirements)
+    - [Run Frontend](#run-frontend)
+    - [Run the Backend](#run-the-backend)
 
 ## Project Structure
 This is a monorepo for the entire system and consists in three components
@@ -36,3 +40,39 @@ In order to setup the project from zero we need to follow these steps:
     - `AWS_SECRET_ACCESS_KEY`: Secret Access Key for the AWS user to be used by terraform
     - `TF_VAR_GITHUB_TOKEN`: Access token from GitHub with read-only access to the repository
     - `CLOUDFLARE_API_TOKEN` (optional): If we want to use a custom domain hosted on Cloudflare
+
+## Developer Setup
+
+### Requirements
+Need to install the following dependencies
+- Python 3.11.7
+- Node v18.17.1
+- AWS CLI
+
+### Run Frontend
+To run the frontend you need to run the following commands
+```bash
+# Move to webapp directory 
+cd webapp
+# Install node packages
+npm install
+# Run react development server
+npm start
+# It should open the default browser on http://localhost:3000
+# Stop react development server
+# Press Ctrl C
+```
+
+### Run the Backend 
+To run the backend you need to run the following commands
+```bash
+# Move to backend project directory
+cd backend/pms-core 
+# Install python packages
+pip install -r requirements.txt
+# Run Chalice on local server
+chalice local --stage local
+# It should be ready to test queries on http://localhost:8000
+# Stop Chalice local server
+# Press Ctrl C
+```
