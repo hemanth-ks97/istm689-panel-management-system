@@ -251,8 +251,11 @@ def get_student_data():
     df = pd.read_csv(csv_file)
     # Replace "email.tamu.edu" with just "tamu.edu" in the email column
     df["EMAIL"] = df["EMAIL"].str.replace('email.tamu.edu', 'tamu.edu')
-    # 
+    print(df["EMAIL"])
+    # Converting the rows in the df into dictonary objects for storing into a the users database
     records = df.to_dict(orient='records')
+    # TODO Put records into a DynamoDB
+
 
     return Response(body={'message': f'CSV processed successfully with {len(df)} records'},
                     status_code=200,
