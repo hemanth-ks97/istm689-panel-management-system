@@ -2,7 +2,6 @@
 
 import boto3
 import uuid
-import logging
 import pandas as pd
 from io import StringIO
 from chalice import Chalice, AuthResponse, CORSConfig, NotFoundError, BadRequestError, Response
@@ -20,9 +19,6 @@ from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from datetime import datetime
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 app = Chalice(app_name=f"{ENV}-pms-core")
 _USER_DB = None
