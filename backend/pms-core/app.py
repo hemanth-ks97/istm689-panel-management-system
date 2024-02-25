@@ -238,23 +238,26 @@ def get_user(id):
     content_types=['text/plain'],
 )
 def get_student_data():
-    # Access the CSV file from the request body
-    csv_data = app.current_request.raw_body.decode('utf-8')
-    # Convert the CSV file to a string
-    csv_file = StringIO(csv_data)
-    # Read CSV data into a pandas dataframe
-    df = pd.read_csv(csv_file)
-    # Replace "email.tamu.edu" with just "tamu.edu" in the email column
-    df["EMAIL"] = df["EMAIL"].str.replace('email.tamu.edu', 'tamu.edu')
-    print(df["EMAIL"])
-    # Converting the rows in the df into dictonary objects for storing into a the users database
-    records = df.to_dict(orient='records')
-    # TODO Put records into a DynamoDB
+    try:
+        # Access the CSV file from the request body
+        csv_data = app.current_request.raw_body.decode('utf-8')
+        # Convert the CSV file to a string
+        csv_file = StringIO(csv_data)
+        # Read CSV data into a pandas dataframe
+        df = pd.read_csv(csv_file)
+        # Replace "email.tamu.edu" with just "tamu.edu" in the email column
+        df["EMAIL"] = df["EMAIL"].str.replace('email.tamu.edu', 'tamu.edu')
+        print(df["EMAIL"])
+        # Converting the rows in the df into dictonary objects for storing into a the users database
+        records = df.to_dict(orient='records')
+        # TODO Put records into a DynamoDB
 
 
-    return Response(body={'message': f'CSV processed successfully with {len(df)} records'},
-                    status_code=200,
-                    headers={'Content-Type': 'application/json'})
+        return Response(body={'message': f'CSV processed successfully with {len(df)} records'},
+                        status_code=200,
+                        headers={'Content-Type': 'application/json'})
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.route(
     "/user",
