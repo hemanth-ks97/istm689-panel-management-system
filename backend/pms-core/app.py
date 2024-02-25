@@ -2,7 +2,10 @@
 
 import boto3
 import uuid
-from chalice import Chalice, AuthResponse, CORSConfig, NotFoundError, BadRequestError
+import logging
+import pandas as pd
+from io import StringIO
+from chalice import Chalice, AuthResponse, CORSConfig, NotFoundError, BadRequestError, Response
 from chalicelib.config import (
     ENV,
     GOOGLE_AUTH_CLIENT_ID,
@@ -18,6 +21,8 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from datetime import datetime
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Chalice(app_name=f"{ENV}-pms-core")
 _USER_DB = None
@@ -89,6 +94,7 @@ def google_oauth2_authorizer(auth_request):
         # Extract the token from the incoming request
         auth_header = auth_request.token.split()
         auth_token_type = auth_header[0]
+        logger.info("Authoriztion Token recvd")
         # Check if authorization type is valid
         if auth_token_type not in ALLOWED_AUTHORIZATION_TYPES:
             app.log.error(f"Invalid Authorization Header Type: {auth_token_type}")
@@ -230,6 +236,27 @@ def get_user(id):
         raise NotFoundError("User (%s) not found" % id)
     return item
 
+@app.route(
+    "/howdycsv",
+    methods=["POST"],
+    authorizer=google_oauth2_authorizer,
+    content_types=['text/plain'],
+)
+def get_student_data():
+    # Access the CSV file from the request body
+    csv_data = app.current_request.raw_body.decode('utf-8')
+    # Convert the CSV file to a string
+    csv_file = StringIO(csv_data)
+    # Read CSV data into a pandas dataframe
+    df = pd.read_csv(csv_file)
+    # Replace "email.tamu.edu" with just "tamu.edu" in the email column
+    df["EMAIL"] = df["EMAIL"].str.replace('email.tamu.edu', 'tamu.edu')
+    # 
+    records = df.to_dict(orient='records')
+
+    return Response(body={'message': f'CSV processed successfully with {len(df)} records'},
+                    status_code=200,
+                    headers={'Content-Type': 'application/json'})
 
 @app.route(
     "/user",
