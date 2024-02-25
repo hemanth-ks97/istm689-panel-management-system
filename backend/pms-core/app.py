@@ -90,7 +90,6 @@ def google_oauth2_authorizer(auth_request):
         # Extract the token from the incoming request
         auth_header = auth_request.token.split()
         auth_token_type = auth_header[0]
-        logger.info("Authoriztion Token recvd")
         # Check if authorization type is valid
         if auth_token_type not in ALLOWED_AUTHORIZATION_TYPES:
             app.log.error(f"Invalid Authorization Header Type: {auth_token_type}")
