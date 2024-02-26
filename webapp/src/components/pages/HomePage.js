@@ -107,10 +107,7 @@ const HomePage = () => {
         Call Fetch Users
       </Button>
       <p></p>
-      <Button variant="outlined" onClick={() => navigate("/question")}>
-        Go to Question Page
-      </Button>
-      <div>
+      <>
         <input type="file" onChange={handleFileChange} />
         <Button
           variant="contained"
@@ -119,7 +116,7 @@ const HomePage = () => {
         >
           Upload Howdy CSV
         </Button>
-      </div>
+      </>
 
       <Snackbar
         open={isSnackbarOpen}
