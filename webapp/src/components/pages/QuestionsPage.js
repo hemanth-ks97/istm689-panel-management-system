@@ -13,7 +13,7 @@ import { useSelector } from "react-redux";
 // Utils
 import { httpClient } from "../../client";
 
-const QuestionPage = () => {
+const QuestionsPage = () => {
   const { user } = useSelector((state) => state.user);
   const [question, setQuestion] = useState("");
   const [allQuestions, setAllQuestions] = useState([]);
@@ -53,7 +53,7 @@ const QuestionPage = () => {
 
   return (
     <>
-      <Typography variant="h4">QuestionPage component</Typography>
+      <Typography variant="h4">QuestionsPage component</Typography>
       <TextField
         id="question1"
         label="Question 1"
@@ -100,4 +100,4 @@ const QuestionPage = () => {
   );
 };
 
-export default QuestionPage;
+export default QuestionsPage;
