@@ -264,8 +264,9 @@ def get_student_data():
         # Add USERID column
         df['UserID'] = [str(uuid.uuid4()) for _ in range(len(df))]
 
-        # Converting the rows in the df into dictonary objects for storing into a the users database
+        # Converting the rows in the df into dictonary objects for storing into the users database
         records = df.to_dict(orient='records')
+        
         # Put users into a DynamoDB
         for record in records:
             get_user_db().add_user(record)
