@@ -2,7 +2,18 @@
 
 import boto3
 import uuid
-from chalice import Chalice, AuthResponse, CORSConfig, NotFoundError, BadRequestError
+import pandas as pd
+import numpy as np
+from decimal import Decimal
+from io import StringIO
+from chalice import (
+    Chalice,
+    AuthResponse,
+    CORSConfig,
+    NotFoundError,
+    BadRequestError,
+    Response,
+)
 from chalicelib.config import (
     ENV,
     GOOGLE_AUTH_CLIENT_ID,
@@ -17,7 +28,6 @@ from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from datetime import datetime
-
 
 app = Chalice(app_name=f"{ENV}-pms-core")
 _USER_DB = None
@@ -194,7 +204,10 @@ def add_new_question():
         new_question["Question"] = incoming_json["question"]
         get_question_db().add_question(new_question)
         # Returns the result of put_item, kind of metadata and stuff
-        return {"message": "Question successfully inserted in the DB", "QuestionID": new_question["QuestionID"]}
+        return {
+            "message": "Question successfully inserted in the DB",
+            "QuestionID": new_question["QuestionID"],
+        }
 
     except Exception as e:
         return {"error": str(e)}
@@ -229,6 +242,57 @@ def get_user(id):
     if item is None:
         raise NotFoundError("User (%s) not found" % id)
     return item
+
+
+@app.route(
+    "/howdycsv",
+    methods=["POST"],
+    authorizer=google_oauth2_authorizer,
+    content_types=["text/plain"],
+)
+def get_student_data():
+    try:
+        # Access the CSV file from the request body
+        csv_data = app.current_request.raw_body.decode("utf-8")
+
+        # Convert the CSV file to a string
+        csv_file = StringIO(csv_data)
+
+        # Read CSV data into a pandas dataframe
+        df = pd.read_csv(csv_file)
+
+        # Replace float columns with decimal and NaN values as None
+        for column in df.columns:
+            if df[column].dtype == "float64":
+                df[column] = df[column].apply(
+                    lambda x: (
+                        Decimal(str(x)) if pd.notnull(x) and not np.isinf(x) else None
+                    )
+                )
+
+        # Replace "email.tamu.edu" with just "tamu.edu" in the email column
+        df["EMAIL"] = df["EMAIL"].str.replace("email.tamu.edu", "tamu.edu")
+
+        # Replace NaN values in [MID NAME] column with empty string
+        df["MID NAME"] = df["MID NAME"].fillna(value="")
+
+        # Add USERID column
+        df["UserID"] = [str(uuid.uuid4()) for _ in range(len(df))]
+
+        # Converting the rows in the df into dictonary objects for storing into the users database
+        records = df.to_dict(orient="records")
+
+        # Put users into a DynamoDB
+        for record in records:
+            get_user_db().add_user(record)
+
+        return Response(
+            body={"message": f"CSV processed successfully with {len(df)} records"},
+            status_code=200,
+            headers={"Content-Type": "application/json"},
+        )
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @app.route(

@@ -13,6 +13,7 @@ const HomePage = () => {
   const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
   const [apiResponse, setApiResponse] = useState("");
   const [isApiWaiting, setIsApiWaiting] = useState(false);
+  const [selectedHowdyFile, SetSelectedHowdyFile] = useState("");
 
   const { user } = useSelector((state) => state.user);
 
@@ -49,6 +50,43 @@ const HomePage = () => {
       });
   };
 
+  const sendCSVToServer = (csvData) => {
+    setIsApiWaiting(true);
+    httpClient
+      .post("/howdycsv", csvData, {
+        headers: {
+          Authorization: `Bearer ${user?.raw_token}`,
+          "Content-Type": "text/plain",
+        },
+      })
+      .then((response) =>
+        setApiResponse(JSON.stringify(response?.data, null, 2))
+      )
+      .catch((err) => setApiResponse(JSON.stringify(err.message, null, 2)))
+      .finally(() => {
+        setIsApiWaiting(false);
+        setIsSnackbarOpen(true);
+      });
+  };
+
+  const handleHowdyCSVUpload = () => {
+    if (selectedHowdyFile) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csvData = e.target.result;
+        sendCSVToServer(csvData);
+      };
+      reader.readAsText(selectedHowdyFile);
+    }
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      SetSelectedHowdyFile(file);
+    }
+  };
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Typography variant="h4">This is the HomePage component.</Typography>
@@ -72,6 +110,16 @@ const HomePage = () => {
       <Button variant="outlined" onClick={() => navigate("/question")}>
         Go to Question Page
       </Button>
+      <div>
+        <input type="file" onChange={handleFileChange} />
+        <Button
+          variant="contained"
+          onClick={handleHowdyCSVUpload}
+          disabled={isApiWaiting}
+        >
+          Upload Howdy CSV
+        </Button>
+      </div>
 
       <Snackbar
         open={isSnackbarOpen}
