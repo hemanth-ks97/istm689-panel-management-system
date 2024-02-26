@@ -10,14 +10,9 @@ import {
   Menu,
   MenuItem,
   Button,
-  List,
-  ListItem,
-  Drawer,
-  Container, 
-  Stack
 } from "@mui/material";
 //Icons
-import MenuIcon from '@mui/icons-material/Menu';
+import MenuIcon from "@mui/icons-material/Menu";
 // React Router
 import { useNavigate } from "react-router-dom";
 
@@ -27,8 +22,6 @@ import { clearUser } from "../../store/slices/userSlice";
 // Enviroment
 import { ENV } from "../../config";
 
-const drawerWidth = 240;
-const nav_buttons = ['Dashboard', 'Questions', 'Voting', 'Grades'];
 const TopBar = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -51,6 +44,37 @@ const TopBar = () => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const navigationOptions = [
+    {
+      name: "Dashboard",
+      handleOnClick: () => {
+        navigate("/");
+        handleCloseNavMenu();
+      },
+    },
+    {
+      name: "Questions",
+      handleOnClick: () => {
+        navigate("/questions");
+        handleCloseNavMenu();
+      },
+    },
+    {
+      name: "Voting",
+      handleOnClick: () => {
+        navigate("/voting");
+        handleCloseNavMenu();
+      },
+    },
+    {
+      name: "Grades",
+      handleOnClick: () => {
+        navigate("/grades");
+        handleCloseNavMenu();
+      },
+    },
+  ];
 
   const settings = [
     {
@@ -88,13 +112,16 @@ const TopBar = () => {
             color="white"
             variant="h6"
             component="div"
-            sx={{ flexGrow: 0.05, fontFamily: 'monospace',
-            fontWeight : '800',
-            letterSpacing: '.1rem' }}
+            sx={{
+              flexGrow: 0.05,
+              fontFamily: "monospace",
+              fontWeight: "800",
+              letterSpacing: ".1rem",
+            }}
           >
             Panel Management System
           </Typography>
-          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+          <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
             <IconButton
               size="large"
               aria-label="account of current user"
@@ -109,45 +136,38 @@ const TopBar = () => {
               id="menu-appbar"
               anchorEl={anchorElNav}
               anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'left',
+                vertical: "bottom",
+                horizontal: "left",
               }}
               keepMounted
               transformOrigin={{
-                vertical: 'top',
-                horizontal: 'left',
+                vertical: "top",
+                horizontal: "left",
               }}
               open={Boolean(anchorElNav)}
               onClose={handleCloseNavMenu}
               sx={{
-                display: { xs: 'block', md: 'none' },
+                display: { xs: "block", md: "none" },
               }}
             >
-              {nav_buttons.map((nav_btn) => (
-                <MenuItem key={nav_btn} onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">{nav_btn}</Typography>
+              {navigationOptions.map((option, idx) => (
+                <MenuItem key={idx} onClick={option.handleOnClick}>
+                  <Typography textAlign="center">{option.name}</Typography>
                 </MenuItem>
               ))}
             </Menu>
           </Box>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {nav_buttons.map((nav_btn) => (
+          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
+            {navigationOptions.map((option, idx) => (
               <Button
-                key={nav_btn}
-                onClick={handleCloseNavMenu}
-                sx={{ my: 2, color: 'white', display: 'block' }}
+                key={idx}
+                onClick={option.handleOnClick}
+                sx={{ my: 2, color: "white", display: "block" }}
               >
-                {nav_btn}
+                {option.name}
               </Button>
             ))}
           </Box>
-          {/*
-          <Stack display = "flex" spacing={2} direction="row" alignItems="flex-start" sx={{ flexGrow: 1 }}>
-            <Button id='btn-dashboard' variant="text" sx={{ color:"white" }}>Dashboard</Button>
-            <Button id='btn-questions' variant="text" sx={{ color:"white" }}>Questions</Button>
-            <Button id='btn-grades' name='btn-grades' variant="text" sx={{ color:"white" }}>Grades</Button>
-          </Stack>
-  */}
 
           {user && (
             <div>
