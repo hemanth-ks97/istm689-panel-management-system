@@ -5,8 +5,11 @@ import { Box, Button, Typography, Snackbar } from "@mui/material";
 import { useSelector } from "react-redux";
 // HTTP Client
 import { httpClient } from "../../client";
+// React Router
+import { useNavigate } from "react-router-dom";
 
 const HomePage = () => {
+  const navigate = useNavigate();
   const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
   const [apiResponse, setApiResponse] = useState("");
   const [isApiWaiting, setIsApiWaiting] = useState(false);
@@ -27,10 +30,10 @@ const HomePage = () => {
       });
   };
 
-  const handleOnClickPrivate = () => {
+  const handleOnClickUser = () => {
     setIsApiWaiting(true);
     httpClient
-      .get("/protected", {
+      .get("/user", {
         headers: {
           Authorization: `Bearer ${user?.raw_token}`,
           "Content-Type": "application/json",
@@ -60,10 +63,14 @@ const HomePage = () => {
       <p></p>
       <Button
         variant="contained"
-        onClick={handleOnClickPrivate}
+        onClick={handleOnClickUser}
         disabled={isApiWaiting}
       >
-        Call Private API Route
+        Call Fetch Users
+      </Button>
+      <p></p>
+      <Button variant="outlined" onClick={() => navigate("/question")}>
+        Go to Question Page
       </Button>
 
       <Snackbar
