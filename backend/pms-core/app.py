@@ -3,6 +3,7 @@
 import boto3
 import uuid
 import pandas as pd
+import numpy as np
 from decimal import Decimal
 from io import StringIO
 from chalice import Chalice, AuthResponse, CORSConfig, NotFoundError, BadRequestError, Response
@@ -242,21 +243,34 @@ def get_student_data():
     try:
         # Access the CSV file from the request body
         csv_data = app.current_request.raw_body.decode('utf-8')
+        
         # Convert the CSV file to a string
         csv_file = StringIO(csv_data)
+        
         # Read CSV data into a pandas dataframe
         df = pd.read_csv(csv_file)
+        
+        # Replace float columns with decimal and NaN values as None 
+        for column in df.columns:
+            if df[column].dtype == 'float64':
+                df[column] = df[column].apply(lambda x: Decimal(str(x)) if pd.notnull(x) and not np.isinf(x) else None)
+
         # Replace "email.tamu.edu" with just "tamu.edu" in the email column
         df["EMAIL"] = df["EMAIL"].str.replace('email.tamu.edu', 'tamu.edu')
-        print(df["EMAIL"])
-        # Convert all float columns to Decimal types and replacing NaNs with Nonechal
-        for column in df.select_dtypes(include=['float64']).columns:
-            df[column] = df[column].apply(lambda x: Decimal(str(x)) if pd.notnull(x) and not np.isinf(x) else None)
+
+        # Replace NaN values in [MID NAME] column with empty string
+        df['MID NAME'] = df['MID NAME'].fillna(value="")
+
+        # Add USERID column
+        df['UserID'] = [str(uuid.uuid4()) for _ in range(len(df))]
+
         # Converting the rows in the df into dictonary objects for storing into a the users database
         records = df.to_dict(orient='records')
         # Put users into a DynamoDB
         for record in records:
             get_user_db().add_user(record)
+        
+
         return Response(body={'message': f'CSV processed successfully with {len(df)} records'},
                         status_code=200,
                         headers={'Content-Type': 'application/json'})
