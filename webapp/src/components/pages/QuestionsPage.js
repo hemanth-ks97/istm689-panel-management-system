@@ -27,7 +27,7 @@ const QuestionsPage = () => {
   const handleOnSubmit = () => {
     setIsApiWaiting(true);
 
-    const data = { Question: question };
+    const data = { question: question };
     httpClient
       .post("/question", data, {
         headers: headers,
