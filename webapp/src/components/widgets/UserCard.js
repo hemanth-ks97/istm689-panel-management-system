@@ -1,6 +1,6 @@
 import React from "react";
 // MUI
-import { Card, CardHeader, CardContent, Avatar } from "@mui/material";
+import { Card, CardHeader, Avatar } from "@mui/material";
 
 const UserCard = ({ name, email, picture }) => {
   return (
