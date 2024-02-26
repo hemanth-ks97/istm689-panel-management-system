@@ -1,4 +1,5 @@
-from boto3.dynamodb.conditions import Attr
+from boto3.dynamodb.conditions import Key, Attr
+
 
 """Question Database Service"""
 
@@ -74,6 +75,15 @@ class UserDB(object):
     def get_user(self, user_id):
         pass
 
+    def update_user(self, user):
+        pass
+
+    def get_user_by_google_id(self, google_id):
+        pass
+
+    def get_user_by_email(self, email):
+        pass
+
     def delete_user(self, user_id):
         pass
 
@@ -101,6 +111,9 @@ class DynamoUserDB(UserDB):
     def add_user(self, user):
         self._table.put_item(Item=user)
 
+    def update_user(self, user):
+        self._table.update(user)
+
     def get_user(self, user_id):
         response = self._table.get_item(
             Key={
@@ -108,6 +121,14 @@ class DynamoUserDB(UserDB):
             },
         )
         return response.get("Item")
+
+    def get_user_by_google_id(self, google_id):
+        response = self._table.scan(FilterExpression=Attr("GoogleID").eq(google_id))
+        return response["Items"]
+
+    def get_user_by_email(self, email):
+        response = self._table.scan(FilterExpression=Attr("Email").eq(email))
+        return response["Items"]
 
     def delete_user(self, user_id):
         self._table.delete_item(

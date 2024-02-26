@@ -24,6 +24,7 @@ from chalicelib.config import (
     ALLOWED_AUTHORIZATION_TYPES,
     USER_TABLE_NAME,
     QUESTION_TABLE_NAME,
+    JWT_SECRET,
 )
 from chalicelib.constants import BOTO3_DYNAMODB_TYPE, REQUEST_CONTENT_TYPE_JSON
 from chalicelib import db
@@ -112,8 +113,11 @@ def token_authorizer(auth_request):
 
         match auth_token_type:
             case "Bearer":
-                request = requests.Request()
+
+                # Try to validate with custom TOKEN
+
                 # Validate the JWT token using Google's OAuth2 v2 API
+                request = requests.Request()
                 id_info = id_token.verify_oauth2_token(
                     token, request, GOOGLE_AUTH_CLIENT_ID
                 )
@@ -151,70 +155,83 @@ def index():
 @app.route(
     "/register",
     methods=["GET"],
-    authorizer=token_authorizer,
 )
 def register():
-    google_id = app.current_request.context["authorizer"]["principalId"]
+    # google_id = app.current_request.context["authorizer"]["principalId"]
+    google_id = "116168957696290474296"
+    tamu_email = "joaquin.gimenez@tamu.edu"
+    try:
 
-    my_secret = "my_super_secret"
+        users_found = get_user_db().get_user_by_google_id(google_id)
+        # Check if result was found
+        if not users_found:
+            users_found = get_user_db().get_user_by_email(tamu_email)
+            # Put the google ID in the place
+            # updated_user = get_user_db().update_user()
+            # return {"user": users_found}
 
-    expiration = datetime.now(tz=timezone.utc) + timedelta(seconds=5)
-    payload_data = {"sub": google_id, "roles": ["admin"], "exp": expiration}
+        user = users_found[0]
 
-    token = jwt.encode(
-        payload=payload_data,
-        key=my_secret,
-        algorithm="HS256",
-    )
+        current_time = datetime.now(tz=timezone.utc)
+        expiration = datetime.now(tz=timezone.utc) + timedelta(minutes=3)
 
-    header_data = jwt.get_unverified_header(token)
+        payload_data = {
+            "iss": app.app_name,
+            "sub": user["UserID"],
+            "aud": app.app_name,
+            "exp": expiration,
+            "nbf": current_time,
+            "iat": current_time,
+            "roles": ["admin"],
+        }
 
-    print(header_data)
-
-    decoded_token = jwt.decode(
-        token,
-        my_secret,
-        algorithms=[
-            header_data["alg"],
-        ],
-    )
-
-    print(decoded_token)
+        token = jwt.encode(
+            payload=payload_data,
+            key=JWT_SECRET,
+            algorithm="HS256",
+        )
+    except Exception as e:
+        return {"error": str(e)}
     return {"token": token}
 
 
-@app.route(
-    "/verify",
-)
-def verification():
-
+@app.route("/generate-token")
+def generate_token():
     try:
-
-        my_secret = "my_super_secret"
-
         json_body = app.current_request.json_body
-
-        token = json_body["token"]
-
-        print(token)
-
-        header_data = jwt.get_unverified_header(token)
-
-        print(header_data)
-
-        decoded_token = jwt.decode(
-            token,
-            my_secret,
-            algorithms=[
-                header_data["alg"],
-            ],
+        incoming_token = json_body["token"]
+        decoded_token = None
+        # Decode token without verifying signature to check issuer and decode it properly
+        unverified_token = jwt.decode(
+            incoming_token, options={"verify_signature": False}
         )
+        # Check unverified token issuer
+        # We need these to check if we want to decode our own token or google token
+        match unverified_token["iss"]:
+            case app.app_name:
+                header_data = jwt.get_unverified_header(incoming_token)
+                decoded_token = jwt.decode(
+                    incoming_token,
+                    JWT_SECRET,
+                    audience=app.app_name,
+                    algorithms=[
+                        header_data["alg"],
+                    ],
+                )
+                pass
+            case "https://accounts.google.com":
+                request = requests.Request()
+                decoded_token = id_token.verify_oauth2_token(
+                    incoming_token, request, GOOGLE_AUTH_CLIENT_ID
+                )
+                pass
+            case _:
+                raise ValueError("Invalid Token Issuer")
 
-        print(decoded_token)
+        return {"decoded_token": decoded_token}
 
     except Exception as e:
         return {"error": str(e)}
-    return {"token": decoded_token}
 
 
 @app.route(
