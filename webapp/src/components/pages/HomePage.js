@@ -56,33 +56,33 @@ const HomePage = () => {
           "Content-Type": "text/plain",
         },
       })
-      .then((response) => 
+      .then((response) =>
         setApiResponse(JSON.stringify(response?.data, null, 2))
       )
       .catch((err) => setApiResponse(JSON.stringify(err.message, null, 2)))
       .finally(() => {
         setIsApiWaiting(false);
         setIsSnackbarOpen(true);
-      })
+      });
   };
 
   const handleHowdyCSVUpload = () => {
-    if (selectedHowdyFile){
+    if (selectedHowdyFile) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const csvData = e.target.result
+        const csvData = e.target.result;
         sendCSVToServer(csvData);
-      }
+      };
       reader.readAsText(selectedHowdyFile);
     }
-  }
+  };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       SetSelectedHowdyFile(file);
     }
-  }
+  };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
