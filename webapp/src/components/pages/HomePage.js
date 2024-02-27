@@ -36,7 +36,7 @@ const HomePage = () => {
     httpClient
       .get("/user", {
         headers: {
-          Authorization: `Bearer ${user?.raw_token}`,
+          Authorization: `Bearer ${user?.token}`,
           "Content-Type": "application/json",
         },
       })
@@ -55,7 +55,7 @@ const HomePage = () => {
     httpClient
       .post("/howdycsv", csvData, {
         headers: {
-          Authorization: `Bearer ${user?.raw_token}`,
+          Authorization: `Bearer ${user?.token}`,
           "Content-Type": "text/plain",
         },
       })

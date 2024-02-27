@@ -105,35 +105,36 @@ def token_authorizer(auth_request):
     try:
         # Expects token in the "Authorization" header of incoming request
         # ---> Format: "{"Authorization": "Bearer <token>"}"
-
         # Extract the token from the incoming request
         auth_header = auth_request.token.split()
         auth_token_type = auth_header[0]
+
         # Check if authorization type is valid
         if auth_token_type not in ALLOWED_AUTHORIZATION_TYPES:
             app.log.error(f"Invalid Authorization Header Type: {auth_token_type}")
             raise ValueError("Could not verify authorization type")
+
         # Extract the token from the authorization header
         token = auth_header[1]
 
-        match auth_token_type:
-            case "Bearer":
-                is_token_valid = verify_token(token)
-                if is_token_valid:
-                    # Token is valid
-                    # Return allowed routes
+        # We can check the token issuer for more security
+        # token_issuer = get_token_issuer(token)
+        # base_url = "http://localhost:8000"
 
-                    allowed_routes.append("*")
-                    principal_id = get_token_subject(token)
-                else:
-                    raise ValueError("Invalid Token")
+        # # Only accepts own token. Not Google's token
+        # if token_issuer != base_url:
+        #     raise ValueError("Invalid Token Issuer")
 
-            case "Basic":
-                # Decode Basic token and return allowed routes
-                # I'm thinking using panel@email.com:current-date
-                pass
-            case _:
-                raise ValueError("Invalid Authorization Header Type")
+        decoded_token = verify_token(token)
+
+        if decoded_token is None:
+            raise ValueError("Invalid or Expired Token")
+
+        # At this point the token is valid and verified
+        # Proceed to fetch user roles and match allowed routes
+
+        allowed_routes.append("*")
+        principal_id = get_token_subject(token)
 
     except exceptions.GoogleAuthError as e:
         # Token is invalid
@@ -337,7 +338,6 @@ def get_all_users():
     """
     User route, testing purposes.
     """
-
     try:
         return get_user_db().list_users()
     except Exception as e:
