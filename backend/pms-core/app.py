@@ -1,8 +1,6 @@
 """Main application file for the PMS Core API."""
 
 import jwt
-
-
 import boto3
 import uuid
 import pandas as pd
@@ -28,6 +26,12 @@ from chalicelib.config import (
 )
 from chalicelib.constants import BOTO3_DYNAMODB_TYPE, REQUEST_CONTENT_TYPE_JSON
 from chalicelib import db
+from chalicelib.utils import (
+    verify_token,
+    get_token_subject,
+    get_token_issuer,
+    get_token_email,
+)
 from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -113,16 +117,12 @@ def token_authorizer(auth_request):
 
         match auth_token_type:
             case "Bearer":
-
-                # Try to validate with custom TOKEN
-
-                # Validate the JWT token using Google's OAuth2 v2 API
-                request = requests.Request()
-                id_info = id_token.verify_oauth2_token(
-                    token, request, GOOGLE_AUTH_CLIENT_ID
-                )
-                allowed_routes.append("*")
-                principal_id = id_info["sub"]
+                is_token_valid = verify_token(token)
+                if is_token_valid:
+                    # Token is valid
+                    # Return allowed routes
+                    allowed_routes.append("*")
+                    principal_id = "asdf"
 
             case "Basic":
                 # Decode Basic token and return allowed routes
@@ -153,19 +153,33 @@ def index():
 
 
 @app.route(
-    "/register",
-    methods=["GET"],
+    "/token/create",
+    methods=["POST"],
 )
-def register():
-    # google_id = app.current_request.context["authorizer"]["principalId"]
-    google_id = "116168957696290474296"
-    tamu_email = "joaquin.gimenez@tamu.edu"
-    try:
+def create_token():
+    """Need to recieive a token, decoded and return a new custom token with internal user ID"""
 
-        users_found = get_user_db().get_user_by_google_id(google_id)
+    try:
+        json_body = app.current_request.json_body
+        incoming_token = json_body["token"]
+
+        is_token_valid = verify_token(incoming_token)
+
+        if not is_token_valid:
+            raise ValueError("Invalid Token")
+
+        # Need to validate the token subject?? It is not needed?
+        token_issuer = get_token_issuer(incoming_token)
+
+        if token_issuer != "https://accounts.google.com":
+            raise ValueError("Invalid Token Issuer")
+        token_subject = get_token_subject(incoming_token)
+
+        users_found = get_user_db().get_user_by_google_id(token_subject)
         # Check if result was found
         if not users_found:
-            users_found = get_user_db().get_user_by_email(tamu_email)
+            user_email = get_token_email(incoming_token)
+            users_found = get_user_db().get_user_by_email(user_email)
             # Put the google ID in the place
             # updated_user = get_user_db().update_user()
             # return {"user": users_found}
@@ -173,7 +187,7 @@ def register():
         user = users_found[0]
 
         current_time = datetime.now(tz=timezone.utc)
-        expiration = datetime.now(tz=timezone.utc) + timedelta(minutes=3)
+        expiration = datetime.now(tz=timezone.utc) + timedelta(minutes=10)
 
         payload_data = {
             "iss": app.app_name,
@@ -195,8 +209,8 @@ def register():
     return {"token": token}
 
 
-@app.route("/generate-token")
-def generate_token():
+@app.route("/token/decode")
+def decode_token():
     try:
         json_body = app.current_request.json_body
         incoming_token = json_body["token"]
@@ -209,6 +223,7 @@ def generate_token():
         # We need these to check if we want to decode our own token or google token
         match unverified_token["iss"]:
             case app.app_name:
+                # Own token with our data!
                 header_data = jwt.get_unverified_header(incoming_token)
                 decoded_token = jwt.decode(
                     incoming_token,
@@ -218,13 +233,12 @@ def generate_token():
                         header_data["alg"],
                     ],
                 )
-                pass
             case "https://accounts.google.com":
+                # Google token with Google's data
                 request = requests.Request()
                 decoded_token = id_token.verify_oauth2_token(
                     incoming_token, request, GOOGLE_AUTH_CLIENT_ID
                 )
-                pass
             case _:
                 raise ValueError("Invalid Token Issuer")
 
@@ -337,7 +351,7 @@ def get_user(id):
 @app.route(
     "/howdycsv",
     methods=["POST"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
     content_types=["text/plain"],
 )
 def get_student_data():
