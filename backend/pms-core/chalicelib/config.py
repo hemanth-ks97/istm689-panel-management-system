@@ -18,3 +18,6 @@ USER_TABLE_NAME = os.environ.get("DYNAMODB_USER_TABLE_NAME", "JoaquinUserTest")
 QUESTION_TABLE_NAME = os.environ.get(
     "DYNAMODB_QUESTION_TABLE_NAME", "JoaquinQuestionTest"
 )
+
+# JWT secret key
+JWT_SECRET = os.environ.get("JWT_SECRET", "8iCGu6XmF1OyWoR9v4WZ3gMQnX9HW7Sk")

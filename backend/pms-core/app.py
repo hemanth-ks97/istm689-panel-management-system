@@ -1,5 +1,6 @@
 """Main application file for the PMS Core API."""
 
+import jwt
 import boto3
 import uuid
 import pandas as pd
@@ -21,13 +22,22 @@ from chalicelib.config import (
     ALLOWED_AUTHORIZATION_TYPES,
     USER_TABLE_NAME,
     QUESTION_TABLE_NAME,
+    JWT_SECRET,
 )
 from chalicelib.constants import BOTO3_DYNAMODB_TYPE, REQUEST_CONTENT_TYPE_JSON
 from chalicelib import db
+from chalicelib.utils import (
+    verify_token,
+    get_token_subject,
+    get_token_issuer,
+    get_token_email,
+    get_base_url,
+)
 from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+from jwt.exceptions import ExpiredSignatureError
 
 app = Chalice(app_name=f"{ENV}-pms-core")
 _USER_DB = None
@@ -86,7 +96,7 @@ app.api.cors = CORSConfig(
 
 
 @app.authorizer()
-def google_oauth2_authorizer(auth_request):
+def token_authorizer(auth_request):
     """
     Lambda function to check authorization of incoming requests.
     """
@@ -95,33 +105,36 @@ def google_oauth2_authorizer(auth_request):
     try:
         # Expects token in the "Authorization" header of incoming request
         # ---> Format: "{"Authorization": "Bearer <token>"}"
-        # ---> Format: "{"Authorization": "Basic <token>"}"
         # Extract the token from the incoming request
         auth_header = auth_request.token.split()
         auth_token_type = auth_header[0]
+
         # Check if authorization type is valid
         if auth_token_type not in ALLOWED_AUTHORIZATION_TYPES:
             app.log.error(f"Invalid Authorization Header Type: {auth_token_type}")
             raise ValueError("Could not verify authorization type")
+
         # Extract the token from the authorization header
         token = auth_header[1]
 
-        match auth_token_type:
-            case "Bearer":
-                request = requests.Request()
-                # Validate the JWT token using Google's OAuth2 v2 API
-                id_info = id_token.verify_oauth2_token(
-                    token, request, GOOGLE_AUTH_CLIENT_ID
-                )
-                allowed_routes.append("*")
-                principal_id = id_info["sub"]
+        # We can check the token issuer for more security
+        # token_issuer = get_token_issuer(token)
+        # base_url = "http://localhost:8000"
 
-            case "Basic":
-                # Decode Basic token and return allowed routes
-                # I'm thinking using panel@email.com:current-date
-                pass
-            case _:
-                raise ValueError("Invalid Authorization Header Type")
+        # # Only accepts own token. Not Google's token
+        # if token_issuer != base_url:
+        #     raise ValueError("Invalid Token Issuer")
+
+        decoded_token = verify_token(token)
+
+        if decoded_token is None:
+            raise ValueError("Invalid or Expired Token")
+
+        # At this point the token is valid and verified
+        # Proceed to fetch user roles and match allowed routes
+
+        allowed_routes.append("*")
+        principal_id = get_token_subject(token)
 
     except exceptions.GoogleAuthError as e:
         # Token is invalid
@@ -145,9 +158,114 @@ def index():
 
 
 @app.route(
+    "/token/create",
+    methods=["POST"],
+)
+def create_token():
+    """Need to recieive a token, decoded and return a new custom token with internal user ID"""
+    user = None
+    try:
+        json_body = app.current_request.json_body
+        incoming_token = json_body["token"]
+
+        valid_and_verified_token = verify_token(incoming_token)
+
+        if not valid_and_verified_token:
+            raise ValueError("Invalid Token")
+
+        # Need to validate the token subject?? It is not needed?
+        token_issuer = get_token_issuer(incoming_token)
+
+        if token_issuer != "https://accounts.google.com":
+            raise ValueError("Invalid Token Issuer")
+        token_subject = get_token_subject(incoming_token)
+
+        users_found = get_user_db().get_user_by_google_id(token_subject)
+
+        # Check if result was found
+        if not users_found:
+            user_email = get_token_email(incoming_token)
+            users_found = get_user_db().get_user_by_email(user_email)
+            user = users_found[0]
+            # Add google ID to the register
+            user["GoogleID"] = token_subject
+            user["UpdatedAt"] = datetime.now().isoformat()
+            # Update user
+            get_user_db().update_user(user)
+
+        # Does not have the updated items
+        user = users_found[0]
+        base_url = get_base_url(app.current_request)
+        current_time = datetime.now(tz=timezone.utc)
+        expiration = datetime.now(tz=timezone.utc) + timedelta(minutes=30)
+
+        payload_data = {
+            "iss": base_url,
+            "aud": app.app_name,
+            "iat": current_time,
+            "nbf": current_time,
+            "exp": expiration,
+            "sub": user["UserID"],
+            "email": user["EmailID"],
+            "name": valid_and_verified_token["name"],
+            "picture": valid_and_verified_token["picture"],
+        }
+
+        token = jwt.encode(
+            payload=payload_data,
+            key=JWT_SECRET,
+            algorithm="HS256",
+        )
+    except Exception:
+        # Not always true but this is a Chalice Exception
+        raise NotFoundError("User not found")
+
+    return {"token": token}
+
+
+@app.route("/token/decode")
+def decode_token():
+    try:
+        json_body = app.current_request.json_body
+        incoming_token = json_body["token"]
+        decoded_token = None
+        # Decode token without verifying signature to check issuer and decode it properly
+        unverified_token = jwt.decode(
+            incoming_token, options={"verify_signature": False}
+        )
+        # Check unverified token issuer
+        # We need these to check if we want to decode our own token or google token
+        match unverified_token["iss"]:
+            case app.app_name:
+                # Own token with our data!
+                header_data = jwt.get_unverified_header(incoming_token)
+                decoded_token = jwt.decode(
+                    incoming_token,
+                    JWT_SECRET,
+                    audience=app.app_name,
+                    algorithms=[
+                        header_data["alg"],
+                    ],
+                )
+            case "https://accounts.google.com":
+                # Google token with Google's data
+                request = requests.Request()
+                decoded_token = id_token.verify_oauth2_token(
+                    incoming_token, request, GOOGLE_AUTH_CLIENT_ID
+                )
+            case _:
+                raise ValueError("Invalid Token Issuer")
+
+        return {"decoded_token": decoded_token}
+
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.route(
     "/question",
     methods=["GET"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
 )
 def get_all_questions():
     """
@@ -163,7 +281,7 @@ def get_all_questions():
 @app.route(
     "/question/{id}",
     methods=["GET"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
 )
 def get_question(id):
     """
@@ -178,7 +296,7 @@ def get_question(id):
 @app.route(
     "/question",
     methods=["POST"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def add_new_question():
@@ -191,14 +309,12 @@ def add_new_question():
         if "question" not in incoming_json:
             raise BadRequestError("Key 'question' not found in incoming request")
 
-        # Fetch principalID (Google ID) from incoming request.
-        google_id = app.current_request.context["authorizer"]["principalId"]
-        # TODO: Add user db get UserID by GoogleID... It will be easier for us later on
+        user_id = app.current_request.context["authorizer"]["principalId"]
         origin_ip = app.current_request.context["identity"]["sourceIp"]
         # Build Question object for database
         new_question = dict()
         new_question["QuestionID"] = str(uuid.uuid4())
-        new_question["GoogleID"] = google_id
+        new_question["UserID"] = user_id
         new_question["OriginIP"] = origin_ip
         new_question["CreatedAt"] = datetime.now().isoformat()
         new_question["Question"] = incoming_json["question"]
@@ -216,13 +332,12 @@ def add_new_question():
 @app.route(
     "/user",
     methods=["GET"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
 )
 def get_all_users():
     """
     User route, testing purposes.
     """
-
     try:
         return get_user_db().list_users()
     except Exception as e:
@@ -232,7 +347,7 @@ def get_all_users():
 @app.route(
     "/user/{id}",
     methods=["GET"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
 )
 def get_user(id):
     """
@@ -247,7 +362,7 @@ def get_user(id):
 @app.route(
     "/howdycsv",
     methods=["POST"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
     content_types=["text/plain"],
 )
 def get_student_data():
@@ -298,7 +413,7 @@ def get_student_data():
 @app.route(
     "/user",
     methods=["POST"],
-    authorizer=google_oauth2_authorizer,
+    authorizer=token_authorizer,
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def add_new_user():

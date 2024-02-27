@@ -20,15 +20,31 @@ import { setUser, clearUser } from "../../store/slices/userSlice";
 import { useNavigate } from "react-router-dom";
 // Import TAMU logo
 import tamuLogo from "../../images/tamu-logo.svg";
+import { httpClient } from "../../client";
 
 const LoginCard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleOnSuccess = ({ credential }) => {
-    dispatch(setUser(credential));
-    // Redirect to home page after succesfull login
-    navigate("/");
+    // Receive Google Token and generate a new custom token
+    const data = { token: credential };
+
+    httpClient
+      .post("/token/create", data)
+      .then((response) => {
+        // Store Google Picture from the initial token
+        // Probably need to add to the custom token!
+        // Store the pms issued token
+
+        dispatch(setUser(response?.data?.token));
+
+        navigate("/");
+      })
+      .catch((error) => {
+        console.log("ERROR", error.message);
+        dispatch(clearUser());
+      });
   };
 
   const handleOnError = () => {
