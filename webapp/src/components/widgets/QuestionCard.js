@@ -11,7 +11,7 @@ import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import FlagIcon from "@mui/icons-material/Flag";
 
-const QuestionCard = ({ questionText, questionID }) => {
+const QuestionCard = ({ questionText, questionID, questionNumber}) => {
 
   const handleDislike = () => {
     console.log(`Question  ${questionID} disliked`);
@@ -30,7 +30,7 @@ const QuestionCard = ({ questionText, questionID }) => {
       <Card sx={{ minWidth: 275 }}>
         <CardContent>
           <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-            Question {questionID}
+            Question {questionNumber}
           </Typography>
           <Typography variant="h5" component="div">
             {questionText}

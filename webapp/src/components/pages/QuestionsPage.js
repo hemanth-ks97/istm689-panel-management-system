@@ -89,6 +89,7 @@ const QuestionsPage = () => {
                 <QuestionCard
                   questionText={question?.Question}
                   questionID={question?.QuestionID}
+                  questionNumber = {idx+1}
                 />
               </ListItem>
             );
