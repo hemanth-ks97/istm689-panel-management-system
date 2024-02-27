@@ -12,6 +12,7 @@ import {
 import { useSelector } from "react-redux";
 // Utils
 import { httpClient } from "../../client";
+import QuestionCard from "../widgets/QuestionCard";
 
 const QuestionsPage = () => {
   const { user } = useSelector((state) => state.user);
@@ -85,9 +86,9 @@ const QuestionsPage = () => {
           {allQuestions.map((question, idx) => {
             return (
               <ListItem key={idx}>
-                <ListItemText
-                  primary={`#${idx} - ${question?.Question}`}
-                  secondary={`QuestionID: ${question?.QuestionID}`}
+                <QuestionCard
+                  questionText={question?.Question}
+                  questionID={question?.QuestionID}
                 />
               </ListItem>
             );
