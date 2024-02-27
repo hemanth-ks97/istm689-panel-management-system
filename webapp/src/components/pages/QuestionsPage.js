@@ -1,13 +1,6 @@
 import React, { useState } from "react";
 // MUI
-import {
-  Typography,
-  TextField,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-} from "@mui/material";
+import { Typography, TextField, Button, List, ListItem } from "@mui/material";
 // Redux
 import { useSelector } from "react-redux";
 // Utils
@@ -89,7 +82,7 @@ const QuestionsPage = () => {
                 <QuestionCard
                   questionText={question?.Question}
                   questionID={question?.QuestionID}
-                  questionNumber = {idx+1}
+                  questionNumber={idx + 1}
                 />
               </ListItem>
             );
