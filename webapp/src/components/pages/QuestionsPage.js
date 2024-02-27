@@ -20,13 +20,21 @@ const QuestionsPage = () => {
   };
   const handleOnSubmit = () => {
     setIsApiWaiting(true);
+    if (question === "") {
+      console.error("Question cannot be empty");
+      setIsApiWaiting(false);
+      return;
+    }
 
-    const data = { question: question };
+    const data = { question: question.trim() };
     httpClient
       .post("/question", data, {
         headers: headers,
       })
-      .then((response) => console.log(response))
+      .then((response) => {
+        setQuestion("");
+        console.log(response);
+      })
       .catch((error) => console.error(error))
       .finally(() => setIsApiWaiting(false));
   };
