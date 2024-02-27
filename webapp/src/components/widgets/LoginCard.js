@@ -20,6 +20,7 @@ import { setUser, clearUser } from "../../store/slices/userSlice";
 import { useNavigate } from "react-router-dom";
 // Import TAMU logo
 import tamuLogo from "../../images/tamu-logo.svg";
+import { httpClient } from "../../client";
 
 const LoginCard = () => {
   const navigate = useNavigate();
@@ -27,6 +28,15 @@ const LoginCard = () => {
 
   const handleOnSuccess = ({ credential }) => {
     dispatch(setUser(credential));
+
+    // Turn ON LOADING SCREEN
+
+    const data = { token: credential };
+
+    httpClient.post("/token/create", data).then((response) => {
+      console.log("Response", JSON.stringify(response));
+    });
+
     // Redirect to home page after succesfull login
     navigate("/");
   };
