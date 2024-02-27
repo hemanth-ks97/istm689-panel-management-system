@@ -16,7 +16,7 @@ const QuestionsPage = () => {
 
   const headers = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${user?.raw_token}`,
+    Authorization: `Bearer ${user?.token}`,
   };
   const handleOnSubmit = () => {
     setIsApiWaiting(true);

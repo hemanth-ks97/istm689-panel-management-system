@@ -8,17 +8,25 @@ export const userSlice = createSlice({
   },
   reducers: {
     setUser: (state, action) => {
-      state.user = jwtDecode(action.payload);
-      // Store raw token too
-      state.user.raw_token = action.payload;
+      const fullUser = jwtDecode(action.payload);
+      // Discard what we don't need!
+      state.user = {
+        email: fullUser.email,
+        name: fullUser.name,
+        picture: fullUser.picture,
+        googleToken: action.payload,
+      };
     },
     clearUser: (state) => {
       state.user = null;
+    },
+    setToken: (state, action) => {
+      state.user.token = action.payload;
     },
   },
 });
 
 // Action creators are generated for each case reducer function
-export const { setUser, clearUser } = userSlice.actions;
+export const { setUser, setToken, clearUser } = userSlice.actions;
 
 export default userSlice.reducer;

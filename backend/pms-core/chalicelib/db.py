@@ -78,6 +78,9 @@ class UserDB(object):
     def update_user(self, user):
         pass
 
+    def add_user_google_id(self, user_id, google_id):
+        pass
+
     def get_user_by_google_id(self, google_id):
         pass
 
@@ -109,10 +112,18 @@ class DynamoUserDB(UserDB):
         return response["Items"]
 
     def add_user(self, user):
-        self._table.put_item(Item=user)
+        return self._table.put_item(Item=user)
 
     def update_user(self, user):
-        self._table.update(user)
+        return self._table.put_item(Item=user)
+
+    def add_user_google_id(self, user_id, google_id):
+        return self._table.update_item(
+            Key={"UserID": user_id},
+            AttributeUpdates={
+                "GoogleID": google_id,
+            },
+        )
 
     def get_user(self, user_id):
         response = self._table.get_item(
@@ -127,7 +138,7 @@ class DynamoUserDB(UserDB):
         return response["Items"]
 
     def get_user_by_email(self, email):
-        response = self._table.scan(FilterExpression=Attr("Email").eq(email))
+        response = self._table.scan(FilterExpression=Attr("EmailID").eq(email))
         return response["Items"]
 
     def delete_user(self, user_id):

@@ -121,8 +121,11 @@ def token_authorizer(auth_request):
                 if is_token_valid:
                     # Token is valid
                     # Return allowed routes
+
                     allowed_routes.append("*")
-                    principal_id = "asdf"
+                    principal_id = get_token_subject(token)
+                else:
+                    raise ValueError("Invalid Token")
 
             case "Basic":
                 # Decode Basic token and return allowed routes
@@ -158,7 +161,7 @@ def index():
 )
 def create_token():
     """Need to recieive a token, decoded and return a new custom token with internal user ID"""
-
+    user = None
     try:
         json_body = app.current_request.json_body
         incoming_token = json_body["token"]
@@ -176,18 +179,22 @@ def create_token():
         token_subject = get_token_subject(incoming_token)
 
         users_found = get_user_db().get_user_by_google_id(token_subject)
+
         # Check if result was found
         if not users_found:
             user_email = get_token_email(incoming_token)
             users_found = get_user_db().get_user_by_email(user_email)
-            # Put the google ID in the place
-            # updated_user = get_user_db().update_user()
-            # return {"user": users_found}
+            user = users_found[0]
+            # Add google ID to the register
+            user["GoogleID"] = token_subject
+            user["UpdatedAt"] = datetime.now().isoformat()
+            # Update user
+            get_user_db().update_user(user)
 
+        # Does not have the updated items
         user = users_found[0]
-
         current_time = datetime.now(tz=timezone.utc)
-        expiration = datetime.now(tz=timezone.utc) + timedelta(minutes=10)
+        expiration = datetime.now(tz=timezone.utc) + timedelta(minutes=30)
 
         payload_data = {
             "iss": app.app_name,
@@ -204,8 +211,10 @@ def create_token():
             key=JWT_SECRET,
             algorithm="HS256",
         )
-    except Exception as e:
-        return {"error": str(e)}
+    except Exception:
+        # Not always true but this is a Chalice Exception
+        raise NotFoundError("User not found")
+
     return {"token": token}
 
 
@@ -295,14 +304,12 @@ def add_new_question():
         if "question" not in incoming_json:
             raise BadRequestError("Key 'question' not found in incoming request")
 
-        # Fetch principalID (Google ID) from incoming request.
-        google_id = app.current_request.context["authorizer"]["principalId"]
-        # TODO: Add user db get UserID by GoogleID... It will be easier for us later on
+        user_id = app.current_request.context["authorizer"]["principalId"]
         origin_ip = app.current_request.context["identity"]["sourceIp"]
         # Build Question object for database
         new_question = dict()
         new_question["QuestionID"] = str(uuid.uuid4())
-        new_question["GoogleID"] = google_id
+        new_question["UserID"] = user_id
         new_question["OriginIP"] = origin_ip
         new_question["CreatedAt"] = datetime.now().isoformat()
         new_question["Question"] = incoming_json["question"]

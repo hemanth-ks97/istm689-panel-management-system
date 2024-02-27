@@ -3,7 +3,7 @@ from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-from .config import JWT_SECRET, GOOGLE_AUTH_CLIENT_ID
+from .config import JWT_SECRET, GOOGLE_AUTH_CLIENT_ID, ENV
 
 
 def decode_and_validate_google_token(token):
@@ -20,7 +20,7 @@ def decode_and_validate_custom_token(token):
         return decode(
             token,
             JWT_SECRET,
-            audience="dev-pms-core",
+            audience="local-pms-core",
             algorithms=[
                 header_data["alg"],
             ],
@@ -36,16 +36,21 @@ def verify_token(token):
 
     # We need these to check if we want to decode our own token or google token
     match token_issuer:
-        case "dev-pms-core":
+        case "local-pms-core":
+            print("HEREEEEE")
             # Own token with our data!
             decoded_token = decode_and_validate_custom_token(token)
+            print(decoded_token)
 
         case "https://accounts.google.com":
+            print("HERE")
+
             # Google token with Google's data
             decoded_token = decode_and_validate_google_token(token)
         case _:
+            print("here")
             # Unknown issuer
-            pass
+            # pass
 
     if decoded_token is None:
         return False
