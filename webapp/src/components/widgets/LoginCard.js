@@ -15,7 +15,7 @@ import {
 import { GoogleLogin } from "@react-oauth/google";
 // Redux
 import { useDispatch } from "react-redux";
-import { setUser, clearUser, setToken } from "../../store/slices/userSlice";
+import { setUser, clearUser } from "../../store/slices/userSlice";
 // React Router
 import { useNavigate } from "react-router-dom";
 // Import TAMU logo
@@ -33,15 +33,16 @@ const LoginCard = () => {
     httpClient
       .post("/token/create", data)
       .then((response) => {
-        dispatch(setUser(credential));
-        dispatch(setToken(response?.data?.token));
+        // Store Google Picture from the initial token
+        // Probably need to add to the custom token!
+        // Store the pms issued token
+        dispatch(setUser(response?.data?.token));
+        navigate("/");
       })
       .catch((error) => {
         console.log("ERROR", error.message);
+        dispatch(clearUser());
       });
-
-    // Redirect to home page after succesfull login
-    navigate("/");
   };
 
   const handleOnError = () => {

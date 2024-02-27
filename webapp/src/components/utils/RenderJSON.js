@@ -14,7 +14,7 @@ const RenderJSON = () => {
   return (
     <>
       <p></p>
-      <Typography>Decoded Token:</Typography>
+      <Typography>User Object in browser</Typography>
       <p></p>
       <pre>{JSON.stringify(user, null, 2)}</pre>
     </>

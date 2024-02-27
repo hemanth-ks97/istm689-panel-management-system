@@ -36,26 +36,18 @@ def verify_token(token):
 
     # We need these to check if we want to decode our own token or google token
     match token_issuer:
-        case "local-pms-core":
-            print("HEREEEEE")
+        # TODO, make this dynamic
+        case "http://localhost:8000":
             # Own token with our data!
             decoded_token = decode_and_validate_custom_token(token)
-            print(decoded_token)
-
         case "https://accounts.google.com":
-            print("HERE")
-
             # Google token with Google's data
             decoded_token = decode_and_validate_google_token(token)
         case _:
-            print("here")
             # Unknown issuer
-            # pass
+            pass
 
-    if decoded_token is None:
-        return False
-    else:
-        return True
+    return decoded_token
 
 
 def get_token_email(token):
@@ -79,3 +71,15 @@ def get_token_issuer(token):
 def unverified_decode(token):
     """Decode token without verifying signature. Used to get the issuer."""
     return decode(token, options={"verify_signature": False})
+
+
+def get_base_url(request):
+    """Get the base URL of the request. Can be used to create links in the response."""
+    headers = request.headers
+    base_url = "%s://%s" % (
+        headers.get("x-forwarded-proto", "http"),
+        headers["host"],
+    )
+    if "stage" in request.context:
+        base_url = "%s/%s" % (base_url, request.context.get("stage"))
+    return base_url

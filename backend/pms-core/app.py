@@ -31,6 +31,7 @@ from chalicelib.utils import (
     get_token_subject,
     get_token_issuer,
     get_token_email,
+    get_base_url,
 )
 from google.auth import exceptions
 from google.oauth2 import id_token
@@ -104,7 +105,7 @@ def token_authorizer(auth_request):
     try:
         # Expects token in the "Authorization" header of incoming request
         # ---> Format: "{"Authorization": "Bearer <token>"}"
-        # ---> Format: "{"Authorization": "Basic <token>"}"
+
         # Extract the token from the incoming request
         auth_header = auth_request.token.split()
         auth_token_type = auth_header[0]
@@ -166,9 +167,9 @@ def create_token():
         json_body = app.current_request.json_body
         incoming_token = json_body["token"]
 
-        is_token_valid = verify_token(incoming_token)
+        valid_and_verified_token = verify_token(incoming_token)
 
-        if not is_token_valid:
+        if not valid_and_verified_token:
             raise ValueError("Invalid Token")
 
         # Need to validate the token subject?? It is not needed?
@@ -193,17 +194,20 @@ def create_token():
 
         # Does not have the updated items
         user = users_found[0]
+        base_url = get_base_url(app.current_request)
         current_time = datetime.now(tz=timezone.utc)
         expiration = datetime.now(tz=timezone.utc) + timedelta(minutes=30)
 
         payload_data = {
-            "iss": app.app_name,
-            "sub": user["UserID"],
+            "iss": base_url,
             "aud": app.app_name,
-            "exp": expiration,
-            "nbf": current_time,
             "iat": current_time,
-            "roles": ["admin"],
+            "nbf": current_time,
+            "exp": expiration,
+            "sub": user["UserID"],
+            "email": user["EmailID"],
+            "name": valid_and_verified_token["name"],
+            "picture": valid_and_verified_token["picture"],
         }
 
         token = jwt.encode(
