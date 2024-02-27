@@ -1,17 +1,11 @@
 import React, { useState } from "react";
 // MUI
-import {
-  Typography,
-  TextField,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-} from "@mui/material";
+import { Typography, TextField, Button, List, ListItem } from "@mui/material";
 // Redux
 import { useSelector } from "react-redux";
 // Utils
 import { httpClient } from "../../client";
+import QuestionCard from "../widgets/QuestionCard";
 
 const QuestionsPage = () => {
   const { user } = useSelector((state) => state.user);
@@ -85,9 +79,10 @@ const QuestionsPage = () => {
           {allQuestions.map((question, idx) => {
             return (
               <ListItem key={idx}>
-                <ListItemText
-                  primary={`#${idx} - ${question?.Question}`}
-                  secondary={`QuestionID: ${question?.QuestionID}`}
+                <QuestionCard
+                  questionText={question?.Question}
+                  questionID={question?.QuestionID}
+                  questionNumber={idx + 1}
                 />
               </ListItem>
             );
