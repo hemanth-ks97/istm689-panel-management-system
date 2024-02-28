@@ -370,10 +370,19 @@ def get_student_data():
 
         # Converting the rows in the df into dictonary objects for storing into the users database
         records = df.to_dict(orient="records")
-
         # Put users into a DynamoDB
         for record in records:
-            get_user_db().add_user(record)
+
+            new_user = {
+                "UserID": record["UserID"],
+                "FName": record["FIRST NAME"],
+                "LName": record["LAST NAME"],
+                "EmailID": record["EMAIL"],
+                "UIN": record["UIN"],
+                "Role": "student",
+                "CreatedAt": datetime.now().isoformat(),
+            }
+            get_user_db().add_user(new_user)
 
         return Response(
             body={"message": f"CSV processed successfully with {len(df)} records"},
