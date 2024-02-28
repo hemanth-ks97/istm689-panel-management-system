@@ -1,0 +1,23 @@
+{
+  "Users": [
+  {
+    "UserID": "UIN",
+    "GoogleID": "GoogleID",
+    "EmailID": "user@example.com",
+    "FName": "FirstName",
+    "LName": "LastName",
+    "UserRole": "Student/Admin/Moderator/Panelist",
+    "AssignedPanel": "",
+    "ProfilePicture": "imageLink"
+  },
+  {
+    "UserID": "UIN",
+    "GoogleID": "GoogleID",
+    "EmailID": "user@example.com",
+    "FName": "FirstName",
+    "LName": "LastName",
+    "UserRole": "Student/Admin/Moderator/Panelist",
+    "AssignedPanel": "",
+    "ProfilePicture": "imageLink"
+  }
+}

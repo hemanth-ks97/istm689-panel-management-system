@@ -1,0 +1,20 @@
+## Questions ##
+
+1. Get all questions from a panel for likes/dislikes
+select questions where panel = ""
+
+2. Get top scored questions from the panel for voting
+select questions where panel = ""
+order by score
+
+3. Get top scored questions to the panel member
+select questions where panel = ""
+order by score
+
+?? questions inside panel ??
+
+## Grades ##
+
+1. Get grades for student for that panel
+select grades where panel ="" and student = ""
+

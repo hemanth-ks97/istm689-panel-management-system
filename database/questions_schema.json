@@ -1,0 +1,41 @@
+
+
+{
+  "Questions": [
+    {
+      "QuestionID": "questionID4",
+      "StudentID": "UIN7638",
+      "ModuleID": "uniqueModuleID1",
+      "QuestionText": "questionText4",
+      "LikeCount": "likeCount",
+      "DislikeCount": "dislikeCount",
+      "NeutralCount": "neutralCount",
+      "FlaggedBy": [
+        "user5ID",
+        "user6ID"
+      ],
+      "SimilarTo": [
+        "question5ID",
+        "question6ID"
+      ],
+      "VoteScore": "voteScore",
+      "QuestionTimestamp": "questionTimestamp"
+    },
+    {
+      "QuestionID": "questionID4",
+      "QuestionText": "questionText4",
+      "LikeCount": "likeCount",
+      "DislikeCount": "dislikeCount",
+      "FlaggedBy": [
+        "user5ID",
+        "user6ID"
+      ],
+      "SimilarTo": [
+        "question5ID",
+        "question6ID"
+      ],
+      "VoteScore": "voteScore",
+      "QuestionTimestamp": "questionTimestamp"
+    }
+  ]
+}
