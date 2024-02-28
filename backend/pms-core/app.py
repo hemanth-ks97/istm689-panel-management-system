@@ -198,7 +198,7 @@ def create_token():
         # Does not have the updated items
         user = users_found[0]
         current_time = datetime.now(tz=timezone.utc)
-        expiration = datetime.now(tz=timezone.utc) + timedelta(minutes=30)
+        expiration = datetime.now(tz=timezone.utc) + timedelta(days=7)
 
         payload_data = {
             "iss": JWT_ISSUER,
