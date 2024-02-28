@@ -10,8 +10,12 @@ import HomePage from "./components/pages/HomePage";
 import LoginPage from "./components/pages/LoginPage";
 import ProfilePage from "./components/pages/ProfilePage";
 import AdminPage from "./components/pages/AdminPage";
+import QuestionsPage from "./components/pages/QuestionsPage";
+import GradesPage from "./components/pages/GradesPage";
+import VotingPage from "./components/pages/VotingPage";
 import PrivacyPage from "./components/pages/PrivacyPage";
 import TermsPage from "./components/pages/TermsPage";
+import NotFoundPage from "./components/pages/NotFoundPage";
 
 const App = () => {
   const { user } = useSelector((state) => state.user);
@@ -20,10 +24,15 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         {/* Need auth users to visit these pages */}
+        {/* Student allowed routes */}
         <Route element={<PrivateRoutes isAllowed={!!user} />}>
           <Route element={<HomePage />} path="/" exact />
           <Route element={<ProfilePage />} path="/profile" />
+          <Route element={<QuestionsPage />} path="/questions" />
+          <Route element={<GradesPage />} path="/grades" />
+          <Route element={<VotingPage />} path="/voting" />
         </Route>
+        {/* TODO: Admin allowed routes */}
         <Route element={<PrivateRoutes isAllowed={!!user} />}>
           <Route element={<AdminPage />} path="/admin" />
         </Route>
@@ -31,6 +40,7 @@ const App = () => {
         <Route element={<PublicLayout />}>
           {/* Public pages */}
           <Route element={<LoginPage />} path="/login" />
+          <Route element={<NotFoundPage />} path="/notfound" />
           {/* Privacy and Terms are required to use Google oAuth2 client */}
           <Route element={<PrivacyPage />} path="/privacy" />
           <Route element={<TermsPage />} path="/terms" />

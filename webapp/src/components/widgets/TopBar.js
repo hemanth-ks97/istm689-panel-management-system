@@ -9,7 +9,10 @@ import {
   Typography,
   Menu,
   MenuItem,
+  Button,
 } from "@mui/material";
+//Icons
+import MenuIcon from "@mui/icons-material/Menu";
 // React Router
 import { useNavigate } from "react-router-dom";
 
@@ -22,8 +25,17 @@ import { ENV } from "../../config";
 const TopBar = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [anchorElNav, setAnchorElNav] = React.useState(null);
   const { user } = useSelector((state) => state.user);
   const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleOpenNavMenu = (event) => {
+    setAnchorElNav(event.currentTarget);
+  };
+
+  const handleCloseNavMenu = () => {
+    setAnchorElNav(null);
+  };
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -32,6 +44,37 @@ const TopBar = () => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const navigationOptions = [
+    {
+      name: "Dashboard",
+      handleOnClick: () => {
+        navigate("/");
+        handleCloseNavMenu();
+      },
+    },
+    {
+      name: "Questions",
+      handleOnClick: () => {
+        navigate("/questions");
+        handleCloseNavMenu();
+      },
+    },
+    {
+      name: "Voting",
+      handleOnClick: () => {
+        navigate("/voting");
+        handleCloseNavMenu();
+      },
+    },
+    {
+      name: "Grades",
+      handleOnClick: () => {
+        navigate("/grades");
+        handleCloseNavMenu();
+      },
+    },
+  ];
 
   const settings = [
     {
@@ -58,21 +101,74 @@ const TopBar = () => {
   ];
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box>
       <AppBar
         position="static"
         // Clearly differentiate from prod and dev environments
         color={ENV === "production" ? "primary" : "secondary"}
       >
-        <Toolbar>
+        <Toolbar disableGutters>
           <Typography
             color="white"
             variant="h6"
             component="div"
-            sx={{ flexGrow: 1 }}
+            sx={{
+              flexGrow: 0.05,
+              fontFamily: "monospace",
+              fontWeight: "800",
+              letterSpacing: ".1rem",
+            }}
           >
             Panel Management System
           </Typography>
+          <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
+            <IconButton
+              size="large"
+              aria-label="account of current user"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleOpenNavMenu}
+              color="inherit"
+            >
+              <MenuIcon />
+            </IconButton>
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorElNav}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "left",
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "left",
+              }}
+              open={Boolean(anchorElNav)}
+              onClose={handleCloseNavMenu}
+              sx={{
+                display: { xs: "block", md: "none" },
+              }}
+            >
+              {navigationOptions.map((option, idx) => (
+                <MenuItem key={idx} onClick={option.handleOnClick}>
+                  <Typography textAlign="center">{option.name}</Typography>
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
+          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
+            {navigationOptions.map((option, idx) => (
+              <Button
+                key={idx}
+                onClick={option.handleOnClick}
+                sx={{ my: 2, color: "white", display: "block" }}
+              >
+                {option.name}
+              </Button>
+            ))}
+          </Box>
+
           {user && (
             <div>
               <IconButton

@@ -12,15 +12,15 @@
       "lambda_arn": "arn:aws:lambda:us-east-1:767397884806:function:pms-core-dev"
     },
     {
-      "name": "google_oauth2_authorizer",
+      "name": "token_authorizer",
       "resource_type": "lambda_function",
-      "lambda_arn": "arn:aws:lambda:us-east-1:767397884806:function:pms-core-dev-google_oauth2_authorizer"
+      "lambda_arn": "arn:aws:lambda:us-east-1:767397884806:function:pms-core-dev-token_authorizer"
     },
     {
       "name": "rest_api",
       "resource_type": "rest_api",
-      "rest_api_id": "9ti9ei16i7",
-      "rest_api_url": "https://9ti9ei16i7.execute-api.us-east-1.amazonaws.com/dev/"
+      "rest_api_id": "dirj9d9i8k",
+      "rest_api_url": "https://dirj9d9i8k.execute-api.us-east-1.amazonaws.com/dev/"
     }
   ],
   "schema_version": "2.0",
