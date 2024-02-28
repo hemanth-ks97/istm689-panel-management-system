@@ -25,6 +25,7 @@ from chalicelib.config import (
     JWT_SECRET,
     JWT_AUDIENCE,
     JWT_ISSUER,
+    JWT_TOKEN_EXPIRATION_DAYS,
 )
 from chalicelib.constants import BOTO3_DYNAMODB_TYPE, REQUEST_CONTENT_TYPE_JSON
 from chalicelib import db
@@ -198,7 +199,9 @@ def create_token():
         # Does not have the updated items
         user = users_found[0]
         current_time = datetime.now(tz=timezone.utc)
-        expiration = datetime.now(tz=timezone.utc) + timedelta(days=7)
+        expiration = datetime.now(tz=timezone.utc) + timedelta(
+            days=int(JWT_TOKEN_EXPIRATION_DAYS)
+        )
 
         payload_data = {
             "iss": JWT_ISSUER,
