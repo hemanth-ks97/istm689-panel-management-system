@@ -54,14 +54,7 @@ const TopBar = () => {
       },
     },
     {
-      name: "Tag Questions",
-      handleOnClick: () => {
-        navigate("/questions");
-        handleCloseNavMenu();
-      },
-    },
-    {
-      name: "Submit Questions",
+      name: "Questions",
       handleOnClick: () => {
         navigate("/questions");
         handleCloseNavMenu();
