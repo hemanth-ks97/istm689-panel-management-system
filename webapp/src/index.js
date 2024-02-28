@@ -5,9 +5,12 @@ import reportWebVitals from "./reportWebVitals";
 
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { tamuTheme } from "./themes/tamuTheme";
-
+// Store
 import { PersistGate } from "redux-persist/integration/react";
 import { persistStore } from "redux-persist";
+
+// Notistack
+import { SnackbarProvider } from "notistack";
 
 // Google Provider
 import { GoogleOAuthProvider } from "@react-oauth/google";
@@ -25,12 +28,14 @@ root.render(
   <React.StrictMode>
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-          <ThemeProvider theme={tamuTheme}>
-            <CssBaseline enableColorScheme />
-            <App />
-          </ThemeProvider>
-        </GoogleOAuthProvider>
+        <SnackbarProvider>
+          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <ThemeProvider theme={tamuTheme}>
+              <CssBaseline enableColorScheme />
+              <App />
+            </ThemeProvider>
+          </GoogleOAuthProvider>
+        </SnackbarProvider>
       </PersistGate>
     </Provider>
   </React.StrictMode>

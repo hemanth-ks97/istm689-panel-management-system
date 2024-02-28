@@ -1,6 +1,6 @@
 import React from "react";
 // MUI
-import { Box, Button, Typography, Snackbar } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import UploadFileCard from "../widgets/UploadFileCard";
 const GradesPage = () => {
   return (
