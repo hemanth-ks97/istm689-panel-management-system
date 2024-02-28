@@ -23,7 +23,7 @@ const QuestionCard = ({ questionText, questionID, questionNumber }) => {
   const handleFlag = () => console.log(`Question  ${questionID} flagged`);
 
   return (
-    <Card sx={{ minWidth: 275 }}>
+    <Card sx={{ minWidth: 275, maxWidth: 400 }}>
       <CardContent>
         <Typography sx={{ fontSize: 14 }} color={"primary"} gutterBottom>
           Question {questionNumber}
