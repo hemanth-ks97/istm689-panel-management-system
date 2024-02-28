@@ -15,15 +15,19 @@ import {
   Flag as FlagIcon,
 } from "@mui/icons-material";
 
+import { useSnackbar } from "notistack";
+
 const QuestionCard = ({ questionText, questionID, questionNumber }) => {
-  const handleDislike = () => console.log(`Question  ${questionID} disliked`);
-
-  const handleLike = () => console.log(`Question  ${questionID} liked`);
-
-  const handleFlag = () => console.log(`Question  ${questionID} flagged`);
+  const { enqueueSnackbar } = useSnackbar();
+  const handleDislike = () =>
+    enqueueSnackbar(`Question disliked`, { variant: "error" });
+  const handleLike = () =>
+    enqueueSnackbar(`Question liked`, { variant: "success" });
+  const handleFlag = () =>
+    enqueueSnackbar(`Question flagged`, { variant: "warning" });
 
   return (
-    <Card sx={{ minWidth: 275 }}>
+    <Card sx={{ minWidth: 275, maxWidth: 400 }}>
       <CardContent>
         <Typography sx={{ fontSize: 14 }} color={"primary"} gutterBottom>
           Question {questionNumber}

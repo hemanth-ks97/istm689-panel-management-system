@@ -6,9 +6,11 @@ import { useSelector } from "react-redux";
 // Utils
 import { httpClient } from "../../client";
 import QuestionCard from "../widgets/QuestionCard";
+import { useSnackbar } from "notistack";
 
 const QuestionsPage = () => {
   const { user } = useSelector((state) => state.user);
+  const { enqueueSnackbar } = useSnackbar();
   const [question, setQuestion] = useState("");
   const [allQuestions, setAllQuestions] = useState([]);
 
@@ -21,7 +23,7 @@ const QuestionsPage = () => {
   const handleOnSubmit = () => {
     setIsApiWaiting(true);
     if (question === "") {
-      console.error("Question cannot be empty");
+      enqueueSnackbar("Question cannot be empty", { variant: "error" });
       setIsApiWaiting(false);
       return;
     }
@@ -32,10 +34,10 @@ const QuestionsPage = () => {
         headers: headers,
       })
       .then((response) => {
+        enqueueSnackbar("Submited!", { variant: "success" });
         setQuestion("");
-        console.log(response);
       })
-      .catch((error) => console.error(error))
+      .catch((error) => enqueueSnackbar(error.message, { variant: "error" }))
       .finally(() => setIsApiWaiting(false));
   };
 
@@ -48,8 +50,13 @@ const QuestionsPage = () => {
       })
       .then((response) => {
         setAllQuestions(response.data);
+        enqueueSnackbar(`Fetched ${response?.data?.length}  questions`, {
+          variant: "success",
+        });
       })
-      .catch((error) => console.error(error))
+      .catch((error) => {
+        enqueueSnackbar(error.message, { variant: "error" });
+      })
       .finally(() => setIsApiWaiting(false));
   };
 

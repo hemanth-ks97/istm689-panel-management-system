@@ -31,6 +31,7 @@ const App = () => {
           <Route element={<QuestionsPage />} path="/questions" />
           <Route element={<GradesPage />} path="/grades" />
           <Route element={<VotingPage />} path="/voting" />
+          <Route element={<QuestionsPage />} path="/path-for-module-1-questions" />
         </Route>
         {/* TODO: Admin allowed routes */}
         <Route element={<PrivateRoutes isAllowed={!!user} />}>

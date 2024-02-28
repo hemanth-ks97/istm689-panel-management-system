@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-// MUI
+
+import { useSnackbar } from "notistack";
 
 // HTTP Client
 import { httpClient } from "../../client";
+import { useSelector } from "react-redux";
+// MUI
 import { CloudUpload as CloudUploadIcon } from "@mui/icons-material";
 import { Button } from "@mui/material";
-import { useSelector } from "react-redux";
 
 import { styled } from "@mui/material/styles";
 
@@ -23,6 +25,8 @@ const VisuallyHiddenInput = styled("input")({
 
 const UploadFileCard = () => {
   const { user } = useSelector((state) => state.user);
+  const { enqueueSnackbar } = useSnackbar();
+
   const [isApiWaiting, setIsApiWaiting] = useState(false);
 
   const sendCSVToServer = (csvData) => {
@@ -34,8 +38,16 @@ const UploadFileCard = () => {
           "Content-Type": "text/plain",
         },
       })
-      .then((response) => console.log(JSON.stringify(response?.data, null, 2)))
-      .catch((err) => console.log(JSON.stringify(err.message, null, 2)))
+      .then((response) => {
+        enqueueSnackbar(JSON.stringify(response?.data?.message), {
+          variant: "success",
+        });
+      })
+      .catch((err) =>
+        enqueueSnackbar(err.message, {
+          variant: "error",
+        })
+      )
       .finally(() => setIsApiWaiting(false));
   };
 
@@ -46,7 +58,7 @@ const UploadFileCard = () => {
       reader.onload = (e) => {
         const csvData = e.target.result;
         sendCSVToServer(csvData);
-        event.target.value = '';
+        event.target.value = "";
       };
       reader.readAsText(file);
     }
