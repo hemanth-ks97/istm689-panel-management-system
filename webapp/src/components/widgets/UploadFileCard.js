@@ -24,7 +24,6 @@ const VisuallyHiddenInput = styled("input")({
 const UploadFileCard = () => {
   const { user } = useSelector((state) => state.user);
   const [isApiWaiting, setIsApiWaiting] = useState(false);
-  const [selectedHowdyFile, SetSelectedHowdyFile] = useState("");
 
   const sendCSVToServer = (csvData) => {
     setIsApiWaiting(true);
@@ -40,21 +39,16 @@ const UploadFileCard = () => {
       .finally(() => setIsApiWaiting(false));
   };
 
-  const handleHowdyCSVUpload = () => {
-    if (selectedHowdyFile) {
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const csvData = e.target.result;
         sendCSVToServer(csvData);
+        event.target.value = '';
       };
-      reader.readAsText(selectedHowdyFile);
-    }
-  };
-
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      SetSelectedHowdyFile(file);
+      reader.readAsText(file);
     }
   };
 
@@ -65,7 +59,6 @@ const UploadFileCard = () => {
       variant="contained"
       tabIndex={-1}
       disabled={isApiWaiting}
-      onClick={handleHowdyCSVUpload}
       startIcon={<CloudUploadIcon />}
     >
       Upload file
