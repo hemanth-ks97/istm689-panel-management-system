@@ -42,7 +42,6 @@ const UploadFileCard = () => {
 
   const handleHowdyCSVUpload = () => {
     if (selectedHowdyFile) {
-      setIsApiWaiting(true);
       const reader = new FileReader();
       reader.onload = (e) => {
         const csvData = e.target.result;
