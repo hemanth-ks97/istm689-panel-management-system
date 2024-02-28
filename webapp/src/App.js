@@ -15,6 +15,7 @@ import GradesPage from "./components/pages/GradesPage";
 import VotingPage from "./components/pages/VotingPage";
 import PrivacyPage from "./components/pages/PrivacyPage";
 import TermsPage from "./components/pages/TermsPage";
+import NotFoundPage from "./components/pages/NotFoundPage";
 
 const App = () => {
   const { user } = useSelector((state) => state.user);
@@ -39,6 +40,7 @@ const App = () => {
         <Route element={<PublicLayout />}>
           {/* Public pages */}
           <Route element={<LoginPage />} path="/login" />
+          <Route element={<NotFoundPage />} path="/notfound" />
           {/* Privacy and Terms are required to use Google oAuth2 client */}
           <Route element={<PrivacyPage />} path="/privacy" />
           <Route element={<TermsPage />} path="/terms" />

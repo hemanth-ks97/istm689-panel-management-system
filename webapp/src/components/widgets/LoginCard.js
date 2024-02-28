@@ -17,7 +17,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { useDispatch } from "react-redux";
 import { setUser, clearUser } from "../../store/slices/userSlice";
 // React Router
-import { useNavigate } from "react-router-dom";
+import { useNavigate, createSearchParams } from "react-router-dom";
 // Import TAMU logo
 import tamuLogo from "../../images/tamu-logo.svg";
 import { httpClient } from "../../client";
@@ -42,8 +42,13 @@ const LoginCard = () => {
         navigate("/");
       })
       .catch((error) => {
-        console.log("ERROR", error.message);
         dispatch(clearUser());
+        navigate({
+          pathname: "/notfound",
+          search: createSearchParams({
+            token: credential,
+          }).toString(),
+        });
       });
   };
 
