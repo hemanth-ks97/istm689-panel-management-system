@@ -23,6 +23,8 @@ from chalicelib.config import (
     USER_TABLE_NAME,
     QUESTION_TABLE_NAME,
     JWT_SECRET,
+    JWT_AUDIENCE,
+    JWT_ISSUER,
 )
 from chalicelib.constants import BOTO3_DYNAMODB_TYPE, REQUEST_CONTENT_TYPE_JSON
 from chalicelib import db
@@ -195,13 +197,12 @@ def create_token():
 
         # Does not have the updated items
         user = users_found[0]
-        base_url = get_base_url(app.current_request)
         current_time = datetime.now(tz=timezone.utc)
         expiration = datetime.now(tz=timezone.utc) + timedelta(minutes=30)
 
         payload_data = {
-            "iss": base_url,
-            "aud": app.app_name,
+            "iss": JWT_ISSUER,
+            "aud": JWT_AUDIENCE,
             "iat": current_time,
             "nbf": current_time,
             "exp": expiration,
@@ -223,39 +224,12 @@ def create_token():
     return {"token": token}
 
 
-@app.route("/token/decode")
+@app.route("/token/decode", methods=["POST"])
 def decode_token():
     try:
         json_body = app.current_request.json_body
         incoming_token = json_body["token"]
-        decoded_token = None
-        # Decode token without verifying signature to check issuer and decode it properly
-        unverified_token = jwt.decode(
-            incoming_token, options={"verify_signature": False}
-        )
-        # Check unverified token issuer
-        # We need these to check if we want to decode our own token or google token
-        match unverified_token["iss"]:
-            case app.app_name:
-                # Own token with our data!
-                header_data = jwt.get_unverified_header(incoming_token)
-                decoded_token = jwt.decode(
-                    incoming_token,
-                    JWT_SECRET,
-                    audience=app.app_name,
-                    algorithms=[
-                        header_data["alg"],
-                    ],
-                )
-            case "https://accounts.google.com":
-                # Google token with Google's data
-                request = requests.Request()
-                decoded_token = id_token.verify_oauth2_token(
-                    incoming_token, request, GOOGLE_AUTH_CLIENT_ID
-                )
-            case _:
-                raise ValueError("Invalid Token Issuer")
-
+        decoded_token = verify_token(incoming_token)
         return {"decoded_token": decoded_token}
 
     except Exception as e:

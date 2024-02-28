@@ -21,3 +21,6 @@ QUESTION_TABLE_NAME = os.environ.get(
 
 # JWT secret key
 JWT_SECRET = os.environ.get("JWT_SECRET", "8iCGu6XmF1OyWoR9v4WZ3gMQnX9HW7Sk")
+# FIND BETTER VALUES FOR THESE TWO THINGS
+JWT_AUDIENCE = f"{ENV}-pms-core"
+JWT_ISSUER = f"{ENV}-pms-core"
