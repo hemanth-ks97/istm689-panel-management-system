@@ -1,0 +1,20 @@
+{
+  "Metrics": [
+    {
+      "StudentID": "UIN7638",
+      "PanelID": "uniquePanelID1",
+      "Stage": "I/Q/T/V",
+      "QuestionSTageScore": "questionsScore",
+      "TagStageInTime": "",
+      "TagStageOutTime": "",
+      "TageStageSD": "",
+      "TagStageScore": "",
+      "VoteStageInTime": "",
+      "VoteStageOutTime": "",
+      "VoteStageSD": "",
+      "VoteStageScore": "votingScore",
+      "EnteredQuestionsTotalScore": "",
+      "FinalScore": "finalScore"
+    }
+  ]
+}

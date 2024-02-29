@@ -7,7 +7,6 @@
     "FName": "FirstName",
     "LName": "LastName",
     "UserRole": "Student/Admin/Moderator/Panelist",
-    "AssignedPanel": "",
     "ProfilePicture": "imageLink"
   },
   {
