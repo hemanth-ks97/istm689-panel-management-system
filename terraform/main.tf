@@ -184,11 +184,11 @@ resource "aws_dynamodb_table" "question-table" {
   }
 
   global_secondary_index {
-    name               = "PanelIDIndex"
-    hash_key           = "PanelID"
-    projection_type    = "ALL"
-    read_capacity      = 5
-    write_capacity     = 5
+    name            = "PanelIDIndex"
+    hash_key        = "PanelID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
   }
 }
 
@@ -216,19 +216,19 @@ resource "aws_dynamodb_table" "grade-table" {
   }
 
   global_secondary_index {
-    name               = "StudentIDIndex"
-    hash_key           = "StudentID"
-    projection_type    = "ALL"
-    read_capacity      = 5
-    write_capacity     = 5
+    name            = "StudentIDIndex"
+    hash_key        = "StudentID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
   }
 
   global_secondary_index {
-    name               = "PanelIDIndex"
-    hash_key           = "PanelID"
-    projection_type    = "ALL"
-    read_capacity      = 5
-    write_capacity     = 5
+    name            = "PanelIDIndex"
+    hash_key        = "PanelID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
   }
 }
 
@@ -270,18 +270,18 @@ resource "aws_dynamodb_table" "engagement-table" {
   }
 
   global_secondary_index {
-    name               = "StudentIDIndex"
-    hash_key           = "StudentID"
-    projection_type    = "ALL"
-    read_capacity      = 5
-    write_capacity     = 5
+    name            = "StudentIDIndex"
+    hash_key        = "StudentID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
   }
 
   global_secondary_index {
-    name               = "PanelIDIndex"
-    hash_key           = "PanelID"
-    projection_type    = "ALL"
-    read_capacity      = 5
-    write_capacity     = 5
+    name            = "PanelIDIndex"
+    hash_key        = "PanelID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
   }
 }

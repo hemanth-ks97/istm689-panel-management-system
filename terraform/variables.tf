@@ -48,6 +48,30 @@ variable "dynamodb_table_write_capacity" {
   }
 }
 
+variable "dynamodb_global_secondary_idx_read_capacity" {
+  description = "Read Capacity limit for every enviroment"
+  type = object({
+    dev        = number
+    production = number
+  })
+  default = {
+    dev        = 1
+    production = 1
+  }
+}
+
+variable "dynamodb_global_secondary_idx_write_capacity" {
+  description = "Read Capacity limit for every enviroment"
+  type = object({
+    dev        = number
+    production = number
+  })
+  default = {
+    dev        = 1
+    production = 1
+  }
+}
+
 variable "amplify_branch_branch_name" {
   description = "Branch name for the webapp repo"
   type = object({
