@@ -372,7 +372,7 @@ def get_student_data():
             get_user_db().add_user(record)
 
         return Response(
-            body={"message": f"CSV processed successfully with {len(df)} records"},
+            body={"message": f"Student data processed successfully with {len(df)} records"},
             status_code=200,
             headers={"Content-Type": "application/json"},
         )
