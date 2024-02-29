@@ -14,6 +14,7 @@ export const userSlice = createSlice({
         email: pmsUser.email,
         picture: pmsUser.picture,
         token: action.payload,
+        role: pmsUser.role
       };
     },
     clearUser: (state) => {

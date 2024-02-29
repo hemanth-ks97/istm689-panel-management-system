@@ -213,6 +213,7 @@ def create_token():
             "email": user["EmailID"],
             "name": valid_and_verified_token["name"],
             "picture": valid_and_verified_token["picture"],
+            "role": user["Role"]
         }
 
         token = jwt.encode(

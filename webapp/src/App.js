@@ -16,6 +16,10 @@ import VotingPage from "./components/pages/VotingPage";
 import PrivacyPage from "./components/pages/PrivacyPage";
 import TermsPage from "./components/pages/TermsPage";
 import NotFoundPage from "./components/pages/NotFoundPage";
+import PanelPage from "./components/pages/PanelPage";
+//constants
+import { ADMIN } from "./config/constants";
+
 
 const App = () => {
   const { user } = useSelector((state) => state.user);
@@ -33,9 +37,10 @@ const App = () => {
           <Route element={<VotingPage />} path="/voting" />
           <Route element={<QuestionsPage />} path="/path-for-module-1-questions" />
         </Route>
-        {/* TODO: Admin allowed routes */}
-        <Route element={<PrivateRoutes isAllowed={!!user} />}>
+        {/* allow only admin to view these pages */}
+        <Route element={<PrivateRoutes isAllowed={user?.role == ADMIN} />}>
           <Route element={<AdminPage />} path="/admin" />
+          <Route element={<PanelPage />} path="/panel" />
         </Route>
 
         <Route element={<PublicLayout />}>
