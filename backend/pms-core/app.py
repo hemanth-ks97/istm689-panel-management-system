@@ -353,39 +353,23 @@ def get_student_data():
         # Read CSV data into a pandas dataframe
         df = pd.read_csv(csv_file)
 
-        # Replace float columns with decimal and NaN values as None
-        for column in df.columns:
-            if df[column].dtype == "float64":
-                df[column] = df[column].apply(
-                    lambda x: (
-                        Decimal(str(x)) if pd.notnull(x) and not np.isinf(x) else None
-                    )
-                )
+        # Rename columns according to user table schema
+        df.rename(columns={"FIRST NAME":"FName", "LAST NAME":"LName", "EMAIL":"EmailID"}, inplace=True)
 
         # Replace "email.tamu.edu" with just "tamu.edu" in the email column
-        df["EMAIL"] = df["EMAIL"].str.replace("email.tamu.edu", "tamu.edu")
-
-        # Replace NaN values in [MID NAME] column with empty string
-        df["MID NAME"] = df["MID NAME"].fillna(value="")
+        df["EmailID"] = df["EmailID"].str.replace("email.tamu.edu", "tamu.edu")
 
         # Add USERID column
         df["UserID"] = [str(uuid.uuid4()) for _ in range(len(df))]
 
-        # Converting the rows in the df into dictonary objects for storing into the users database
-        records = df.to_dict(orient="records")
-        # Put users into a DynamoDB
-        for record in records:
+        # Add Role column
+        df["Role"] = ["student" for _ in range(len(df))]
 
-            new_user = {
-                "UserID": record["UserID"],
-                "FName": record["FIRST NAME"],
-                "LName": record["LAST NAME"],
-                "EmailID": record["EMAIL"],
-                "UIN": record["UIN"],
-                "Role": "student",
-                "CreatedAt": datetime.now().isoformat(),
-            }
-            get_user_db().add_user(new_user)
+        # Choosing relevant columns for adding records to the user_db
+        records = df[["UserID", "EmailID", "FName", "LName", "UIN", "Role"]].to_dict(orient="records")
+        for record in records:
+            record["CreatedAt"] = datetime.now().isoformat()
+            get_user_db().add_user(record)
 
         return Response(
             body={"message": f"CSV processed successfully with {len(df)} records"},
