@@ -1,10 +1,9 @@
 {
   "Metrics": [
     {
-      "StudentID": "UIN7638",
+      "UserID": "UIN7638",
       "PanelID": "uniquePanelID1",
-      "Stage": "I/Q/T/V",
-      "QuestionSTageScore": "questionsScore",
+      "QuestionStageScore": "questionsScore",
       "TagStageInTime": "",
       "TagStageOutTime": "",
       "TageStageSD": "",
@@ -14,7 +13,7 @@
       "VoteStageSD": "",
       "VoteStageScore": "votingScore",
       "EnteredQuestionsTotalScore": "",
-      "FinalScore": "finalScore"
+      "FinalTotalScore": "finalTotalScore"
     }
   ]
 }

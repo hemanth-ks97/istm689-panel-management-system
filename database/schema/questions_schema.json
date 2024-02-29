@@ -2,7 +2,7 @@
   "Questions": [
     {
       "QuestionID": "questionID4",
-      "StudentID": "UIN7638",
+      "UserID": "UIN7638",
       "PanelID": "uniquePanelID1",
       "QuestionText": "questionText4",
       "LikedBy": [
@@ -25,14 +25,12 @@
         "question5ID",
         "question6ID"
       ],
-      "Score": {
-        "LikeScore": "",
-        "DislikeScore": "",
-        "NeutralScore": "",
-        "VotingStageBonusScore": "",
-        "PresentationBonusScore": "",
-        "FinalScore": ""
-      }
+      "LikeScore": "",
+      "DislikeScore": "",
+      "NeutralScore": "",
+      "VotingStageBonusScore": "",
+      "PresentationBonusScore": "",
+      "FinalScore": ""
     }
   ]
 }

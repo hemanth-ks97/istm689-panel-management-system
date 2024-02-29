@@ -6,12 +6,11 @@
       "PanelDesc": "PanelDescription1",
       "Panelist": "userID",
       "PanelVideoLink": "",
-      "Dates": {
-        "QuestionStageDeadline": "",
-        "TagStageDeadline": "",
-        "VoteStageDeadline": "",
-        "PanelPresentation": ""
-      }
+      "QuestionStageDeadline": "",
+      "TagStageDeadline": "",
+      "VoteStageDeadline": "",
+      "PanelPresentation": "",
+      "NumberOfQuestions": ""
     }
   ]
 }

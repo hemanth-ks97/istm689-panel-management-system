@@ -1,22 +1,16 @@
 {
   "Users": [
-  {
-    "UserID": "UIN",
-    "GoogleID": "GoogleID",
-    "EmailID": "user@example.com",
-    "FName": "FirstName",
-    "LName": "LastName",
-    "UserRole": "Student/Admin/Moderator/Panelist",
-    "ProfilePicture": "imageLink"
-  },
-  {
-    "UserID": "UIN",
-    "GoogleID": "GoogleID",
-    "EmailID": "user@example.com",
-    "FName": "FirstName",
-    "LName": "LastName",
-    "UserRole": "Student/Admin/Moderator/Panelist",
-    "AssignedPanel": "",
-    "ProfilePicture": "imageLink"
-  }
+    {
+      "UserID": "",
+      "GoogleID": "GoogleID",
+      "CanvasID": "",
+      "EmailID": "user@example.com",
+      "UIN": "",
+      "FName": "FirstName",
+      "LName": "LastName",
+      "Role": "Student/Admin/Moderator/Panelist",
+      "Section": "",
+      "ProfilePicture": "imageLink"
+    }
+  ]
 }
