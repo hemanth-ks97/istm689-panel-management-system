@@ -18,3 +18,10 @@ order by score
 1. Get grades for student for that panel
 select grades where panel ="" and student = ""
 
+## Engagement ##
+
+1. Get engagement for like/dislike stage
+select timestamp where panel = "" and student = ""
+
+1. Get engagement for voting stage
+select timestamp where panel = "" and student = ""

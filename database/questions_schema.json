@@ -1,11 +1,9 @@
-
-
 {
   "Questions": [
     {
       "QuestionID": "questionID4",
       "StudentID": "UIN7638",
-      "ModuleID": "uniqueModuleID1",
+      "PanelID": "uniquePanelID1",
       "QuestionText": "questionText4",
       "LikeCount": "likeCount",
       "DislikeCount": "dislikeCount",
@@ -23,9 +21,12 @@
     },
     {
       "QuestionID": "questionID4",
+      "StudentID": "UIN7638",
+      "PanelID": "uniquePanelID1",
       "QuestionText": "questionText4",
       "LikeCount": "likeCount",
       "DislikeCount": "dislikeCount",
+      "NeutralCount": "neutralCount",
       "FlaggedBy": [
         "user5ID",
         "user6ID"
