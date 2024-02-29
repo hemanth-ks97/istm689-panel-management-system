@@ -366,7 +366,7 @@ def get_student_data():
         df["Role"] = ["student" for _ in range(len(df))]
 
         # Choosing relevant columns for adding records to the user_db
-        records = df[["UserID", "EmailID", "FName", "LName", "UIN", "Role"]].to_dict(orient="records")
+        records = df[["UserID", "EmailID", "FName", "LName", "UIN", "Role", "Section", "CanvasID"]].to_dict(orient="records")
         for record in records:
             record["CreatedAt"] = datetime.now().isoformat()
             get_user_db().add_user(record)
