@@ -353,7 +353,7 @@ def get_student_data():
         # Read CSV data into a pandas dataframe
         df = pd.read_csv(csv_file)
 
-        # Rename columns according to table schema
+        # Rename columns according to user table schema
         df.rename(columns={"FIRST NAME":"FName", "LAST NAME":"LName", "EMAIL":"EmailID"}, inplace=True)
 
         # Replace "email.tamu.edu" with just "tamu.edu" in the email column
@@ -365,9 +365,8 @@ def get_student_data():
         # Add Role column
         df["Role"] = ["student" for _ in range(len(df))]
 
-        # Choosing relevant columns and converting each row to a dictionary object
+        # Choosing relevant columns for adding records to the user_db
         records = df[["UserID", "EmailID", "FName", "LName", "UIN", "Role"]].to_dict(orient="records")
-        # Put users into a DynamoDB
         for record in records:
             record["CreatedAt"] = datetime.now().isoformat()
             get_user_db().add_user(record)
