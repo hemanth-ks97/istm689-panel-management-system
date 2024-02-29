@@ -116,6 +116,31 @@ resource "aws_amplify_domain_association" "frontend-domain-association" {
   }
 }
 
+##########################
+# Cloudflare resources
+##########################
+resource "cloudflare_record" "custom-domain-verification" {
+  zone_id         = var.cf_zone_id
+  name            = local.custom_domain_verification_parse_output[0]
+  value           = local.custom_domain_verification_parse_output[2]
+  type            = local.custom_domain_verification_parse_output[1]
+  proxied         = false
+  allow_overwrite = true
+  ttl             = 1
+}
+
+resource "cloudflare_record" "custom-domain" {
+  zone_id = var.cf_zone_id
+  name    = var.amplify_domain_association_domain_name[terraform.workspace]
+  value   = local.custom_domain_parse_output[1]
+  type    = local.custom_domain_parse_output[0]
+  proxied = false
+  ttl     = 1
+}
+
+##########################
+# Database
+##########################
 resource "aws_dynamodb_table" "user-dynamodb-table" {
   name           = "${terraform.workspace}-User"
   billing_mode   = "PROVISIONED"
@@ -140,25 +165,123 @@ resource "aws_dynamodb_table" "question-dynamodb-table" {
   }
 }
 
+#question table
+resource "aws_dynamodb_table" "question-table" {
+  name           = "${terraform.workspace}-question"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "QuestionID"
 
-##########################
-# Cloudflare resources
-##########################
-resource "cloudflare_record" "custom-domain-verification" {
-  zone_id         = var.cf_zone_id
-  name            = local.custom_domain_verification_parse_output[0]
-  value           = local.custom_domain_verification_parse_output[2]
-  type            = local.custom_domain_verification_parse_output[1]
-  proxied         = false
-  allow_overwrite = true
-  ttl             = 1
+  attribute {
+    name = "QuestionID"
+    type = "S"
+  }
+
+  attribute {
+    name = "PanelID"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name               = "PanelIDIndex"
+    hash_key           = "PanelID"
+    projection_type    = "ALL"
+    read_capacity      = 5
+    write_capacity     = 5
+  }
 }
 
-resource "cloudflare_record" "custom-domain" {
-  zone_id = var.cf_zone_id
-  name    = var.amplify_domain_association_domain_name[terraform.workspace]
-  value   = local.custom_domain_parse_output[1]
-  type    = local.custom_domain_parse_output[0]
-  proxied = false
-  ttl     = 1
+#grade table
+resource "aws_dynamodb_table" "grade-table" {
+  name           = "${terraform.workspace}-grade"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "GradeID"
+
+  attribute {
+    name = "GradeID"
+    type = "S"
+  }
+
+  attribute {
+    name = "StudentID"
+    type = "S"
+  }
+
+  attribute {
+    name = "PanelID"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name               = "StudentIDIndex"
+    hash_key           = "StudentID"
+    projection_type    = "ALL"
+    read_capacity      = 5
+    write_capacity     = 5
+  }
+
+  global_secondary_index {
+    name               = "PanelIDIndex"
+    hash_key           = "PanelID"
+    projection_type    = "ALL"
+    read_capacity      = 5
+    write_capacity     = 5
+  }
+}
+
+#user table
+resource "aws_dynamodb_table" "user-table" {
+  name           = "${terraform.workspace}-user"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "UserID"
+
+  attribute {
+    name = "UserID"
+    type = "S"
+  }
+}
+
+#engagement table
+resource "aws_dynamodb_table" "engagement-table" {
+  name           = "${terraform.workspace}-engagement"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "EngagementID"
+
+  attribute {
+    name = "EngagementID"
+    type = "S"
+  }
+
+  attribute {
+    name = "StudentID"
+    type = "S"
+  }
+
+  attribute {
+    name = "PanelID"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name               = "StudentIDIndex"
+    hash_key           = "StudentID"
+    projection_type    = "ALL"
+    read_capacity      = 5
+    write_capacity     = 5
+  }
+
+  global_secondary_index {
+    name               = "PanelIDIndex"
+    hash_key           = "PanelID"
+    projection_type    = "ALL"
+    read_capacity      = 5
+    write_capacity     = 5
+  }
 }
