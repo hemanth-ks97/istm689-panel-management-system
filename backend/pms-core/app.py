@@ -13,6 +13,7 @@ from chalice import (
     CORSConfig,
     NotFoundError,
     BadRequestError,
+    ForbiddenError,
     Response,
 )
 from chalicelib.config import (
@@ -120,18 +121,10 @@ def token_authorizer(auth_request):
         # Extract the token from the authorization header
         token = auth_header[1]
 
-        # We can check the token issuer for more security
-        # token_issuer = get_token_issuer(token)
-        # base_url = "http://localhost:8000"
-
-        # # Only accepts own token. Not Google's token
-        # if token_issuer != base_url:
-        #     raise ValueError("Invalid Token Issuer")
-
         decoded_token = verify_token(token)
 
         if decoded_token is None:
-            raise ValueError("Invalid or Expired Token")
+            raise ForbiddenError("Invalid or Expired Token")
 
         # At this point the token is valid and verified
         # Proceed to fetch user roles and match allowed routes
@@ -174,30 +167,17 @@ def create_token():
         valid_and_verified_token = verify_token(incoming_token)
 
         if not valid_and_verified_token:
-            raise ValueError("Invalid Token")
+            raise ForbiddenError("Invalid Token")
 
-        # Need to validate the token subject?? It is not needed?
-        token_issuer = get_token_issuer(incoming_token)
-
-        if token_issuer != "https://accounts.google.com":
-            raise ValueError("Invalid Token Issuer")
-        token_subject = get_token_subject(incoming_token)
-
-        users_found = get_user_db().get_user_by_google_id(token_subject)
-
-        # Check if result was found
+        user_email = get_token_email(incoming_token)
+        users_found = get_user_db().get_user_by_email(user_email)
         if not users_found:
-            user_email = get_token_email(incoming_token)
-            users_found = get_user_db().get_user_by_email(user_email)
-            user = users_found[0]
-            # Add google ID to the register
-            user["GoogleID"] = token_subject
-            user["UpdatedAt"] = datetime.now().isoformat()
-            # Update user
-            get_user_db().update_user(user)
+            raise NotFoundError("User not found")
 
-        # Does not have the updated items
         user = users_found[0]
+        user["LastLoggedIn"] = datetime.now().isoformat()
+        get_user_db().update_user(user)
+
         current_time = datetime.now(tz=timezone.utc)
         expiration = datetime.now(tz=timezone.utc) + timedelta(
             days=int(JWT_TOKEN_EXPIRATION_DAYS)
@@ -211,6 +191,7 @@ def create_token():
             "exp": expiration,
             "sub": user["UserID"],
             "email": user["EmailID"],
+            "role": user["Role"],
             "name": valid_and_verified_token["name"],
             "picture": valid_and_verified_token["picture"],
         }
@@ -222,21 +203,9 @@ def create_token():
         )
     except Exception:
         # Not always true but this is a Chalice Exception
-        raise NotFoundError("User not found")
+        raise ForbiddenError("User not found")
 
     return {"token": token}
-
-
-@app.route("/token/decode", methods=["POST"])
-def decode_token():
-    try:
-        json_body = app.current_request.json_body
-        incoming_token = json_body["token"]
-        decoded_token = verify_token(incoming_token)
-        return {"decoded_token": decoded_token}
-
-    except Exception as e:
-        return {"error": str(e)}
 
 
 @app.route(
@@ -354,22 +323,33 @@ def get_student_data():
         df = pd.read_csv(csv_file)
 
         # Rename columns according to user table schema
-        df.rename(columns={"FIRST NAME":"FName", "LAST NAME":"LName", "EMAIL":"EmailID"}, inplace=True)
+        df.rename(
+            columns={"FIRST NAME": "FName", "LAST NAME": "LName", "EMAIL": "EmailID"},
+            inplace=True,
+        )
 
         # Replace "email.tamu.edu" with just "tamu.edu" in the email column
         df["EmailID"] = df["EmailID"].str.replace("email.tamu.edu", "tamu.edu")
 
-        # Add USERID column
+        # Add UserID column
         df["UserID"] = [str(uuid.uuid4()) for _ in range(len(df))]
 
         # Add Role column
         df["Role"] = ["student" for _ in range(len(df))]
 
         # Choosing relevant columns for adding records to the user_db
-        records = df[["UserID", "EmailID", "FName", "LName", "UIN", "Role"]].to_dict(orient="records")
+        records = df[["UserID", "EmailID", "FName", "LName", "UIN", "Role"]].to_dict(
+            orient="records"
+        )
         for record in records:
-            record["CreatedAt"] = datetime.now().isoformat()
-            get_user_db().add_user(record)
+            # CHECK UIN before adding a new user to prevent duplicate students
+            user_exists = get_user_db().get_user_by_uin(record["UIN"])
+
+            if user_exists is None:
+                record["CreatedAt"] = datetime.now().isoformat()
+                get_user_db().add_user(record)
+            else:
+                print("User already exists, skipped")
 
         return Response(
             body={"message": f"CSV processed successfully with {len(df)} records"},

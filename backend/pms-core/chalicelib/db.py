@@ -81,6 +81,9 @@ class UserDB(object):
     def add_user_google_id(self, user_id, google_id):
         pass
 
+    def get_user_by_uin(self, uin):
+        pass
+
     def get_user_by_google_id(self, google_id):
         pass
 
@@ -135,6 +138,10 @@ class DynamoUserDB(UserDB):
 
     def get_user_by_google_id(self, google_id):
         response = self._table.scan(FilterExpression=Attr("GoogleID").eq(google_id))
+        return response["Items"]
+
+    def get_user_by_uin(self, uin):
+        response = self._table.scan(FilterExpression=Attr("UIN").eq(uin))
         return response["Items"]
 
     def get_user_by_email(self, email):
