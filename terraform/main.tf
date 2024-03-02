@@ -141,29 +141,6 @@ resource "cloudflare_record" "custom-domain" {
 ##########################
 # Database
 ##########################
-resource "aws_dynamodb_table" "user-dynamodb-table" {
-  name           = "${terraform.workspace}-User"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
-  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
-  hash_key       = "UserID"
-  attribute {
-    name = "UserID"
-    type = "S"
-  }
-}
-
-resource "aws_dynamodb_table" "question-dynamodb-table" {
-  name           = "${terraform.workspace}-Question"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
-  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
-  hash_key       = "QuestionID"
-  attribute {
-    name = "QuestionID"
-    type = "S"
-  }
-}
 
 #question table
 resource "aws_dynamodb_table" "question-table" {
