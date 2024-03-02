@@ -146,6 +146,17 @@ variable "amplify_branch_environment_variables_REACT_APP_GOOGLE_CLIENT_ID" {
     production = "979252554614-r05g1fdg6unklck10sjnamb3701r0u88.apps.googleusercontent.com"
   }
 }
-
+# amplify_branch_environment_variables_REACT_APP_GOOGLE_RECAPTCHA_KEY
+variable "amplify_branch_environment_variables_REACT_APP_GOOGLE_RECAPTCHA_KEY" {
+  description = "Site Key for Google reCaptcha v3"
+  type = object({
+    dev        = string
+    production = string
+  })
+  default = {
+    dev        = "6LdJk4cpAAAAAMElljbKeYwljNSFD63BEJmt804E"
+    production = "6LfnmocpAAAAACDze9K30nkB472UV0qnYVJPBbBu"
+  }
+}
 
 
