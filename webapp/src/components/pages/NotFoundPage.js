@@ -13,8 +13,8 @@ const NotFoundPage = () => {
     let token_info = null;
     try {
       token_info = jwtDecode(searchParams.get("token"));
+      setUser(token_info);
     } catch (error) {}
-    setUser(token_info);
   }, []);
 
   return (
