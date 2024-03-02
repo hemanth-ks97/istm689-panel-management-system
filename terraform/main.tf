@@ -93,10 +93,11 @@ resource "aws_amplify_app" "frontend-app" {
   # This enviroments variables will be pass to the web app!!! 
   # we should use this to pass the API URL, IDs, somethign we need!
   environment_variables = {
-    ENV                        = terraform.workspace
-    REACT_APP_API_BASE_URL     = var.amplify_branch_environment_variables_REACT_APP_API_BASE_URL[terraform.workspace]
-    REACT_APP_ENV              = terraform.workspace
-    REACT_APP_GOOGLE_CLIENT_ID = var.amplify_branch_environment_variables_REACT_APP_GOOGLE_CLIENT_ID[terraform.workspace]
+    ENV                            = terraform.workspace
+    REACT_APP_API_BASE_URL         = var.amplify_branch_environment_variables_REACT_APP_API_BASE_URL[terraform.workspace]
+    REACT_APP_ENV                  = terraform.workspace
+    REACT_APP_GOOGLE_CLIENT_ID     = var.amplify_branch_environment_variables_REACT_APP_GOOGLE_CLIENT_ID[terraform.workspace]
+    REACT_APP_GOOGLE_RECAPTCHA_KEY = var.amplify_branch_environment_variables_REACT_APP_GOOGLE_RECAPTCHA_KEY[terraform.workspace]
   }
 }
 resource "aws_amplify_branch" "frontend-branch" {
@@ -141,29 +142,6 @@ resource "cloudflare_record" "custom-domain" {
 ##########################
 # Database
 ##########################
-resource "aws_dynamodb_table" "user-dynamodb-table" {
-  name           = "${terraform.workspace}-User"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
-  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
-  hash_key       = "UserID"
-  attribute {
-    name = "UserID"
-    type = "S"
-  }
-}
-
-resource "aws_dynamodb_table" "question-dynamodb-table" {
-  name           = "${terraform.workspace}-Question"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
-  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
-  hash_key       = "QuestionID"
-  attribute {
-    name = "QuestionID"
-    type = "S"
-  }
-}
 
 #question table
 resource "aws_dynamodb_table" "question-table" {
@@ -192,43 +170,17 @@ resource "aws_dynamodb_table" "question-table" {
   }
 }
 
-#grade table
-resource "aws_dynamodb_table" "grade-table" {
-  name           = "${terraform.workspace}-grade"
+#panel table
+resource "aws_dynamodb_table" "panel-table" {
+  name           = "${terraform.workspace}-panel"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
-  hash_key       = "GradeID"
-
-  attribute {
-    name = "GradeID"
-    type = "S"
-  }
-
-  attribute {
-    name = "StudentID"
-    type = "S"
-  }
+  hash_key       = "PanelID"
 
   attribute {
     name = "PanelID"
     type = "S"
-  }
-
-  global_secondary_index {
-    name            = "StudentIDIndex"
-    hash_key        = "StudentID"
-    projection_type = "ALL"
-    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
-    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
-  }
-
-  global_secondary_index {
-    name            = "PanelIDIndex"
-    hash_key        = "PanelID"
-    projection_type = "ALL"
-    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
-    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
   }
 }
 
@@ -246,18 +198,14 @@ resource "aws_dynamodb_table" "user-table" {
   }
 }
 
-#engagement table
-resource "aws_dynamodb_table" "engagement-table" {
-  name           = "${terraform.workspace}-engagement"
+#metrics table
+resource "aws_dynamodb_table" "metric-table" {
+  name           = "${terraform.workspace}-metric"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
-  hash_key       = "EngagementID"
-
-  attribute {
-    name = "EngagementID"
-    type = "S"
-  }
+  hash_key       = "StudentID"
+  range_key      = "PanelID"
 
   attribute {
     name = "StudentID"
@@ -272,6 +220,7 @@ resource "aws_dynamodb_table" "engagement-table" {
   global_secondary_index {
     name            = "StudentIDIndex"
     hash_key        = "StudentID"
+    range_key       = "PanelID"
     projection_type = "ALL"
     read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
     write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
@@ -280,6 +229,7 @@ resource "aws_dynamodb_table" "engagement-table" {
   global_secondary_index {
     name            = "PanelIDIndex"
     hash_key        = "PanelID"
+    range_key       = "StudentID"
     projection_type = "ALL"
     read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
     write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]

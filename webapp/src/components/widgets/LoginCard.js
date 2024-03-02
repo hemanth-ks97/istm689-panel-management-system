@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 // MUI
 import {
   Button,
@@ -21,14 +21,17 @@ import { useNavigate, createSearchParams } from "react-router-dom";
 // Import TAMU logo
 import tamuLogo from "../../images/tamu-logo.svg";
 import { httpClient } from "../../client";
+import LoadingSpinner from "../widgets/LoadingSpinner";
 
 const LoginCard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleOnSuccess = ({ credential }) => {
     // Receive Google Token and generate a new custom token
     const data = { token: credential };
+    setIsLoading(true);
 
     httpClient
       .post("/token/create", data)
@@ -49,7 +52,8 @@ const LoginCard = () => {
             token: credential,
           }).toString(),
         });
-      });
+      })
+      .finally(() => setIsLoading(false));
   };
 
   const handleOnError = () => {
@@ -78,7 +82,14 @@ const LoginCard = () => {
           justifyContent="center"
         >
           <Grid item xs={3}>
-            <GoogleLogin onSuccess={handleOnSuccess} onError={handleOnError} />
+            {isLoading ? (
+              <LoadingSpinner />
+            ) : (
+              <GoogleLogin
+                onSuccess={handleOnSuccess}
+                onError={handleOnError}
+              />
+            )}
           </Grid>
         </Grid>
       </CardContent>
@@ -92,7 +103,9 @@ const LoginCard = () => {
           justifyContent="center"
         >
           <Grid item xs={3}>
-            <Button variant="outlined">Panelist</Button>
+            <Button variant="outlined" onClick={() => navigate("/login/panel")}>
+              Panelist
+            </Button>
           </Grid>
         </Grid>
       </CardActions>
