@@ -13,13 +13,13 @@ import AdminPage from "./components/pages/AdminPage";
 import QuestionsPage from "./components/pages/QuestionsPage";
 import GradesPage from "./components/pages/GradesPage";
 import VotingPage from "./components/pages/VotingPage";
+import TaggingPage from "./components/pages/TaggingPage";
 import PrivacyPage from "./components/pages/PrivacyPage";
 import TermsPage from "./components/pages/TermsPage";
 import NotFoundPage from "./components/pages/NotFoundPage";
 import PanelPage from "./components/pages/PanelPage";
 //constants
 import { ADMIN } from "./config/constants";
-
 
 const App = () => {
   const { user } = useSelector((state) => state.user);
@@ -31,16 +31,20 @@ const App = () => {
         {/* Student allowed routes */}
         <Route element={<PrivateRoutes isAllowed={!!user} />}>
           <Route element={<HomePage />} path="/" exact />
-          <Route element={<ProfilePage />} path="/profile" />
-          <Route element={<QuestionsPage />} path="/questions" />
-          <Route element={<GradesPage />} path="/grades" />
-          <Route element={<VotingPage />} path="/voting" />
-          <Route element={<QuestionsPage />} path="/path-for-module-1-questions" />
+          <Route element={<ProfilePage />} path="profile" />
+          <Route element={<GradesPage />} path="grades" />
+
+          <Route element={<PanelPage />} path="panel/:panelId">
+            <Route element={<QuestionsPage />} path="questions" />
+            <Route element={<VotingPage />} path="voting" />
+            <Route element={<TaggingPage />} path="tagging" />
+
+            <Route path="*" element={<Navigate to="/" />} />
+          </Route>
         </Route>
         {/* allow only admin to view these pages */}
-        <Route element={<PrivateRoutes isAllowed={user?.role == ADMIN} />}>
+        <Route element={<PrivateRoutes isAllowed={user?.role === ADMIN} />}>
           <Route element={<AdminPage />} path="/admin" />
-          <Route element={<PanelPage />} path="/panel" />
         </Route>
 
         <Route element={<PublicLayout />}>
