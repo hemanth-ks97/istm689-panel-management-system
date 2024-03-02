@@ -16,6 +16,8 @@ import VotingPage from "./components/pages/VotingPage";
 import TaggingPage from "./components/pages/TaggingPage";
 import PrivacyPage from "./components/pages/PrivacyPage";
 import TermsPage from "./components/pages/TermsPage";
+import StudentLogin from "./components/pages/StudentLogin";
+import PanelLogin from "./components/pages/PanelLogin";
 import NotFoundPage from "./components/pages/NotFoundPage";
 import PanelPage from "./components/pages/PanelPage";
 //constants
@@ -38,22 +40,25 @@ const App = () => {
             <Route element={<QuestionsPage />} path="questions" />
             <Route element={<VotingPage />} path="voting" />
             <Route element={<TaggingPage />} path="tagging" />
-
             <Route path="*" element={<Navigate to="/" />} />
           </Route>
         </Route>
         {/* allow only admin to view these pages */}
         <Route element={<PrivateRoutes isAllowed={user?.role === ADMIN} />}>
-          <Route element={<AdminPage />} path="/admin" />
+          <Route element={<AdminPage />} path="admin" />
         </Route>
 
         <Route element={<PublicLayout />}>
           {/* Public pages */}
-          <Route element={<LoginPage />} path="/login" />
-          <Route element={<NotFoundPage />} path="/notfound" />
+          <Route element={<LoginPage />} path="login">
+            <Route index element={<StudentLogin />} />
+            <Route element={<PanelLogin />} path="panel" />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Route>
+          <Route element={<NotFoundPage />} path="notfound" />
           {/* Privacy and Terms are required to use Google oAuth2 client */}
-          <Route element={<PrivacyPage />} path="/privacy" />
-          <Route element={<TermsPage />} path="/terms" />
+          <Route element={<PrivacyPage />} path="privacy" />
+          <Route element={<TermsPage />} path="terms" />
         </Route>
 
         {/* Default redirect to home page */}
