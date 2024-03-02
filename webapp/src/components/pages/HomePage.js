@@ -13,7 +13,7 @@ import {
   styled,
 } from "@mui/material";
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 const HomePage = () => {
   const DemoPaper = styled(Paper)(({ theme }) => ({
@@ -29,20 +29,24 @@ const HomePage = () => {
   };
 
   const navigate = useNavigate(); // Initialize navigate function
-  
+
   // Function to handle row click
   const handleRowClick = (path) => {
     navigate(path);
   };
 
   const ThisWeekRows = [
-    createData('Module 1 Video', '-', '/path-for-module-1-video'),
-    createData('Module 1 Submit Questions', 'March 1, 2023', '/path-for-module-1-questions'),
+    createData("Module 1 Video", "-", "/panel/1/video"),
+    createData(
+      "Module 1 Submit Questions",
+      "March 1, 2023",
+      "/panel/1/questions"
+    ),
   ];
-  
+
   const NextWeekRows = [
-    createData('Module 1 Tag Questions', 'March 13, 2023', '/path-for-module-1-tag-question'),
-    createData('Module 1 Vote Questions', 'March 17, 2023', '/path-for-module-1-vote-question'),
+    createData("Module 2 Tag Questions", "March 13, 2023", "/panel/2/tagging"),
+    createData("Module 2 Vote Questions", "March 17, 2023", "/panel/2/voting"),
   ];
 
   return (
@@ -111,6 +115,7 @@ const HomePage = () => {
                     hover
                     key={row.Assignment}
                     sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    onClick={() => handleRowClick(row.Path)} // to navigate to the QuestionsPage comp
                   >
                     <TableCell component="th" scope="row">
                       {row.Assignment}
