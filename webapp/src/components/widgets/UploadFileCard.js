@@ -11,9 +11,6 @@ import { Button } from "@mui/material";
 
 import { styled } from "@mui/material/styles";
 
-//CSV parser
-import Papa from "papaparse";
-
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
   clipPath: "inset(50%)",
