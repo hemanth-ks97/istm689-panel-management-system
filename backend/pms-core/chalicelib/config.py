@@ -14,7 +14,7 @@ ALLOW_ORIGIN = os.environ.get("ALLOW_ORIGIN", "http://localhost:3000")
 # Can add more later, like basic auth for development purposes, etc
 ALLOWED_AUTHORIZATION_TYPES = (AUTH_BEARER_TYPE, AUTH_BASIC_TYPE)
 
-USER_TABLE_NAME = os.environ.get("DYNAMODB_USER_TABLE_NAME", "local-User")
+USER_TABLE_NAME = os.environ.get("DYNAMODB_USER_TABLE_NAME", "local-user")
 QUESTION_TABLE_NAME = os.environ.get("DYNAMODB_QUESTION_TABLE_NAME", "local-Question")
 
 # JWT secret key
