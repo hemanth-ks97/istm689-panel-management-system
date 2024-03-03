@@ -105,7 +105,7 @@ variable "amplify_branch_environment_variables_REACT_APP_API_BASE_URL" {
     production = string
   })
   default = {
-    dev        = "https://dirj9d9i8k.execute-api.us-east-1.amazonaws.com/dev/"
+    dev        = "https://r23u758nsl.execute-api.us-east-1.amazonaws.com/dev/"
     production = "https://77v6036nsb.execute-api.us-east-1.amazonaws.com/production/"
   }
 }
