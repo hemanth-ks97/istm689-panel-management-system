@@ -1,25 +1,17 @@
 import React from "react";
-// MUI
-import { Grid } from "@mui/material";
-// Widgets
-import LoginCard from "../widgets/LoginCard";
+
+import { Outlet } from "react-router-dom";
+
+import { GOOGLE_RECAPTCHA_KEY } from "../../config";
+
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 
 const LoginPage = () => {
+  // Maybe we set the common layout for login page here
   return (
-    <Grid
-      container
-      spacing={0}
-      direction="column"
-      alignItems="center"
-      justifyContent="center"
-      color="red"
-      sx={{ minHeight: "100vh" }}
-      style={{ color: "white", backgroundColor: "#500000" }}
-    >
-      <Grid item xs={3}>
-        <LoginCard />
-      </Grid>
-    </Grid>
+    <GoogleReCaptchaProvider reCaptchaKey={GOOGLE_RECAPTCHA_KEY}>
+      <Outlet />
+    </GoogleReCaptchaProvider>
   );
 };
 

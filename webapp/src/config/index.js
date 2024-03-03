@@ -8,3 +8,7 @@ export const USER_TABLE = process.env.REACT_APP_USER_TABLE || "users";
 export const GOOGLE_CLIENT_ID =
   process.env.REACT_APP_GOOGLE_CLIENT_ID ||
   "370940936724-4qh7n4qh6vrgli6bsf3je6kbe2lsotef.apps.googleusercontent.com";
+
+export const GOOGLE_RECAPTCHA_KEY =
+  process.env.REACT_APP_GOOGLE_RECAPTCHA_KEY ||
+  "6Lf3lIcpAAAAAMU8C3qfxkesI11tlGCs0NnDOGV7";

@@ -9,8 +9,10 @@
         "ENV": "production",
         "GOOGLE_AUTH_CLIENT_ID": "979252554614-r05g1fdg6unklck10sjnamb3701r0u88.apps.googleusercontent.com",
         "ALLOW_ORIGIN": "https://istm689.joaquingimenez.com",
-        "DYNAMODB_USER_TABLE_NAME": "production-User",
-        "DYNAMODB_QUESTION_TABLE_NAME": "production-Question",
+        "DYNAMODB_USER_TABLE_NAME": "production-user",
+        "DYNAMODB_QUESTION_TABLE_NAME": "production-question",
+        "DYNAMODB_PANEL_TABLE_NAME": "production-panel",
+        "DYNAMODB_METRIC_TABLE_NAME": "production-metric",
         "JWT_TOKEN_EXPIRATION_DAYS": "1"
       }
     },
@@ -21,8 +23,10 @@
         "ENV": "dev",
         "GOOGLE_AUTH_CLIENT_ID": "979252554614-0gjt8bjrpkht2n0le6uoo12nhs8pgrv3.apps.googleusercontent.com",
         "ALLOW_ORIGIN": "https://istm689-dev.joaquingimenez.com",
-        "DYNAMODB_USER_TABLE_NAME": "dev-User",
-        "DYNAMODB_QUESTION_TABLE_NAME": "dev-Question",
+        "DYNAMODB_USER_TABLE_NAME": "dev-user",
+        "DYNAMODB_QUESTION_TABLE_NAME": "dev-question",
+        "DYNAMODB_PANEL_TABLE_NAME": "dev-panel",
+        "DYNAMODB_METRIC_TABLE_NAME": "dev-metric",
         "JWT_TOKEN_EXPIRATION_DAYS": "3"
       }
     },
@@ -35,6 +39,8 @@
         "ALLOW_ORIGIN": "http://localhost:3000",
         "DYNAMODB_USER_TABLE_NAME": "local-user",
         "DYNAMODB_QUESTION_TABLE_NAME": "local-Question",
+        "DYNAMODB_PANEL_TABLE_NAME": "local-panel",
+        "DYNAMODB_METRIC_TABLE_NAME": "local-metric",
         "JWT_TOKEN_EXPIRATION_DAYS": "7"
       }
     }
