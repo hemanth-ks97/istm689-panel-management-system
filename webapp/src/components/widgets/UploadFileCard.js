@@ -31,13 +31,33 @@ const UploadFileCard = () => {
   const { enqueueSnackbar } = useSnackbar();
 
   const [isApiWaiting, setIsApiWaiting] = useState(false);
-  const [howdyFileData, setHowdyfileData] = useState("");
-  const [canvasfileData, setCanvasFileData] = useState("");
 
-  const sendCSVToServer = (csvData) => {
+  const sendHowdyCSVToServer = (csvData) => {
     setIsApiWaiting(true);
     httpClient
       .post("/howdycsv", csvData, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+          "Content-Type": "text/plain",
+        },
+      })
+      .then((response) => {
+        enqueueSnackbar(JSON.stringify(response?.data?.message), {
+          variant: "success",
+        });
+      })
+      .catch((err) =>
+        enqueueSnackbar(err.message, {
+          variant: "error",
+        })
+      )
+      .finally(() => setIsApiWaiting(false));
+  };
+
+  const sendCanvasCSVToServer = (csvData) => {
+    setIsApiWaiting(true);
+    httpClient
+      .post("/canvascsv", csvData, {
         headers: {
           Authorization: `Bearer ${user?.token}`,
           "Content-Type": "text/plain",
@@ -62,8 +82,7 @@ const UploadFileCard = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const csvString = e.target.result;
-        var csvData = Papa.parse(csvString, {header:true});
-        setHowdyfileData(csvData);
+        sendHowdyCSVToServer(csvString)
         event.target.value = '';
         enqueueSnackbar("Howdy file parsed", {
           variant: "info",
@@ -79,8 +98,7 @@ const UploadFileCard = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const csvString = e.target.result;
-        var csvData = Papa.parse(csvString, {header:true});
-        setCanvasFileData(csvData);
+        sendCanvasCSVToServer(csvString)
         event.target.value = '';
         enqueueSnackbar("Canvas file parsed", {
           variant: "info",
@@ -88,22 +106,6 @@ const UploadFileCard = () => {
       };
       reader.readAsText(file);
     }
-  };
-
-  const handleProcessDataClick = () => {
-    const joinedData = []
-    for (let i = 0; i < howdyFileData.data.length; i++){
-      for (let j = 0; j < canvasfileData.data.length; j++){
-        if(howdyFileData.data[i]["UIN"] == canvasfileData.data[j]["SIS Login ID"]){
-          joinedData.push({...howdyFileData.data[i], "CanvasID":canvasfileData.data[j]["ID"], "Section":canvasfileData.data[j]["Section"]})
-          continue;
-        }
-      }
-    }
-    enqueueSnackbar(`${joinedData.length} common records found`, {
-      variant: "info",
-    });
-    sendCSVToServer(Papa.unparse(joinedData));
   };
 
   return (
@@ -129,14 +131,6 @@ const UploadFileCard = () => {
       >
         Upload Canvas file
         <VisuallyHiddenInput type="file" onChange={handleCanvasFileChange} />
-      </Button>
-      <Button
-        variant="contained"
-        color="primary"
-        disabled={isApiWaiting || !howdyFileData || !canvasfileData}
-        onClick={handleProcessDataClick}
-      >
-        Process Data
       </Button>
     </div>
   );
