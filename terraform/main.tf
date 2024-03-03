@@ -204,11 +204,11 @@ resource "aws_dynamodb_table" "metric-table" {
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
-  hash_key       = "StudentID"
+  hash_key       = "UserID"
   range_key      = "PanelID"
 
   attribute {
-    name = "StudentID"
+    name = "UserID"
     type = "S"
   }
 
@@ -218,8 +218,8 @@ resource "aws_dynamodb_table" "metric-table" {
   }
 
   global_secondary_index {
-    name            = "StudentIDIndex"
-    hash_key        = "StudentID"
+    name            = "UserIDIndex"
+    hash_key        = "UserID"
     range_key       = "PanelID"
     projection_type = "ALL"
     read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
@@ -229,7 +229,7 @@ resource "aws_dynamodb_table" "metric-table" {
   global_secondary_index {
     name            = "PanelIDIndex"
     hash_key        = "PanelID"
-    range_key       = "StudentID"
+    range_key       = "UserID"
     projection_type = "ALL"
     read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
     write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
