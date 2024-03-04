@@ -5,6 +5,7 @@ import boto3
 import uuid
 import pandas as pd
 import numpy as np
+import random
 from decimal import Decimal
 from io import StringIO
 from chalice import (
@@ -336,6 +337,47 @@ def get_user(id):
         raise NotFoundError("User (%s) not found" % id)
     return item
 
+
+@app.route(
+    "/{panel_id}/distribute",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def distribute_questions(panel_id):
+    # nS = number of students, nQ = number of questions, QpS = Questions per student = 20 (fixed)
+    # Qs = nS * QpS (Total Question slots)
+    # Qcount = Qs/nQ
+    QpS = 20
+
+    # Get total number of questions for the given panel ---> Write corresponding function in db.py
+    question_ids = get_question_db().get_question_ids_by_panel_id(panel_id)
+    nQ = len(question_ids)
+    question_count_map = {q: 0 for q in question_ids}
+    
+    # Get total students from the usersDB
+    student_ids = get_user_db().get_student_user_ids()
+    nS = len(student_ids)
+    Qs = nS * QpS
+    Qcount = Qs//nQ
+
+    print("nQ = ", nQ)
+    print("nS = ", nS)
+    print("Qcount = ", Qcount)
+    # Shuffle questions
+    random.shuffle(question_ids)
+
+    student_question_map = {s:[] for s in student_ids}
+    # Round robin to assign each question sequentially to students until the Qcount value is reached for each question
+    for s in student_ids:
+        for q in question_ids:
+            if len(student_question_map[s]) < Qcount:
+                if question_count_map[q] < QpS:
+                    student_question_map[s].append(q)
+                    question_count_map[q] += 1
+
+    # TODO - Add the student_question_map to an S3 bucket
+
+    return ({"student_question_map":student_question_map, "question_count_map":question_count_map})
 
 @app.route(
     "/howdycsv",
