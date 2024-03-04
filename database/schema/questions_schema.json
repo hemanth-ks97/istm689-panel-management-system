@@ -1,0 +1,36 @@
+{
+  "Questions": [
+    {
+      "QuestionID": "questionID4",
+      "UserID": "UIN7638",
+      "PanelID": "uniquePanelID1",
+      "QuestionText": "questionText4",
+      "LikedBy": [
+        "UIN763867",
+        "UIN76348"
+      ],
+      "DislikedBy": [
+        "UIN3867",
+        "UIN6348"
+      ],
+      "NeutralizedBy": [
+        "UIN7",
+        "UIN48"
+      ],
+      "FlaggedBy": [
+        "user5ID",
+        "user6ID"
+      ],
+      "SimilarTo": [
+        "question5ID",
+        "question6ID"
+      ],
+      "LikeScore": "",
+      "DislikeScore": "",
+      "NeutralScore": "",
+      "VotingStageBonusScore": "",
+      "PresentationBonusScore": "",
+      "FinalScore": ""
+    }
+  ]
+}
