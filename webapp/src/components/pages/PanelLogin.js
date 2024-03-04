@@ -21,7 +21,7 @@ import { httpClient } from "../../client";
 const PanelLogin = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [reCaptchaToken, setReCaptchaToken] = useState(null);
-  const [email, setEmail] = useState(null);
+  const [email, setEmail] = useState("");
 
   const disclaimerText = [
     "Please be advised that this login portal is exclusively designated for authorized panelists. Any attempt by students to access this platform using panelist credentials is strictly prohibited and will be recorded. We maintain a comprehensive log of all login interactions, including but not limited to IP addresses and timestamps.",
