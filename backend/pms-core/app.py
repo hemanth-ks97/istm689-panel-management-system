@@ -1,13 +1,10 @@
 """Main application file for the PMS Core API."""
 
-import requests as true_requests
-
+import requests
 import jwt
 import boto3
 import uuid
 import pandas as pd
-import numpy as np
-from decimal import Decimal
 from io import StringIO
 from chalice import (
     Chalice,
@@ -19,7 +16,6 @@ from chalice import (
 )
 from chalicelib.config import (
     ENV,
-    GOOGLE_AUTH_CLIENT_ID,
     ALLOW_ORIGIN,
     ALLOWED_AUTHORIZATION_TYPES,
     USER_TABLE_NAME,
@@ -36,14 +32,10 @@ from chalicelib.utils import (
     get_token_subject,
     get_token_issuer,
     get_token_email,
-    get_base_url,
 )
 from google.auth import exceptions
-import json
-from google.oauth2 import id_token
-from google.auth.transport import requests
 from datetime import datetime, timezone, timedelta
-from jwt.exceptions import ExpiredSignatureError
+
 
 app = Chalice(app_name=f"{ENV}-pms-core")
 _USER_DB = None
@@ -461,7 +453,7 @@ def get_panel():
         "secret": "6Lf3lIcpAAAAACFT-wrtXeX2Z3NMAQLT3pXHIENL",
     }
     url = "https://www.google.com/recaptcha/api/siteverify"
-    res = true_requests.post(url, params=params)
+    res = requests.post(url, params=params)
     response = res.json()
 
     if response["success"] is False:
