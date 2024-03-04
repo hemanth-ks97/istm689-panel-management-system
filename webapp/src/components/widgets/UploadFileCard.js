@@ -29,7 +29,7 @@ const UploadFileCard = () => {
 
   const [isApiWaiting, setIsApiWaiting] = useState(false);
 
-  const sendCSVToServer = (csvData) => {
+  const sendHowdyCSVToServer = (csvData) => {
     setIsApiWaiting(true);
     httpClient
       .post("/howdycsv", csvData, {
@@ -51,31 +51,85 @@ const UploadFileCard = () => {
       .finally(() => setIsApiWaiting(false));
   };
 
-  const handleFileChange = (event) => {
+  const sendCanvasCSVToServer = (csvData) => {
+    setIsApiWaiting(true);
+    httpClient
+      .post("/canvascsv", csvData, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+          "Content-Type": "text/plain",
+        },
+      })
+      .then((response) => {
+        enqueueSnackbar(JSON.stringify(response?.data?.message), {
+          variant: "success",
+        });
+      })
+      .catch((err) =>
+        enqueueSnackbar(err.message, {
+          variant: "error",
+        })
+      )
+      .finally(() => setIsApiWaiting(false));
+  };
+
+  const handleHowdyFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const csvData = e.target.result;
-        sendCSVToServer(csvData);
-        event.target.value = "";
+        const csvString = e.target.result;
+        sendHowdyCSVToServer(csvString)
+        event.target.value = '';
+        enqueueSnackbar("Howdy file parsed", {
+          variant: "info",
+        });
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleCanvasFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csvString = e.target.result;
+        sendCanvasCSVToServer(csvString)
+        event.target.value = '';
+        enqueueSnackbar("Canvas file parsed", {
+          variant: "info",
+        });
       };
       reader.readAsText(file);
     }
   };
 
   return (
-    <Button
-      component="label"
-      role={undefined}
-      variant="contained"
-      tabIndex={-1}
-      disabled={isApiWaiting}
-      startIcon={<CloudUploadIcon />}
-    >
-      Upload file
-      <VisuallyHiddenInput type="file" onChange={handleFileChange} />
-    </Button>
+    <div>
+      <Button
+        component="label"
+        role={undefined}
+        variant="contained"
+        tabIndex={-1}
+        disabled={isApiWaiting}
+        startIcon={<CloudUploadIcon />}
+      >
+        Upload Howdy file
+        <VisuallyHiddenInput type="file" onChange={handleHowdyFileChange} />
+      </Button>
+      <Button
+        component="label"
+        role={undefined}
+        variant="contained"
+        tabIndex={-1}
+        disabled={isApiWaiting}
+        startIcon={<CloudUploadIcon />}
+      >
+        Upload Canvas file
+        <VisuallyHiddenInput type="file" onChange={handleCanvasFileChange} />
+      </Button>
+    </div>
   );
 };
 

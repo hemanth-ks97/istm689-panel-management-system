@@ -343,7 +343,7 @@ def get_user(id):
     authorizer=token_authorizer,
     content_types=["text/plain"],
 )
-def get_student_data():
+def post_howdy_csv():
     try:
         # Access the CSV file from the request body
         csv_data = app.current_request.raw_body.decode("utf-8")
@@ -360,20 +360,89 @@ def get_student_data():
         # Replace "email.tamu.edu" with just "tamu.edu" in the email column
         df["EmailID"] = df["EmailID"].str.replace("email.tamu.edu", "tamu.edu")
 
-        # Add USERID column
-        df["UserID"] = [str(uuid.uuid4()) for _ in range(len(df))]
+        # Choosing relevant columns for adding records to the user_db
+        records = df[["EmailID", "FName", "LName", "UIN"]].to_dict(orient="records")
+        for record in records:
+            user_exists = get_user_db().get_user_by_uin(record["UIN"])
 
-        # Add Role column
-        df["Role"] = ["student" for _ in range(len(df))]
+            if not user_exists :
+                # If the user does not exists, create a new one from scratch
+                new_user = dict()
+                new_user["UserID"] = str(uuid.uuid4())
+                new_user["EmailID"] = record["EmailID"]
+                new_user["FName"] = record["FName"]
+                new_user["LName"] = record["LName"]
+                new_user["UIN"] = record["UIN"]
+                new_user["Role"] = 'student'
+                new_user["CreatedAt"] = datetime.now().isoformat()
+                new_user["UpdatedAt"] = datetime.now().isoformat()
+                get_user_db().add_user(new_user)
+            else:
+                 # The user already exists, should update some fields only
+                updated_user = user_exists[0]
+                updated_user["EmailID"] = record["EmailID"]
+                updated_user["FName"] = record["FName"]
+                updated_user["LName"] = record["LName"]
+                updated_user["UpdatedAt"] = datetime.now().isoformat()
+                get_user_db().update_user(updated_user)
+        return Response(
+            body={"message": f"Student data processed successfully with {len(df)} records"},
+            status_code=200,
+            headers={"Content-Type": "application/json"},
+        )
+    except Exception as e:
+        return {"error": str(e)}
+    
+@app.route(
+    "/canvascsv",
+    methods=["POST"],
+    authorizer=token_authorizer,
+    content_types=["text/plain"],
+)
+def post_canvas_csv():
+    try:
+        # Access the CSV file from the request body
+        csv_data = app.current_request.raw_body.decode("utf-8")
+
+        # Convert the CSV file to a string
+        csv_file = StringIO(csv_data)
+
+        # Read CSV data into a pandas dataframe
+        df = pd.read_csv(csv_file)
+
+        # Rename columns according to user table schema
+        df.rename(columns={"ID":"CanvasID", "SIS Login ID":"UIN"}, inplace=True)
+
+        df['CanvasID'] = df['CanvasID'].replace('NaN', pd.NA).fillna(0).astype(int)
+        df['UIN'] = df['UIN'].replace('NaN', pd.NA).fillna(0).astype(int)
+        df['Section'] = df['Section'].replace('NaN', "")
+        df = df[df['UIN'] != 0]
 
         # Choosing relevant columns for adding records to the user_db
-        records = df[["UserID", "EmailID", "FName", "LName", "UIN", "Role"]].to_dict(orient="records")
+        records = df[["CanvasID", "Section", "UIN"]].to_dict(orient="records")
         for record in records:
-            record["CreatedAt"] = datetime.now().isoformat()
-            get_user_db().add_user(record)
+            user_exists = get_user_db().get_user_by_uin(record["UIN"])
 
+            if not user_exists :
+                # If the user does not exists, create a new one from scratch
+                new_user = dict()
+                new_user["UserID"] = str(uuid.uuid4())
+                new_user["UIN"] = int(record["UIN"])
+                new_user["Role"] = 'student'
+                new_user["Section"] = record["Section"]
+                new_user["CanvasID"] = int(record["CanvasID"])
+                new_user["CreatedAt"] = datetime.now().isoformat()
+                new_user["UpdatedAt"] = datetime.now().isoformat()
+                get_user_db().add_user(new_user)
+            else:
+                 # The user already exists, should update some fields only
+                updated_user = user_exists[0]
+                updated_user["Section"] = record["Section"]
+                updated_user["CanvasID"] = int(record["CanvasID"])
+                updated_user["UpdatedAt"] = datetime.now().isoformat()
+                get_user_db().update_user(updated_user)
         return Response(
-            body={"message": f"CSV processed successfully with {len(df)} records"},
+            body={"message": f"Student data processed successfully with {len(df)} records"},
             status_code=200,
             headers={"Content-Type": "application/json"},
         )
