@@ -27,13 +27,12 @@ const PanelLogin = () => {
     "Thank you for your cooperation and understanding.",
   ];
 
-  const handleVerify = (token) => {
+  const handleVerify = () => {
     enqueueSnackbar("reCaptcha verified", {
       variant: "success",
       preventDuplicate: true,
     });
     setIsVerified(true);
-    console.log(token);
   };
 
   const handleSubmit = () => {

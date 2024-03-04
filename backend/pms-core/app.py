@@ -213,7 +213,7 @@ def create_token():
             "email": user["EmailID"],
             "name": valid_and_verified_token["name"],
             "picture": valid_and_verified_token["picture"],
-            "role": user["Role"]
+            "role": user["Role"],
         }
 
         token = jwt.encode(
@@ -355,7 +355,10 @@ def post_howdy_csv():
         df = pd.read_csv(csv_file)
 
         # Rename columns according to user table schema
-        df.rename(columns={"FIRST NAME":"FName", "LAST NAME":"LName", "EMAIL":"EmailID"}, inplace=True)
+        df.rename(
+            columns={"FIRST NAME": "FName", "LAST NAME": "LName", "EMAIL": "EmailID"},
+            inplace=True,
+        )
 
         # Replace "email.tamu.edu" with just "tamu.edu" in the email column
         df["EmailID"] = df["EmailID"].str.replace("email.tamu.edu", "tamu.edu")
@@ -365,7 +368,7 @@ def post_howdy_csv():
         for record in records:
             user_exists = get_user_db().get_user_by_uin(record["UIN"])
 
-            if not user_exists :
+            if not user_exists:
                 # If the user does not exists, create a new one from scratch
                 new_user = dict()
                 new_user["UserID"] = str(uuid.uuid4())
@@ -373,12 +376,12 @@ def post_howdy_csv():
                 new_user["FName"] = record["FName"]
                 new_user["LName"] = record["LName"]
                 new_user["UIN"] = record["UIN"]
-                new_user["Role"] = 'student'
+                new_user["Role"] = "student"
                 new_user["CreatedAt"] = datetime.now().isoformat()
                 new_user["UpdatedAt"] = datetime.now().isoformat()
                 get_user_db().add_user(new_user)
             else:
-                 # The user already exists, should update some fields only
+                # The user already exists, should update some fields only
                 updated_user = user_exists[0]
                 updated_user["EmailID"] = record["EmailID"]
                 updated_user["FName"] = record["FName"]
@@ -386,13 +389,16 @@ def post_howdy_csv():
                 updated_user["UpdatedAt"] = datetime.now().isoformat()
                 get_user_db().update_user(updated_user)
         return Response(
-            body={"message": f"Student data processed successfully with {len(df)} records"},
+            body={
+                "message": f"Student data processed successfully with {len(df)} records"
+            },
             status_code=200,
             headers={"Content-Type": "application/json"},
         )
     except Exception as e:
         return {"error": str(e)}
-    
+
+
 @app.route(
     "/canvascsv",
     methods=["POST"],
@@ -411,38 +417,43 @@ def post_canvas_csv():
         df = pd.read_csv(csv_file)
 
         # Rename columns according to user table schema
-        df.rename(columns={"ID":"CanvasID", "SIS Login ID":"UIN"}, inplace=True)
-
-        df['CanvasID'] = df['CanvasID'].replace('NaN', pd.NA).fillna(0).astype(int)
-        df['UIN'] = df['UIN'].replace('NaN', pd.NA).fillna(0).astype(int)
-        df['Section'] = df['Section'].replace('NaN', "")
-        df = df[df['UIN'] != 0]
+        df.rename(columns={"ID": "CanvasID", "SIS Login ID": "UIN"}, inplace=True)
+        # Cleanup CanvasID NaN columns
+        df["CanvasID"] = df["CanvasID"].replace("NaN", pd.NA).fillna(0).astype(int)
+        # Cleanup UIN NaN columns
+        df["UIN"] = df["UIN"].replace("NaN", pd.NA).fillna(0).astype(int)
+        # Cleanup Section NaN columns
+        df["Section"] = df["Section"].replace("NaN", "")
+        # Remove rows with UIN = 0
+        df = df[df["UIN"] != 0]
 
         # Choosing relevant columns for adding records to the user_db
         records = df[["CanvasID", "Section", "UIN"]].to_dict(orient="records")
         for record in records:
             user_exists = get_user_db().get_user_by_uin(record["UIN"])
 
-            if not user_exists :
+            if not user_exists:
                 # If the user does not exists, create a new one from scratch
                 new_user = dict()
                 new_user["UserID"] = str(uuid.uuid4())
                 new_user["UIN"] = int(record["UIN"])
-                new_user["Role"] = 'student'
+                new_user["Role"] = "student"
                 new_user["Section"] = record["Section"]
                 new_user["CanvasID"] = int(record["CanvasID"])
                 new_user["CreatedAt"] = datetime.now().isoformat()
                 new_user["UpdatedAt"] = datetime.now().isoformat()
                 get_user_db().add_user(new_user)
             else:
-                 # The user already exists, should update some fields only
+                # The user already exists, should update some fields only
                 updated_user = user_exists[0]
                 updated_user["Section"] = record["Section"]
                 updated_user["CanvasID"] = int(record["CanvasID"])
                 updated_user["UpdatedAt"] = datetime.now().isoformat()
                 get_user_db().update_user(updated_user)
         return Response(
-            body={"message": f"Student data processed successfully with {len(df)} records"},
+            body={
+                "message": f"Student data processed successfully with {len(df)} records"
+            },
             status_code=200,
             headers={"Content-Type": "application/json"},
         )
