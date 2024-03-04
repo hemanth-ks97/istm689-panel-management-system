@@ -48,6 +48,16 @@ class DynamoQuestionDB(QuestionDB):
             },
         )
         return response.get("Item")
+    
+    def get_question_ids_by_panel_id(self, panel_id):
+        response = self._table.query(
+            IndexName='PanelIDIndex',
+            KeyConditionExpression = 'PanelID = :panel_id',
+            ExpressionAttributeValues = {
+                ':panel_id': panel_id
+            }
+        )
+        return [item["QuestionID"] for item in response["Items"]]
 
     def delete_question(self, question_id):
         self._table.delete_item(
@@ -110,6 +120,19 @@ class DynamoUserDB(UserDB):
             scan_params["FilterExpression"] = filter_expression
         response = self._table.scan(**scan_params)
         return response["Items"]
+    
+    def get_student_user_ids(self):
+        response = self._table.query(
+            IndexName='Role-index',
+            KeyConditionExpression='#roleAttr = :roleVal',
+            ExpressionAttributeNames={
+                '#roleAttr': 'Role',  # Placeholder for the reserved word 'role'
+            },
+            ExpressionAttributeValues={
+                ':roleVal': 'student', 
+            }
+        )
+        return {item["UserID"] for item in response["Items"]}
 
     def add_user(self, user):
         return self._table.put_item(Item=user)
