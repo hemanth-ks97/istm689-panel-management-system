@@ -213,7 +213,7 @@ resource "aws_dynamodb_table" "user-table" {
 
 }
 
-#metrics table
+#metric table
 resource "aws_dynamodb_table" "metric-table" {
   name           = "${terraform.workspace}-metric"
   billing_mode   = "PROVISIONED"
@@ -321,7 +321,7 @@ resource "aws_dynamodb_table" "local-user-table" {
 
 }
 
-#metrics table
+#metric table
 resource "aws_dynamodb_table" "local-metric-table" {
   name           = "local-metric"
   billing_mode   = "PROVISIONED"
