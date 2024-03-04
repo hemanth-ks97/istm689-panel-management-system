@@ -2,11 +2,16 @@ import { faker } from "@faker-js/faker";
 
 import {
   DynamoDBClient,
-  ListTablesCommand,
-  GetItemCommand,
-  PutItemCommand,
   BatchWriteItemCommand,
 } from "@aws-sdk/client-dynamodb";
+
+const ENV = process.env.ENV || "local";
+
+const TABLE_NAME = {
+  USER: `${ENV}-user`,
+  PANEL: `${ENV}-panel`,
+  QUESTIONS: `${ENV}-question`,
+};
 
 const client = new DynamoDBClient({});
 
@@ -151,19 +156,38 @@ const createRandomPanel = () => {
   const randomNumber = faker.number.int(100);
   const visibility = randomNumber % 2 === 0 ? "public" : "internal";
 
+  const startDate = faker.date.soon({ days: randomNumber });
+  const questionsDeadline = faker.date.soon({
+    days: 10,
+    refDate: startDate,
+  });
+
+  const tagDeadline = faker.date.soon({
+    days: 10,
+    refDate: questionsDeadline,
+  });
+  const voteDeadline = faker.date.soon({
+    days: 10,
+    refDate: tagDeadline,
+  });
+  const presentationDate = faker.date.soon({
+    days: 10,
+    refDate: voteDeadline,
+  });
+
   return {
     PanelID: faker.string.uuid(),
     NumberOfQuestions: faker.number.int({ min: 3, max: 10 }),
     PanelDesc: faker.lorem.paragraph(),
     Panelist: faker.person.fullName(),
     PanelName: `Panel ${faker.company.buzzAdjective()}`,
-    PanelPresentationDate: faker.date.anytime(),
-    PanelStartDate: faker.date.anytime(),
+    PanelStartDate: startDate,
+    QuestionStageDeadline: questionsDeadline,
+    TagStageDeadline: tagDeadline,
+    VoteStageDeadline: voteDeadline,
+    PanelPresentationDate: presentationDate,
     PanelVideoLink: faker.image.urlLoremFlickr(),
-    QuestionStageDeadline: faker.date.anytime(),
-    TagStageDeadline: faker.date.anytime(),
     Visibility: visibility,
-    VoteStageDeadline: faker.date.anytime(),
   };
 };
 
@@ -184,17 +208,18 @@ const generatePanels = (panelCount = 5) => {
 const createDynamoDBQuestionObject = (question) => {
   return {
     QuestionID: { S: question.QuestionID },
-    PanelID: { S: question.PanelID },
+    DislikedBy: { SS: question.DislikedBy }, // Should be an array of valid user IDs
     DislikeScore: { N: question.DislikeScore.toString() },
     FinalScore: { N: question.FinalScore.toString() },
+    LikedBy: { SS: question.LikedBy }, // Should be an array of valid user IDs
     LikeScore: { N: question.LikeScore.toString() },
+    NeutralizedBy: { SS: question.NeutralizedBy }, // Should be an array of valid user IDs
     NeutralScore: { N: question.NeutralScore.toString() },
+    PanelID: { S: question.PanelID },
     PresentationBonusScore: { N: question.PresentationBonusScore.toString() },
     QuestionText: { S: question.QuestionText },
-    VotingStageBonusScore: { N: question.VotingStageBonusScore.toString() },
     UserID: { S: question.UserID },
-    LikedBy: { SS: question.LikedBy }, // Should be an array of valid user IDs
-    DislikedBy: { SS: question.DislikedBy }, // Should be an array of valid user IDs
+    VotingStageBonusScore: { N: question.VotingStageBonusScore.toString() },
   };
 };
 
@@ -210,8 +235,9 @@ const createRandomQuestion = (panelID, userID) => {
     VotingStageBonusScore: faker.number.int({ min: 1, max: 100 }),
     QuestionText: faker.lorem.paragraph(),
     UserID: userID,
-    LikedBy: [userID], // Should be an array of valid user IDs
-    DislikedBy: [userID], // Should be an array of valid user IDs
+    LikedBy: [userID], // Should be an array of multiple valid user IDs
+    DislikedBy: [userID], // Should be an array of multiple valid user IDs
+    NeutralizedBy: [userID], // Should be an array of multiple valid user IDs
   };
   return question;
 };
@@ -239,11 +265,10 @@ const generateQuestions = (panels, users, questionsByPanel = 5) => {
         PutRequest: { Item: createDynamoDBQuestionObject(question) },
       });
     }
-
-    return panelQuestions;
+    return true;
   });
 
-  return questions;
+  return panelQuestions;
 };
 
 const main = async () => {
@@ -254,24 +279,26 @@ const main = async () => {
   let batchItems = {};
 
   if (users.length > 0) {
-    batchItems["local-user"] = users;
+    batchItems[TABLE_NAME.USER] = users;
   }
   if (panels.length > 0) {
-    batchItems["local-panel"] = panels;
+    batchItems[TABLE_NAME.PANEL] = panels;
   }
-
-  if (questions.length > 0 && panels.length > 0 && questions.length > 0) {
-    batchItems["local-questions"] = questions;
-  }
-
-  console.log(JSON.stringify(batchItems, null, 2));
-  const command = new BatchWriteItemCommand({
+  const putItems = new BatchWriteItemCommand({
     RequestItems: batchItems,
   });
+  await client.send(putItems);
 
-  const response = await client.send(command);
-
-  return response;
+  if (questions.length > 0 && panels.length > 0 && questions.length > 0) {
+    batchItems = {};
+    batchItems[TABLE_NAME.QUESTIONS] = questions;
+  }
+  // BatchWriteItemCommand only can handle 25 at the time
+  // Need to split for the questions
+  const putQuestions = new BatchWriteItemCommand({
+    RequestItems: batchItems,
+  });
+  await client.send(putQuestions);
 };
 
 main();
