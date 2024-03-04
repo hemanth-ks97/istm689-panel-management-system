@@ -5,7 +5,7 @@
   "main": "generate-fake-data.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "generate" :"node generate-fake-data.js"
   },
   "author": "",
   "license": "ISC",
