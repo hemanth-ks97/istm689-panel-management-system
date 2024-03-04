@@ -1,0 +1,19 @@
+{
+  "name": "utils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "generate-fake-data.js",
+  "type": "module",
+  "scripts": {
+    "generate" :"node generate-fake-data.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.525.0",
+    "@aws-sdk/lib-dynamodb": "^3.525.0",
+    "@faker-js/faker": "^8.4.1",
+    "libs": "^0.1.2",
+    "uuid": "^9.0.1"
+  }
+}
