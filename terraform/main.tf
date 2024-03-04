@@ -197,6 +197,20 @@ resource "aws_dynamodb_table" "user-table" {
     name = "UserID"
     type = "S"
   }
+
+  attribute {
+    name = "Role"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "RoleIndex"
+    hash_key        = "Role"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+
 }
 
 #metrics table
@@ -291,6 +305,20 @@ resource "aws_dynamodb_table" "local-user-table" {
     name = "UserID"
     type = "S"
   }
+
+  attribute {
+    name = "Role"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "RoleIndex"
+    hash_key        = "Role"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+
 }
 
 #metrics table

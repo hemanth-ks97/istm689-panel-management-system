@@ -2,15 +2,13 @@
   "Users": [
     {
       "UserID": "",
-      "GoogleID": "GoogleID",
       "CanvasID": "",
       "EmailID": "user@example.com",
       "UIN": "",
       "FName": "FirstName",
       "LName": "LastName",
       "Role": "Student/Admin/Moderator/Panelist",
-      "Section": "",
-      "ProfilePicture": "imageLink"
+      "Section": ""
     }
   ]
 }
