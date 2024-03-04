@@ -10,35 +10,6 @@ import {
 
 const client = new DynamoDBClient({});
 
-const createUser = (user) => {
-  const date = new Date(Date.now()).toISOString();
-
-  return {
-    UserID: { S: user.UserID },
-    CanvasID: { N: user.CanvasID.toString() },
-    CreatedAt: { S: date },
-    EmailID: { S: user.EmailID },
-    FName: { S: user.FName },
-    LName: { S: user.LName },
-    Role: { S: user.Role },
-    Section: { S: user.Section },
-    UIN: { N: user.UIN.toString() },
-  };
-};
-
-const createRandomUser = () => {
-  return {
-    UserID: faker.string.uuid(),
-    CanvasID: faker.number.int({ min: 100, max: 500 }),
-    EmailID: faker.internet.email(),
-    FName: faker.person.firstName(),
-    LName: faker.person.lastName(),
-    Role: "student",
-    Section: "ISTM-622-601",
-    UIN: faker.number.int({ min: 1000, max: 5000 }),
-  };
-};
-
 const teamMembers = [
   {
     UserID: faker.string.uuid(),
@@ -112,89 +83,160 @@ const teamMembers = [
   },
 ];
 
+const createDynamoDBUserObject = (user) => {
+  const date = new Date(Date.now()).toISOString();
+
+  return {
+    UserID: { S: user.UserID },
+    CanvasID: { N: user.CanvasID.toString() },
+    UIN: { N: user.UIN.toString() },
+    EmailID: { S: user.EmailID },
+    FName: { S: user.FName },
+    LName: { S: user.LName },
+    Role: { S: user.Role },
+    Section: { S: user.Section },
+    CreatedAt: { S: date },
+  };
+};
+
+const createRandomUser = () => {
+  const randomNumber = faker.number.int(100);
+  const role = randomNumber % 2 === 0 ? "student" : "admin";
+  return {
+    UserID: faker.string.uuid(),
+    CanvasID: faker.number.int({ min: 100, max: 500 }),
+    EmailID: faker.internet.email(),
+    FName: faker.person.firstName(),
+    LName: faker.person.lastName(),
+    Role: role,
+    Section: "ISTM-622-601",
+    UIN: faker.number.int({ min: 1000, max: 5000 }),
+  };
+};
+
 const generateUsers = (userCount = 3) => {
   const users = [];
   let newRecord;
   for (const member of teamMembers) {
-    newRecord = { PutRequest: { Item: createUser(member) } };
+    newRecord = { PutRequest: { Item: createDynamoDBUserObject(member) } };
     users.push(newRecord);
   }
   let randomUser;
   for (let i = 0; i < userCount; i++) {
     randomUser = createRandomUser();
-    newRecord = { PutRequest: { Item: createUser(randomUser) } };
+    newRecord = { PutRequest: { Item: createDynamoDBUserObject(randomUser) } };
     users.push(newRecord);
   }
   return users;
 };
 
-const createRandomPanel = () => {
+const createDynamoDBPanelObject = (panel) => {
   return {
-    PanelID: { S: faker.string.uuid() },
-    NumberOfQuestions: { N: faker.number.int({ min: 3, max: 10 }).toString() },
-    PanelDesc: { S: faker.lorem.paragraph() },
-    Panelist: { S: faker.person.fullName() },
-    PanelName: { S: `Panel ${faker.company.buzzAdjective()}` },
-    PanelPresentationDate: { S: faker.date.anytime() },
-    PanelStartDate: { S: faker.date.anytime() },
-    PanelVideoLink: { S: faker.image.urlLoremFlickr() },
-    QuestionStageDeadline: { S: faker.date.anytime() },
-    TagStageDeadline: { S: faker.date.anytime() },
-    Visibility: { S: "public" },
-    VoteStageDeadline: { S: faker.date.anytime() },
+    PanelID: { S: panel.PanelID },
+    NumberOfQuestions: { N: panel.NumberOfQuestions.toString() },
+    PanelDesc: { S: panel.PanelDesc },
+    Panelist: { S: panel.Panelist },
+    PanelName: { S: panel.PanelName },
+    PanelPresentationDate: { S: panel.PanelPresentationDate },
+    PanelStartDate: { S: panel.PanelStartDate },
+    PanelVideoLink: { S: panel.PanelVideoLink },
+    QuestionStageDeadline: { S: panel.QuestionStageDeadline },
+    TagStageDeadline: { S: panel.TagStageDeadline },
+    Visibility: { S: panel.Visibility },
+    VoteStageDeadline: { S: panel.VoteStageDeadline },
+  };
+};
+
+const createRandomPanel = () => {
+  const randomNumber = faker.number.int(100);
+  const visibility = randomNumber % 2 === 0 ? "public" : "internal";
+
+  return {
+    PanelID: faker.string.uuid(),
+    NumberOfQuestions: faker.number.int({ min: 3, max: 10 }),
+    PanelDesc: faker.lorem.paragraph(),
+    Panelist: faker.person.fullName(),
+    PanelName: `Panel ${faker.company.buzzAdjective()}`,
+    PanelPresentationDate: faker.date.anytime(),
+    PanelStartDate: faker.date.anytime(),
+    PanelVideoLink: faker.image.urlLoremFlickr(),
+    QuestionStageDeadline: faker.date.anytime(),
+    TagStageDeadline: faker.date.anytime(),
+    Visibility: visibility,
+    VoteStageDeadline: faker.date.anytime(),
   };
 };
 
 const generatePanels = (panelCount = 5) => {
   const panels = [];
   let randomPanel;
+  let newRecord;
   for (let i = 0; i < panelCount; i++) {
-    randomPanel = { PutRequest: { Item: createRandomPanel() } };
-    panels.push(randomPanel);
+    randomPanel = createRandomPanel();
+    newRecord = {
+      PutRequest: { Item: createDynamoDBPanelObject(randomPanel) },
+    };
+    panels.push(newRecord);
   }
   return panels;
 };
-const generateQuestions = (panels, users) => {
+
+const createDynamoDBQuestionObject = (question) => {
+  return {
+    QuestionID: { S: question.QuestionID },
+    PanelID: { S: question.PanelID },
+    DislikeScore: { N: question.DislikeScore.toString() },
+    FinalScore: { N: question.FinalScore.toString() },
+    LikeScore: { N: question.LikeScore.toString() },
+    NeutralScore: { N: question.NeutralScore.toString() },
+    PresentationBonusScore: { N: question.PresentationBonusScore.toString() },
+    QuestionText: { S: question.QuestionText },
+    VotingStageBonusScore: { N: question.VotingStageBonusScore.toString() },
+    UserID: { S: question.UserID },
+    LikedBy: { SS: question.LikedBy }, // Should be an array of valid user IDs
+    DislikedBy: { SS: question.DislikedBy }, // Should be an array of valid user IDs
+  };
+};
+
+const createRandomQuestion = (panelID, userID) => {
+  const question = {
+    QuestionID: faker.string.uuid(),
+    PanelID: panelID,
+    DislikeScore: faker.number.int({ min: 1, max: 100 }),
+    FinalScore: faker.number.int({ min: 1, max: 100 }),
+    LikeScore: faker.number.int({ min: 1, max: 100 }),
+    NeutralScore: faker.number.int({ min: 1, max: 100 }),
+    PresentationBonusScore: faker.number.int({ min: 1, max: 100 }),
+    VotingStageBonusScore: faker.number.int({ min: 1, max: 100 }),
+    QuestionText: faker.lorem.paragraph(),
+    UserID: userID,
+    LikedBy: [userID], // Should be an array of valid user IDs
+    DislikedBy: [userID], // Should be an array of valid user IDs
+  };
+  return question;
+};
+
+const generateQuestions = (panels, users, questionsByPanel = 5) => {
   let panelID;
-  let userID = users[0].PutRequest.Item.UserID.S.toString();
+  let userID;
+  let randomUserIndex;
+  let panelQuestions = [];
+
+  // Loop through each generated panel to create questions
   const questions = panels.map((panel) => {
     panelID = panel.PutRequest.Item.PanelID.S;
 
-    const panelQuestions = [];
+    for (let i = 0; i < questionsByPanel; i++) {
+      // Randomly select a user from the list of users
+      randomUserIndex = faker.number.int({ min: 0, max: users.length - 1 });
+      userID = users[randomUserIndex].PutRequest.Item.UserID.S;
 
-    // For each panel, generate 5 questions
-    for (let i = 0; i < 5; i++) {
+      // Create a random question
+      const question = createRandomQuestion(panelID, userID);
+
+      // Add the question to the list of questions
       panelQuestions.push({
-        PutRequest: {
-          Item: {
-            QuestionID: { S: faker.string.uuid() },
-            PanelID: { S: panelID },
-            DislikeScore: {
-              N: faker.number.int({ min: 1, max: 100 }).toString(),
-            },
-            FinalScore: {
-              N: faker.number.int({ min: 1, max: 100 }).toString(),
-            },
-            LikeScore: {
-              N: faker.number.int({ min: 1, max: 100 }).toString(),
-            },
-            NeutralScore: {
-              N: faker.number.int({ min: 1, max: 100 }).toString(),
-            },
-            PresentationBonusScore: {
-              N: faker.number.int({ min: 1, max: 100 }).toString(),
-            },
-            QuestionText: {
-              S: faker.lorem.paragraph(),
-            },
-            VotingStageBonusScore: {
-              N: faker.number.int({ min: 1, max: 100 }).toString(),
-            },
-            UserID: { S: userID },
-            LikedBy: { S: userID },
-            DislikedBy: { S: userID },
-          },
-        },
+        PutRequest: { Item: createDynamoDBQuestionObject(question) },
       });
     }
 
@@ -211,14 +253,14 @@ const main = async () => {
 
   let batchItems = {};
 
-  // if (users.length > 0) {
-  //   batchItems["local-user"] = users;
-  // }
-  // if (panels.length > 0) {
-  //   batchItems["local-panel"] = panels;
-  // }
+  if (users.length > 0) {
+    batchItems["local-user"] = users;
+  }
+  if (panels.length > 0) {
+    batchItems["local-panel"] = panels;
+  }
 
-  if (questions.length > 0) {
+  if (questions.length > 0 && panels.length > 0 && questions.length > 0) {
     batchItems["local-questions"] = questions;
   }
 
