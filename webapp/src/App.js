@@ -22,6 +22,7 @@ import NotFoundPage from "./components/pages/NotFoundPage";
 import PanelPage from "./components/pages/PanelPage";
 //constants
 import { ADMIN } from "./config/constants";
+import AdminPanelPage from "./components/pages/AdminPanelPage";
 
 const App = () => {
   const { user } = useSelector((state) => state.user);
@@ -46,6 +47,7 @@ const App = () => {
         {/* allow only admin to view these pages */}
         <Route element={<PrivateRoutes isAllowed={user?.role === ADMIN} />}>
           <Route element={<AdminPage />} path="admin" />
+          <Route element={<AdminPanelPage />} path="admin-panel" />
         </Route>
 
         <Route element={<PublicLayout />}>

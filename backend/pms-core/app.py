@@ -22,6 +22,7 @@ from chalicelib.config import (
     ALLOWED_AUTHORIZATION_TYPES,
     USER_TABLE_NAME,
     QUESTION_TABLE_NAME,
+    PANEL_TABLE_NAME,
     JWT_SECRET,
     JWT_AUDIENCE,
     JWT_ISSUER,
@@ -35,6 +36,7 @@ from chalicelib.utils import (
     get_token_issuer,
     get_token_email,
     get_base_url,
+    get_token_role
 )
 from google.auth import exceptions
 from google.oauth2 import id_token
@@ -45,7 +47,7 @@ from jwt.exceptions import ExpiredSignatureError
 app = Chalice(app_name=f"{ENV}-pms-core")
 _USER_DB = None
 _QUESTION_DB = None
-
+_PANEL_DB = None
 
 def get_user_db():
     global _USER_DB
@@ -70,6 +72,16 @@ def get_question_db():
         return {"error": str(e)}
     return _QUESTION_DB
 
+def get_panel_db():
+    global _PANEL_DB
+    try:
+        if _PANEL_DB is None:
+            _PANEL_DB = db.DynamoPanelDB(
+                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(PANEL_TABLE_NAME)
+            )
+    except Exception as e:
+        return {"error": str(e)}
+    return _PANEL_DB
 
 def dummy():
     """
@@ -498,5 +510,57 @@ def add_new_user():
         get_user_db().add_user(new_user)
         # Returns the result of put_item, kind of metadata and stuff
 
+    except Exception as e:
+        return {"error": str(e)}
+    
+@app.route(
+    "/panel",
+    methods=["POST"],
+    authorizer=token_authorizer,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def add_panel_info():
+    incoming_json = app.current_request.json_body
+
+    """ check if truly the admin is sending the request """
+    auth_header = app.current_request.headers.get('Authorization')    
+    incoming_token = auth_header.split(' ')[1]
+    if get_token_role(incoming_token) != "admin":
+        raise BadRequestError("Only admin can perform this action")
+
+    panel = {}
+    
+    try:
+        # map json to panel object
+        panel["PanelID"] = str(uuid.uuid4())
+        panel["NumberOfQuestions"] = incoming_json["numberOfQuestions"]
+        panel["PanelName"] = incoming_json["panelName"]
+        panel["Panelist"] = incoming_json["panelist"]
+        panel["QuestionStageDeadline"] = incoming_json["questionStageDeadline"]
+        panel["VoteStageDeadline"] = incoming_json["voteStageDeadline"]
+        panel["TagStageDeadline"] = incoming_json["tagStageDeadline"]
+        panel["PanelVideoLink"] = incoming_json["panelVideoLink"]
+        panel["PanelPresentationDate"] = incoming_json["panelPresentationDate"]
+        panel["PanelDesc"] = incoming_json["panelDesc"]
+
+        get_panel_db().add_panel(panel)
+
+        return Response(
+            body={"message": "Panel added successfully"},
+            status_code=200,
+            headers={"Content-Type": "application/json"},
+            )
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.route(
+    "/panel",
+    methods=["GET"],
+    authorizer=token_authorizer,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def add_panel_info():
+    try:
+        return get_panel_db().get_all_panels()
     except Exception as e:
         return {"error": str(e)}
