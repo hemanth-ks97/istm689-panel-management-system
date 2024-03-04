@@ -208,12 +208,12 @@ const generatePanels = (panelCount = 5) => {
 const createDynamoDBQuestionObject = (question) => {
   return {
     QuestionID: { S: question.QuestionID },
-    DislikedBy: { SS: question.DislikedBy }, // Should be an array of valid user IDs
+    DislikedBy: { L: [] }, // Should be an array of valid user IDs
+    LikedBy: { L: [] }, // Should be an array of valid user IDs
+    NeutralizedBy: { L: [] }, // Should be an array of valid user IDs
     DislikeScore: { N: question.DislikeScore.toString() },
     FinalScore: { N: question.FinalScore.toString() },
-    LikedBy: { SS: question.LikedBy }, // Should be an array of valid user IDs
     LikeScore: { N: question.LikeScore.toString() },
-    NeutralizedBy: { SS: question.NeutralizedBy }, // Should be an array of valid user IDs
     NeutralScore: { N: question.NeutralScore.toString() },
     PanelID: { S: question.PanelID },
     PresentationBonusScore: { N: question.PresentationBonusScore.toString() },
@@ -293,8 +293,10 @@ const main = async () => {
     batchItems = {};
     batchItems[TABLE_NAME.QUESTIONS] = questions;
   }
-  // BatchWriteItemCommand only can handle 25 at the time
-  // Need to split for the questions
+  /**
+   * BatchWriteItemCommand only can handle 25 at the time
+   * Need to split for the questions
+   */
   const putQuestions = new BatchWriteItemCommand({
     RequestItems: batchItems,
   });
