@@ -141,6 +141,10 @@ class DynamoUserDB(UserDB):
         response = self._table.scan(FilterExpression=Attr("EmailID").eq(email))
         return response["Items"]
 
+    def get_user_by_uin(self, uin):
+        response = self._table.scan(FilterExpression=Attr("UIN").eq(uin))
+        return response["Items"]
+
     def delete_user(self, user_id):
         self._table.delete_item(
             Key={
