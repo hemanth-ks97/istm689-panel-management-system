@@ -199,6 +199,8 @@ const generateUsers = () => {
 };
 
 const createDynamoDBPanelObject = (panel) => {
+  const date = new Date(Date.now()).toISOString();
+
   return {
     PanelID: { S: panel.PanelID },
     NumberOfQuestions: { N: panel.NumberOfQuestions.toString() },
@@ -212,6 +214,7 @@ const createDynamoDBPanelObject = (panel) => {
     TagStageDeadline: { S: panel.TagStageDeadline },
     Visibility: { S: panel.Visibility },
     VoteStageDeadline: { S: panel.VoteStageDeadline },
+    CreatedAt: { S: date },
   };
 };
 
@@ -269,6 +272,8 @@ const generatePanels = (panelCount = 5) => {
 };
 
 const createDynamoDBQuestionObject = (question) => {
+  const date = new Date(Date.now()).toISOString();
+
   return {
     QuestionID: { S: question.QuestionID },
     DislikedBy: { L: [] }, // Should be an array of valid user IDs
@@ -283,6 +288,7 @@ const createDynamoDBQuestionObject = (question) => {
     QuestionText: { S: question.QuestionText },
     UserID: { S: question.UserID },
     VotingStageBonusScore: { N: question.VotingStageBonusScore.toString() },
+    CreatedAt: { S: date },
   };
 };
 
