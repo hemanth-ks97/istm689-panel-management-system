@@ -8,4 +8,8 @@ BOTO3_DYNAMODB_TYPE = "dynamodb"
 # Request Content Types
 REQUEST_CONTENT_TYPE_JSON = "application/json"
 
+ADMIN_ROLE = "admin"
+STUDENT_ROLE = "student"
+PANELIST_ROLE = "panelist"
+
 GOOGLE_RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"

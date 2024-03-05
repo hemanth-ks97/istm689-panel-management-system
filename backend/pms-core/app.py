@@ -31,6 +31,9 @@ from chalicelib.constants import (
     BOTO3_DYNAMODB_TYPE,
     REQUEST_CONTENT_TYPE_JSON,
     GOOGLE_RECAPTCHA_VERIFY_URL,
+    ADMIN_ROLE,
+    STUDENT_ROLE,
+    PANELIST_ROLE,
 )
 from chalicelib import db
 from chalicelib.utils import (
@@ -248,12 +251,21 @@ def create_token():
 def get_all_questions():
     """
     Question route, testing purposes.
+
     """
+    user_id = app.current_request.context["authorizer"]["principalId"]
 
     try:
-        return get_question_db().list_questions()
+
+        user_role = get_user_db().get_user_role(user_id)
+
+        if user_role != ADMIN_ROLE:
+            raise BadRequestError("Only admin can perform this action")
+
+        questions = get_question_db().list_questions()
     except Exception as e:
         return {"error": str(e)}
+    return questions
 
 
 @app.route(
@@ -316,10 +328,18 @@ def get_all_users():
     """
     User route, testing purposes.
     """
+    user_id = app.current_request.context["authorizer"]["principalId"]
+
     try:
-        return get_user_db().list_users()
+        user_role = get_user_db().get_user_role(user_id)
+
+        if user_role != ADMIN_ROLE:
+            raise BadRequestError("Only admin can perform this action")
+
+        users = get_user_db().list_users()
     except Exception as e:
         return {"error": str(e)}
+    return users
 
 
 @app.route(
@@ -344,7 +364,14 @@ def get_user(id):
     content_types=["text/plain"],
 )
 def post_howdy_csv():
+    user_id = app.current_request.context["authorizer"]["principalId"]
     try:
+
+        user_role = get_user_db().get_user_role(user_id)
+
+        if user_role != ADMIN_ROLE:
+            raise BadRequestError("Only admin can perform this action")
+
         # Access the CSV file from the request body
         csv_data = app.current_request.raw_body.decode("utf-8")
 
@@ -376,7 +403,7 @@ def post_howdy_csv():
                 new_user["FName"] = record["FName"]
                 new_user["LName"] = record["LName"]
                 new_user["UIN"] = record["UIN"]
-                new_user["Role"] = "student"
+                new_user["Role"] = STUDENT_ROLE
                 new_user["CreatedAt"] = datetime.now().isoformat()
                 new_user["UpdatedAt"] = datetime.now().isoformat()
                 get_user_db().add_user(new_user)
@@ -406,7 +433,13 @@ def post_howdy_csv():
     content_types=["text/plain"],
 )
 def post_canvas_csv():
+    user_id = app.current_request.context["authorizer"]["principalId"]
     try:
+        user_role = get_user_db().get_user_role(user_id)
+
+        if user_role != ADMIN_ROLE:
+            raise BadRequestError("Only admin can perform this action")
+
         # Access the CSV file from the request body
         csv_data = app.current_request.raw_body.decode("utf-8")
 
@@ -437,7 +470,7 @@ def post_canvas_csv():
                 new_user = dict()
                 new_user["UserID"] = str(uuid.uuid4())
                 new_user["UIN"] = int(record["UIN"])
-                new_user["Role"] = "student"
+                new_user["Role"] = STUDENT_ROLE
                 new_user["Section"] = record["Section"]
                 new_user["CanvasID"] = int(record["CanvasID"])
                 new_user["CreatedAt"] = datetime.now().isoformat()
@@ -462,7 +495,7 @@ def post_canvas_csv():
 
 
 @app.route("/login/panel", methods=["POST"], content_types=[REQUEST_CONTENT_TYPE_JSON])
-def get_panel():
+def get_login_panel():
     incoming_json = app.current_request.json_body
 
     params = {
@@ -479,11 +512,17 @@ def get_panel():
     if response["score"] <= 0.5:
         raise BadRequestError("Score too low")
 
-    # Check if the emails is amongts the registered panelist!!!
+    panelist_email = incoming_json["email"]
+    user = get_user_db().get_user_by_email(panelist_email)
+
+    if not user:
+        raise NotFoundError("User not found")
+
+    if user[0]["Role"] != PANELIST_ROLE:
+        raise BadRequestError("User is not a panelist")
+
     # If so, generate a token and send an email
-
-    # Generate a token and Call SNS to send an email!!
-
+    # GENERATE SHORT LIVE TOKEN FOR PANELIST!
     return response
 
 
@@ -495,8 +534,14 @@ def get_panel():
 )
 def add_new_user():
     """User route, testing purposes."""
+    user_id = app.current_request.context["authorizer"]["principalId"]
+
     try:
-        """`app.current_request.json_body` works because the request has the header `Content-Type: application/json` set."""
+        user_role = get_user_db().get_user_role(user_id)
+
+        if user_role != ADMIN_ROLE:
+            raise BadRequestError("Only admin can perform this action")
+
         incoming_json = app.current_request.json_body
 
         # Check for all required fields
@@ -507,19 +552,14 @@ def add_new_user():
         if "email" not in incoming_json:
             raise BadRequestError("Key 'email' not found in incoming request")
 
-        # Fetch principalID (Google ID) from incoming request.
-        # Not a real case scenario
-        google_id = app.current_request.context["authorizer"]["principalId"]
-        origin_ip = app.current_request.context["identity"]["sourceIp"]
         # Build User object for database
-        new_user = dict()
-        new_user["UserID"] = str(uuid.uuid4())
-        new_user["GoogleID"] = google_id
-        new_user["OriginIP"] = origin_ip
-        new_user["CreatedAt"] = datetime.now().isoformat()
-        new_user["Name"] = incoming_json["name"]
-        new_user["LastName"] = incoming_json["lastname"]
-        new_user["Email"] = incoming_json["email"]
+        new_user = {
+            "UserID": str(uuid.uuid4()),
+            "CreatedAt": datetime.now().isoformat(),
+            "Name": incoming_json["name"],
+            "LastName": incoming_json["lastname"],
+            "Email": incoming_json["email"],
+        }
 
         get_user_db().add_user(new_user)
         # Returns the result of put_item, kind of metadata and stuff
@@ -535,33 +575,32 @@ def add_new_user():
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def add_panel_info():
-    incoming_json = app.current_request.json_body
-
-    """ check if truly the admin is sending the request """
-    auth_header = app.current_request.headers.get("Authorization")
-    incoming_token = auth_header.split(" ")[1]
-    if get_token_role(incoming_token) != "admin":
-        raise BadRequestError("Only admin can perform this action")
-
-    panel = dict()
-
+    user_id = app.current_request.context["authorizer"]["principalId"]
     try:
-        # map json to panel object
-        panel["PanelID"] = str(uuid.uuid4())
-        panel["NumberOfQuestions"] = incoming_json["numberOfQuestions"]
-        panel["PanelName"] = incoming_json["panelName"]
-        panel["Panelist"] = incoming_json["panelist"]
-        panel["QuestionStageDeadline"] = incoming_json["questionStageDeadline"]
-        panel["VoteStageDeadline"] = incoming_json["voteStageDeadline"]
-        panel["TagStageDeadline"] = incoming_json["tagStageDeadline"]
-        panel["PanelVideoLink"] = incoming_json["panelVideoLink"]
-        panel["PanelPresentationDate"] = incoming_json["panelPresentationDate"]
-        panel["PanelDesc"] = incoming_json["panelDesc"]
-        panel["PanelStartDate"] = incoming_json["panelStartDate"]
-        panel["Visibility"] = incoming_json["visibility"]
+        user_role = get_user_db().get_user_role(user_id)
 
-        get_panel_db().add_panel(panel)
+        if user_role != ADMIN_ROLE:
+            raise BadRequestError("Only admin can perform this action")
 
+        incoming_json = app.current_request.json_body
+
+        new_panel = {
+            "PanelID": str(uuid.uuid4()),
+            "NumberOfQuestions": incoming_json["numberOfQuestions"],
+            "PanelName": incoming_json["panelName"],
+            "Panelist": incoming_json["panelist"],
+            "QuestionStageDeadline": incoming_json["questionStageDeadline"],
+            "VoteStageDeadline": incoming_json["voteStageDeadline"],
+            "TagStageDeadline": incoming_json["tagStageDeadline"],
+            "PanelVideoLink": incoming_json["panelVideoLink"],
+            "PanelPresentationDate": incoming_json["panelPresentationDate"],
+            "PanelDesc": incoming_json["panelDesc"],
+            "PanelStartDate": incoming_json["panelStartDate"],
+            "Visibility": incoming_json["visibility"],
+        }
+        get_panel_db().add_panel(new_panel)
+
+        # We don't know if we added the panel successfully
         return Response(
             body={"message": "Panel added successfully"},
             status_code=200,
@@ -595,10 +634,16 @@ def get_all_panels():
     methods=["GET"],
     authorizer=token_authorizer,
 )
-def get_all_panels(id):
+def get_panel(id):
+    # Fetch user id
+    user_id = app.current_request.context["authorizer"]["principalId"]
     try:
-
+        user_role = get_user_db().get_user_role(user_id)
         panel = get_panel_db().get_panel(id)
+
+        if user_role != ADMIN_ROLE and panel["Visibility"] == "internal":
+            raise BadRequestError("Only admin can view this panel")
+
         return panel
 
     except Exception as e:

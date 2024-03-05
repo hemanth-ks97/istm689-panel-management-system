@@ -48,7 +48,7 @@ const PanelPage = () => {
         <Typography>{JSON.stringify(panel, null, 2)}</Typography>
 
         <ButtonGroup>
-          <Button variant="outlined" onClick={() => navigate("questions")}>
+          <Button variant="outlined" onClick={() => navigate("question")}>
             Submit Questions
           </Button>
 
@@ -59,7 +59,7 @@ const PanelPage = () => {
           <Button variant="outlined" onClick={() => navigate("voting")}>
             Vote Questions
           </Button>
-          <Button variant="outlined" onClick={() => navigate("voting")}>
+          <Button variant="outlined" onClick={() => navigate("questions")}>
             DRAFT: All questions for this Panel
           </Button>
         </ButtonGroup>

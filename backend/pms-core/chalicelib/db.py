@@ -110,6 +110,9 @@ class UserDB(object):
     def get_user(self, user_id):
         pass
 
+    def get_user_role(self, user_id):
+        pass
+
     def update_user(self, user):
         pass
 
@@ -167,6 +170,10 @@ class DynamoUserDB(UserDB):
             },
         )
         return response.get("Item")
+
+    def get_user_role(self, user_id):
+        user = self.get_user(user_id)
+        return user["Role"]
 
     def get_user_by_google_id(self, google_id):
         response = self._table.scan(FilterExpression=Attr("GoogleID").eq(google_id))
