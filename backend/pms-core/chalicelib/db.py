@@ -123,7 +123,7 @@ class DynamoUserDB(UserDB):
     
     def get_student_user_ids(self):
         response = self._table.query(
-            IndexName='Role-index',
+            IndexName='RoleIndex',
             KeyConditionExpression='#roleAttr = :roleVal',
             ExpressionAttributeNames={
                 '#roleAttr': 'Role',  # Placeholder for the reserved word 'role'
