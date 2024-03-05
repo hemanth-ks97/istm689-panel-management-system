@@ -1,7 +1,6 @@
 """Main application file for the PMS Core API."""
 
 import requests
-import jwt
 import boto3
 import uuid
 import pandas as pd
@@ -14,6 +13,7 @@ from chalice import (
     BadRequestError,
     Response,
 )
+from chalicelib.email import send_email
 from chalicelib.config import (
     ENV,
     ALLOW_ORIGIN,
@@ -39,10 +39,7 @@ from chalicelib import db
 from chalicelib.utils import (
     verify_token,
     get_token_subject,
-    get_token_issuer,
-    get_token_email,
-    get_base_url,
-    get_token_role,
+    create_token,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -103,6 +100,9 @@ def dummy():
     dummy_db.update_item()
     dummy_db.scan()
     dummy_db.query()
+    # SES
+    dummy_ses = boto3.client("ses")
+    dummy_ses.send_email()
     # S3
     # dummy_s3 = boto3.client("s3")
     # dummy_s3.put_object()
@@ -183,7 +183,7 @@ def index():
     "/token/create",
     methods=["POST"],
 )
-def create_token():
+def create_new_token():
     """Need to receive a token, decoded and return a new custom token with internal user ID"""
 
     try:
@@ -205,28 +205,13 @@ def create_token():
 
         user = users_found[0]
 
-        current_time = datetime.now(tz=timezone.utc)
-        expiration = datetime.now(tz=timezone.utc) + timedelta(
-            days=int(JWT_TOKEN_EXPIRATION_DAYS)
-        )
-
-        payload_data = {
-            "iss": JWT_ISSUER,
-            "aud": JWT_AUDIENCE,
-            "iat": current_time,
-            "nbf": current_time,
-            "exp": expiration,
-            "sub": user["UserID"],
-            "email": user["EmailID"],
-            "name": valid_and_verified_token["name"],
-            "picture": valid_and_verified_token["picture"],
-            "role": user["Role"],
-        }
-
-        token = jwt.encode(
-            payload=payload_data,
-            key=JWT_SECRET,
-            algorithm="HS256",
+        # Create a new token with the user id
+        new_token = create_token(
+            user_id=user["UserID"],
+            email_id=user["EmailID"],
+            name=valid_and_verified_token["name"],
+            picture=valid_and_verified_token["picture"],
+            role=user["Role"],
         )
 
         # Register last login
@@ -240,7 +225,7 @@ def create_token():
         # Not always true but this is a Chalice Exception
         raise NotFoundError("User not found")
 
-    return {"token": token}
+    return {"token": new_token}
 
 
 @app.route(
@@ -517,16 +502,31 @@ def get_login_panel():
         raise BadRequestError("Score too low")
 
     panelist_email = incoming_json["email"]
-    user = get_user_db().get_user_by_email(panelist_email)
+    users = get_user_db().get_user_by_email(panelist_email)
 
-    if not user:
+    if not users:
         raise NotFoundError("User not found")
 
-    if user[0]["Role"] != PANELIST_ROLE:
+    user = users[0]
+
+    if user["Role"] != PANELIST_ROLE:
         raise BadRequestError("User is not a panelist")
 
+    new_token = create_token(
+        user_id=user["UserID"],
+        email_id=user["EmailID"],
+        name=f"{user['FName']} {user['LName']}",
+        picture="",
+        role=user["Role"],
+    )
+
     # If so, generate a token and send an email
-    # GENERATE SHORT LIVE TOKEN FOR PANELIST!
+    send_email(
+        destination_addresses=["davidgomilliontest@gmail.com"],
+        subject="Panelist Login URL",
+        body=f"Your login URL is: https://pms.tamu.edu/panelist?token={new_token}",
+    )
+
     return response
 
 
