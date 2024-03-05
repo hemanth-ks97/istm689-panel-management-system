@@ -11,6 +11,7 @@ import LoginPage from "./components/pages/LoginPage";
 import ProfilePage from "./components/pages/ProfilePage";
 import AdminDashboardPage from "./components/pages/AdminDashboardPage";
 import AdminGradesPage from "./components/pages/AdminGradesPage";
+import PanelDashboardPage from "./components/pages/PanelDashboardPage";
 import AdminPanelsPage from "./components/pages/AdminPanelsPage";
 import AdminUsersPage from "./components/pages/AdminUsersPage";
 import QuestionsPage from "./components/pages/QuestionsPage";
@@ -38,6 +39,7 @@ const App = () => {
           <Route element={<HomePage />} path="/" exact />
           <Route element={<ProfilePage />} path="profile" />
           <Route element={<GradesPage />} path="grades" />
+          <Route element={<PanelDashboardPage />} path="panels" />
 
           <Route element={<PanelPage />} path="panel/:panelId">
             <Route element={<QuestionsPage />} path="questions" />

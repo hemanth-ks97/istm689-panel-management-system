@@ -9,6 +9,10 @@ GOOGLE_AUTH_CLIENT_ID = os.environ.get(
     "GOOGLE_AUTH_CLIENT_ID",
     "370940936724-4qh7n4qh6vrgli6bsf3je6kbe2lsotef.apps.googleusercontent.com",
 )
+GOOGLE_RECAPTCHA_SECRET_KEY = os.environ.get(
+    "GOOGLE_RECAPTCHA_SECRET_KEY", "6Lf3lIcpAAAAACFT-wrtXeX2Z3NMAQLT3pXHIENL"
+)
+
 ALLOW_ORIGIN = os.environ.get("ALLOW_ORIGIN", "http://localhost:3000")
 
 # Can add more later, like basic auth for development purposes, etc

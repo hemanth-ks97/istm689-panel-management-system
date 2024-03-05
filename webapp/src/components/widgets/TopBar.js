@@ -53,17 +53,24 @@ const TopBar = () => {
         handleCloseNavMenu();
       },
     },
+    // {
+    //   name: "Questions",
+    //   handleOnClick: () => {
+    //     navigate("/questions");
+    //     handleCloseNavMenu();
+    //   },
+    // },
+    // {
+    //   name: "Voting",
+    //   handleOnClick: () => {
+    //     navigate("/voting");
+    //     handleCloseNavMenu();
+    //   },
+    // },
     {
-      name: "Questions",
+      name: "Panels",
       handleOnClick: () => {
-        navigate("/questions");
-        handleCloseNavMenu();
-      },
-    },
-    {
-      name: "Voting",
-      handleOnClick: () => {
-        navigate("/voting");
+        navigate("/panels");
         handleCloseNavMenu();
       },
     },
@@ -81,13 +88,6 @@ const TopBar = () => {
       name: "Profile",
       handleOnClick: () => {
         navigate("/profile");
-        handleClose();
-      },
-    },
-    {
-      name: "My account",
-      handleOnClick: () => {
-        navigate("/");
         handleClose();
       },
     },

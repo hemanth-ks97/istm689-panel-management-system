@@ -22,11 +22,16 @@ from chalicelib.config import (
     QUESTION_TABLE_NAME,
     PANEL_TABLE_NAME,
     JWT_SECRET,
+    GOOGLE_RECAPTCHA_SECRET_KEY,
     JWT_AUDIENCE,
     JWT_ISSUER,
     JWT_TOKEN_EXPIRATION_DAYS,
 )
-from chalicelib.constants import BOTO3_DYNAMODB_TYPE, REQUEST_CONTENT_TYPE_JSON
+from chalicelib.constants import (
+    BOTO3_DYNAMODB_TYPE,
+    REQUEST_CONTENT_TYPE_JSON,
+    GOOGLE_RECAPTCHA_VERIFY_URL,
+)
 from chalicelib import db
 from chalicelib.utils import (
     verify_token,
@@ -462,9 +467,9 @@ def get_panel():
 
     params = {
         "response": incoming_json["token"],
-        "secret": "6Lf3lIcpAAAAACFT-wrtXeX2Z3NMAQLT3pXHIENL",
+        "secret": GOOGLE_RECAPTCHA_SECRET_KEY,
     }
-    url = "https://www.google.com/recaptcha/api/siteverify"
+    url = GOOGLE_RECAPTCHA_VERIFY_URL
     res = requests.post(url, params=params)
     response = res.json()
 
@@ -572,8 +577,14 @@ def add_panel_info():
     authorizer=token_authorizer,
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
-def add_panel_info():
+def get_all_panels():
+    all_panels = None
     try:
-        return get_panel_db().get_all_panels()
+
+        all_panels = get_panel_db().get_all_panels()
+        # Check user role
+
     except Exception as e:
         return {"error": str(e)}
+
+    return all_panels
