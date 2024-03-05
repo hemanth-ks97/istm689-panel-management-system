@@ -67,6 +67,11 @@ def get_token_issuer(token):
     unverified_token = unverified_decode(token)
     return unverified_token["iss"]
 
+def get_token_role(token):
+    """Get the role of the token."""
+    unverified_token = unverified_decode(token)
+    return unverified_token["role"]
+
 
 def unverified_decode(token):
     """Decode token without verifying signature. Used to get the issuer."""

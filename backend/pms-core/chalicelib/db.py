@@ -60,6 +60,30 @@ class DynamoQuestionDB(QuestionDB):
         if expression is None:
             return condition
         return expression & condition
+    
+""" Panel DB service """
+
+class PanelDB(object):
+
+    def add_panel(self, panel):
+        pass
+    
+    def get_panel(self, panel_id):
+        pass
+
+    def get_all_panels(self):
+        pass
+
+class DynamoPanelDB(PanelDB):
+    def __init__(self, table_resource):
+        self._table = table_resource
+    def add_panel(self, panel):
+        return self._table.put_item(Item=panel)
+    def get_all_panels(self):
+        scan_params = {}
+        response = self._table.scan(**scan_params)
+        return response["Items"]
+    
 
 
 """User Database Service"""

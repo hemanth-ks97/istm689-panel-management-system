@@ -1,5 +1,5 @@
 import React from "react";
-
+import PanelForm from "../forms/PanelForm";
 // MUI
 import { Box, Typography, Button } from "@mui/material";
 import { useParams, Outlet, useNavigate } from "react-router-dom";
