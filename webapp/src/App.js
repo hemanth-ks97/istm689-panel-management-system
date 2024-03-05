@@ -43,6 +43,7 @@ const App = () => {
 
           <Route element={<PanelPage />} path="panel/:panelId">
             <Route element={<QuestionsPage />} path="questions" />
+            <Route element={<QuestionsPage />} path="question" />
             <Route element={<VotingPage />} path="voting" />
             <Route element={<TaggingPage />} path="tagging" />
             <Route path="*" element={<Navigate to="/" />} />

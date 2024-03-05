@@ -36,7 +36,7 @@ const PanelDashboardPage = () => {
       );
   }, []);
 
-  if (panels.length === 0) {
+  if (!panels && panels.length === 0) {
     return <LoadingSpinner />;
   }
 

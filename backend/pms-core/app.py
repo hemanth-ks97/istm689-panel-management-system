@@ -294,20 +294,24 @@ def add_new_question():
     try:
         """`app.current_request.json_body` works because the request has the header `Content-Type: application/json` set."""
         incoming_json = app.current_request.json_body
-
         # Check for all required fields
         if "question" not in incoming_json:
             raise BadRequestError("Key 'question' not found in incoming request")
+        if "panelId" not in incoming_json:
+            raise BadRequestError("Key 'panelId' not found in incoming request")
 
         user_id = app.current_request.context["authorizer"]["principalId"]
-        origin_ip = app.current_request.context["identity"]["sourceIp"]
+
+        # Validate if panel still acepts questions!!
+
         # Build Question object for database
-        new_question = dict()
-        new_question["QuestionID"] = str(uuid.uuid4())
-        new_question["UserID"] = user_id
-        new_question["OriginIP"] = origin_ip
-        new_question["CreatedAt"] = datetime.now().isoformat()
-        new_question["Question"] = incoming_json["question"]
+        new_question = {
+            "QuestionID": str(uuid.uuid4()),
+            "UserID": user_id,
+            "PanelID": incoming_json["panelId"],
+            "QuestionText": incoming_json["question"],
+            "CreatedAt": datetime.now().isoformat(),
+        }
         get_question_db().add_question(new_question)
         # Returns the result of put_item, kind of metadata and stuff
         return {
