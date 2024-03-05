@@ -1,11 +1,12 @@
 import { React, useEffect, useState } from "react";
 // MUI
-import { Box, Typography, CircularProgress } from "@mui/material";
+import { Box } from "@mui/material";
 import { httpClient } from "../../client";
 import { useSnackbar } from "notistack";
 // Redux
 import { useSelector } from "react-redux";
 import PanelDisplay from "../widgets/PanelDisplay";
+import LoadingSpinner from "../widgets/LoadingSpinner";
 const AdminPage = () => {
   const [panels, setPanels] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -17,7 +18,7 @@ const AdminPage = () => {
     Authorization: `Bearer ${user?.token}`,
   };
 
-  // fetch the panels everytime this component is rendered 
+  // fetch the panels everytime this component is rendered
   useEffect(() => {
     setIsLoading(true);
     httpClient
@@ -27,16 +28,21 @@ const AdminPage = () => {
       .then((response) => {
         setPanels(response.data);
       })
-      .catch((error) => enqueueSnackbar(error.message, { variant: "Failed to retrieve panel information" }))
+      .catch((error) =>
+        enqueueSnackbar(error.message, {
+          variant: "Failed to retrieve panel information",
+        })
+      )
       .finally(() => setIsLoading(false));
+  }, []);
 
-  }, [])
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <Typography variant="h4">This is the AdminPage component. You are Dr Gomillion. Only you should see this page</Typography>
-      {isLoading && <CircularProgress />}
-      {!isLoading && <PanelDisplay data = {panels} isAdmin={true}/>}
+      {panels.length > 0 && <PanelDisplay data={panels} isAdmin={true} />}
     </Box>
   );
 };

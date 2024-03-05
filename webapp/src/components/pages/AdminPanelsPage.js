@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import PanelForm from "../forms/PanelForm";
 
-const AdminPanelPage = () => {
+const AdminPanelsPage = () => {
   return (
     <div>
       <Typography variant="h3" sx={{ my: 1 }}>
@@ -14,4 +14,4 @@ const AdminPanelPage = () => {
   );
 };
 
-export default AdminPanelPage;
+export default AdminPanelsPage;

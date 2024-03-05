@@ -9,7 +9,10 @@ import PrivateRoutes from "./components/utils/PrivateRoutes";
 import HomePage from "./components/pages/HomePage";
 import LoginPage from "./components/pages/LoginPage";
 import ProfilePage from "./components/pages/ProfilePage";
-import AdminPage from "./components/pages/AdminPage";
+import AdminDashboardPage from "./components/pages/AdminDashboardPage";
+import AdminGradesPage from "./components/pages/AdminGradesPage";
+import AdminPanelsPage from "./components/pages/AdminPanelsPage";
+import AdminUsersPage from "./components/pages/AdminUsersPage";
 import QuestionsPage from "./components/pages/QuestionsPage";
 import GradesPage from "./components/pages/GradesPage";
 import VotingPage from "./components/pages/VotingPage";
@@ -22,7 +25,6 @@ import NotFoundPage from "./components/pages/NotFoundPage";
 import PanelPage from "./components/pages/PanelPage";
 //constants
 import { ADMIN } from "./config/constants";
-import AdminPanelPage from "./components/pages/AdminPanelPage";
 
 const App = () => {
   const { user } = useSelector((state) => state.user);
@@ -46,8 +48,12 @@ const App = () => {
         </Route>
         {/* allow only admin to view these pages */}
         <Route element={<PrivateRoutes isAllowed={user?.role === ADMIN} />}>
-          <Route element={<AdminPage />} path="admin" />
-          <Route element={<AdminPanelPage />} path="admin-panel" />
+          <Route element={<AdminDashboardPage />} path="admin">
+            <Route element={<AdminPanelsPage />} path="panels" />
+            <Route element={<AdminGradesPage />} path="grades" />
+            <Route element={<AdminUsersPage />} path="users" />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Route>
         </Route>
 
         <Route element={<PublicLayout />}>

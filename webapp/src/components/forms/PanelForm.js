@@ -1,8 +1,4 @@
-import {
-  TextField,
-  Button,
-  CircularProgress,
-} from "@mui/material";
+import { TextField, Button, CircularProgress } from "@mui/material";
 import { useState } from "react";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -48,9 +44,13 @@ const PanelForm = () => {
     e.preventDefault();
 
     // check for date inputs
-    if (!formValues.voteStageDeadline || !formValues.tagStageDeadline || !formValues.questionStageDeadline) {
-        enqueueSnackbar("All Dates are required", { variant: "warning" });
-        return;
+    if (
+      !formValues.voteStageDeadline ||
+      !formValues.tagStageDeadline ||
+      !formValues.questionStageDeadline
+    ) {
+      enqueueSnackbar("All Dates are required", { variant: "warning" });
+      return;
     }
     setIsApiWaiting(true);
     httpClient
@@ -96,7 +96,7 @@ const PanelForm = () => {
           sx={{ my: 1 }}
           required
         />
-         <TextField
+        <TextField
           id="panelDesc"
           label="Description"
           variant="outlined"
@@ -129,7 +129,7 @@ const PanelForm = () => {
           sx={{ my: 1 }}
           required
         />
-         <TextField
+        <TextField
           id="videoLink"
           label="Link to video"
           variant="outlined"
@@ -147,7 +147,6 @@ const PanelForm = () => {
               handleDateChange("questionStageDeadline", newValue)
             }
             sx={{ my: 1 }}
-            
           />
           <DatePicker
             name="voteStageDeadline"
@@ -167,7 +166,7 @@ const PanelForm = () => {
             }
             sx={{ my: 1 }}
           />
-           <DatePicker
+          <DatePicker
             name="panelPresentationDate"
             label="Panel Presentation Date"
             value={formValues.panelPresentationDate}
@@ -178,7 +177,9 @@ const PanelForm = () => {
           />
         </LocalizationProvider>
 
-        <Button sx={{ my: 1 }} type="submit">Submit</Button>
+        <Button sx={{ my: 1 }} type="submit">
+          Submit
+        </Button>
       </form>
 
       {isApiWaiting && <CircularProgress />}
