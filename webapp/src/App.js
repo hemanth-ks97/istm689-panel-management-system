@@ -18,6 +18,7 @@ import QuestionsPage from "./components/pages/QuestionsPage";
 import GradesPage from "./components/pages/GradesPage";
 import VotingPage from "./components/pages/VotingPage";
 import TaggingPage from "./components/pages/TaggingPage";
+import AdminImportPage from "./components/pages/AdminImportPage";
 import PrivacyPage from "./components/pages/PrivacyPage";
 import TermsPage from "./components/pages/TermsPage";
 import StudentLogin from "./components/pages/StudentLogin";
@@ -55,6 +56,8 @@ const App = () => {
             <Route element={<AdminPanelsPage />} path="panels" />
             <Route element={<AdminGradesPage />} path="grades" />
             <Route element={<AdminUsersPage />} path="users" />
+            <Route element={<AdminImportPage />} path="import" />
+
             <Route path="*" element={<Navigate to="/" />} />
           </Route>
         </Route>

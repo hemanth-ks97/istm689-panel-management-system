@@ -11,8 +11,8 @@ const AdminPage = () => {
     { displayName: "Panel Management", path: "panels" },
     { displayName: "Grades Management", path: "grades" },
     { displayName: "Users Management", path: "users" },
+    { displayName: "Import Students", path: "import" },
   ];
-
   const gridItems = options.map((option) => (
     <Button onClick={() => navigate(option.path)}>{option.displayName}</Button>
   ));
