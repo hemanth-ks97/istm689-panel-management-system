@@ -88,6 +88,10 @@ class DynamoPanelDB(PanelDB):
         response = self._table.scan()
         return response["Items"]
 
+    def get_public_panels(self):
+        response = self._table.scan(FilterExpression=Attr("Visibility").eq("public"))
+        return response["Items"]
+
     def get_panel(self, panel_id):
         response = self._table.get_item(
             Key={

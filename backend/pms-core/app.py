@@ -617,16 +617,21 @@ def add_panel_info():
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def get_all_panels():
-    all_panels = None
+    user_id = app.current_request.context["authorizer"]["principalId"]
     try:
+        user_role = get_user_db().get_user_role(user_id)
 
-        all_panels = get_panel_db().get_all_panels()
+        if user_role is ADMIN_ROLE:
+            panels = get_panel_db().get_all_panels()
+        else:
+            panels = get_panel_db().get_public_panels()
+
         # Check user role
 
     except Exception as e:
         return {"error": str(e)}
 
-    return all_panels
+    return panels
 
 
 @app.route(
