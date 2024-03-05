@@ -621,7 +621,7 @@ def get_all_panels():
     try:
         user_role = get_user_db().get_user_role(user_id)
 
-        if user_role is ADMIN_ROLE:
+        if user_role == ADMIN_ROLE:
             panels = get_panel_db().get_all_panels()
         else:
             panels = get_panel_db().get_public_panels()
