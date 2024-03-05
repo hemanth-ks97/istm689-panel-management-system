@@ -176,8 +176,8 @@ def index():
     methods=["POST"],
 )
 def create_token():
-    """Need to recieive a token, decoded and return a new custom token with internal user ID"""
-    user = None
+    """Need to receive a token, decoded and return a new custom token with internal user ID"""
+
     try:
         json_body = app.current_request.json_body
         incoming_token = json_body["token"]
@@ -187,28 +187,16 @@ def create_token():
         if not valid_and_verified_token:
             raise ValueError("Invalid Token")
 
-        # Need to validate the token subject?? It is not needed?
-        token_issuer = get_token_issuer(incoming_token)
+        user_email = valid_and_verified_token["email"]
 
-        if token_issuer != "https://accounts.google.com":
-            raise ValueError("Invalid Token Issuer")
-        token_subject = get_token_subject(incoming_token)
-
-        users_found = get_user_db().get_user_by_google_id(token_subject)
+        users_found = get_user_db().get_user_by_email(user_email)
 
         # Check if result was found
         if not users_found:
-            user_email = get_token_email(incoming_token)
-            users_found = get_user_db().get_user_by_email(user_email)
-            user = users_found[0]
-            # Add google ID to the register
-            user["GoogleID"] = token_subject
-            user["UpdatedAt"] = datetime.now().isoformat()
-            # Update user
-            get_user_db().update_user(user)
+            raise NotFoundError("User not found")
 
-        # Does not have the updated items
         user = users_found[0]
+
         current_time = datetime.now(tz=timezone.utc)
         expiration = datetime.now(tz=timezone.utc) + timedelta(
             days=int(JWT_TOKEN_EXPIRATION_DAYS)
@@ -232,6 +220,14 @@ def create_token():
             key=JWT_SECRET,
             algorithm="HS256",
         )
+
+        # Register last login
+        user["LastLogin"] = (
+            datetime.now(tz=timezone.utc)
+            .isoformat(timespec="seconds")
+            .replace("+00:00", "Z")
+        )
+        get_user_db().update_user(user)
     except Exception:
         # Not always true but this is a Chalice Exception
         raise NotFoundError("User not found")
