@@ -100,6 +100,16 @@ const TopBar = () => {
     },
   ];
 
+  if (user.role === "admin") {
+    settings.unshift({
+      name: "Admin",
+      handleOnClick: () => {
+        navigate("/admin");
+        handleClose();
+      },
+    });
+  }
+
   return (
     <Box>
       <AppBar

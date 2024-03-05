@@ -1,49 +1,27 @@
-import { React, useEffect, useState } from "react";
+import { React } from "react";
 // MUI
-import { Box } from "@mui/material";
-import { httpClient } from "../../client";
-import { useSnackbar } from "notistack";
-// Redux
-import { useSelector } from "react-redux";
-import PanelDisplay from "../widgets/PanelDisplay";
-import LoadingSpinner from "../widgets/LoadingSpinner";
+import { Button, ButtonGroup } from "@mui/material";
+
+import { Outlet, useNavigate } from "react-router-dom";
+
 const AdminPage = () => {
-  const [panels, setPanels] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const { enqueueSnackbar } = useSnackbar();
-  const { user } = useSelector((state) => state.user);
+  const navigate = useNavigate();
 
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${user?.token}`,
-  };
+  const options = [
+    { displayName: "Panel Management", path: "panels" },
+    { displayName: "Grades Management", path: "grades" },
+    { displayName: "Users Management", path: "users" },
+  ];
 
-  // fetch the panels everytime this component is rendered
-  useEffect(() => {
-    setIsLoading(true);
-    httpClient
-      .get("/panel", {
-        headers: headers,
-      })
-      .then((response) => {
-        setPanels(response.data);
-      })
-      .catch((error) =>
-        enqueueSnackbar(error.message, {
-          variant: "Failed to retrieve panel information",
-        })
-      )
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
+  const gridItems = options.map((option) => (
+    <Button onClick={() => navigate(option.path)}>{option.displayName}</Button>
+  ));
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      {panels.length > 0 && <PanelDisplay data={panels} isAdmin={true} />}
-    </Box>
+    <>
+      <ButtonGroup>{gridItems}</ButtonGroup>
+      <Outlet />
+    </>
   );
 };
 

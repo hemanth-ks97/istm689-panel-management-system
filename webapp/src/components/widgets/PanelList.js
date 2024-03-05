@@ -1,30 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { Typography } from "@mui/material";
-
+// MUI
 import { httpClient } from "../../client";
+
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
+import ListDisplay from "./ListDisplay";
+import LoadingSpinner from "./LoadingSpinner";
 
-import LoadingSpinner from "../widgets/LoadingSpinner";
-import ListDisplay from "../widgets/ListDisplay";
-const AdminUsersPage = () => {
+const PanelList = () => {
   const { user } = useSelector((state) => state.user);
-  const [users, setUsers] = useState([]);
+  const [panels, setPanels] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
   const [isLoading, setIsLoading] = useState(true);
+
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${user?.token}`,
   };
 
+  // fetch the panels everytime this component is rendered
   useEffect(() => {
     setIsLoading(true);
     httpClient
-      .get("/user", {
+      .get("/panel", {
         headers: headers,
       })
       .then((response) => {
-        setUsers(response.data);
+        setPanels(response.data);
       })
       .catch((error) =>
         enqueueSnackbar(error.message, {
@@ -38,7 +40,7 @@ const AdminUsersPage = () => {
     return <LoadingSpinner />;
   }
 
-  return <ListDisplay data={users} idAttributeName="UserID" isAdmin={true} />;
+  return <ListDisplay data={panels} isAdmin={true} idAttributeName="PanelID" />;
 };
 
-export default AdminUsersPage;
+export default PanelList;

@@ -19,6 +19,8 @@ const PanelForm = () => {
     tagStageDeadline: null,
     panelVideoLink: "",
     panelPresentationDate: null,
+    panelStartDate: null,
+    visibility: "internal",
     panelDesc: "",
   });
   const headers = {
@@ -47,7 +49,9 @@ const PanelForm = () => {
     if (
       !formValues.voteStageDeadline ||
       !formValues.tagStageDeadline ||
-      !formValues.questionStageDeadline
+      !formValues.questionStageDeadline ||
+      !formValues.panelStartDate ||
+      !formValues.panelPresentationDate
     ) {
       enqueueSnackbar("All Dates are required", { variant: "warning" });
       return;
@@ -68,6 +72,8 @@ const PanelForm = () => {
           tagStageDeadline: null,
           panelVideoLink: "",
           panelPresentationDate: null,
+          panelStartDate: null,
+          visibility: "internal",
           panelDesc: "",
         });
       })
@@ -140,6 +146,15 @@ const PanelForm = () => {
         />
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DatePicker
+            name="panelStartDate"
+            label="Panel Start Date"
+            value={formValues.panelStartDate}
+            onChange={(newValue) =>
+              handleDateChange("panelStartDate", newValue)
+            }
+            sx={{ my: 1 }}
+          />
+          <DatePicker
             name="questionStageDeadline"
             label="Question stage deadline"
             value={formValues.questionStageDeadline}
@@ -176,6 +191,15 @@ const PanelForm = () => {
             sx={{ my: 1 }}
           />
         </LocalizationProvider>
+        <TextField
+          id="visibility"
+          label="Set Visibility"
+          variant="outlined"
+          name="visibility"
+          value={formValues.visibility}
+          onChange={handleInputChange}
+          sx={{ my: 1 }}
+        />
 
         <Button sx={{ my: 1 }} type="submit">
           Submit

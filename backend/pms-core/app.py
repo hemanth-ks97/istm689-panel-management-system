@@ -542,7 +542,7 @@ def add_panel_info():
     if get_token_role(incoming_token) != "admin":
         raise BadRequestError("Only admin can perform this action")
 
-    panel = {}
+    panel = dict()
 
     try:
         # map json to panel object
@@ -556,6 +556,8 @@ def add_panel_info():
         panel["PanelVideoLink"] = incoming_json["panelVideoLink"]
         panel["PanelPresentationDate"] = incoming_json["panelPresentationDate"]
         panel["PanelDesc"] = incoming_json["panelDesc"]
+        panel["PanelStartDate"] = incoming_json["panelStartDate"]
+        panel["Visibility"] = incoming_json["visibility"]
 
         get_panel_db().add_panel(panel)
 

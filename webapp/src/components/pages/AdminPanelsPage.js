@@ -1,16 +1,35 @@
-import { Box, Typography } from "@mui/material";
+import React, { useState } from "react";
+import { Typography, ButtonGroup, Button } from "@mui/material";
 import PanelForm from "../forms/PanelForm";
+import PanelList from "../widgets/PanelList";
 
 const AdminPanelsPage = () => {
+  const [selectedAction, setSelectedAction] = useState("list");
   return (
-    <div>
-      <Typography variant="h3" sx={{ my: 1 }}>
-        Add a new panel
-      </Typography>
-      <Box p={2} sx={{ border: "2px solid grey" }}>
-        <PanelForm />
-      </Box>
-    </div>
+    <>
+      <p></p>
+      <ButtonGroup>
+        <Button onClick={() => setSelectedAction("list")}>
+          List all panels
+        </Button>
+        <Button onClick={() => setSelectedAction("create")}>
+          Add new Panel
+        </Button>
+      </ButtonGroup>
+      <></>
+      {selectedAction === "create" && (
+        <>
+          <Typography>Add a new panel</Typography>
+          <PanelForm />
+        </>
+      )}
+      {selectedAction === "list" && (
+        <>
+          <Typography>List Panels</Typography>
+          <PanelList />
+        </>
+      )}
+    </>
   );
 };
 

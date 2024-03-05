@@ -6,7 +6,7 @@ import { Edit as EditIcon } from "@mui/icons-material";
  The edit option is shown only when isAdmin is passed as true
  While rendering this component for student, we can make it false 
  */
-const PanelDisplay = ({ data, isAdmin }) => {
+const ListDisplay = ({ data, idAttributeName, isAdmin }) => {
   const dataKeys = Object.keys(data[0]);
   dataKeys.sort();
 
@@ -32,8 +32,12 @@ const PanelDisplay = ({ data, isAdmin }) => {
     });
   }
   return (
-    <DataGrid rows={data} columns={columns} getRowId={(row) => row.PanelID} />
+    <DataGrid
+      rows={data}
+      columns={columns}
+      getRowId={(row) => row[idAttributeName]}
+    />
   );
 };
 
-export default PanelDisplay;
+export default ListDisplay;
