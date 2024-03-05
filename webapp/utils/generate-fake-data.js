@@ -104,9 +104,7 @@ const createDynamoDBUserObject = (user) => {
   };
 };
 
-const createRandomUser = () => {
-  const randomNumber = faker.number.int(100);
-  const role = randomNumber % 2 === 0 ? "student" : "admin";
+const createRandomUser = ({ role = "student" }) => {
   return {
     UserID: faker.string.uuid(),
     CanvasID: faker.number.int({ min: 100, max: 500 }),
@@ -119,20 +117,85 @@ const createRandomUser = () => {
   };
 };
 
-const generateUsers = (userCount = 3) => {
-  const users = [];
+const generateTeamUsers = () => {
   let newRecord;
+  let newMembers = [];
   for (const member of teamMembers) {
     newRecord = { PutRequest: { Item: createDynamoDBUserObject(member) } };
-    users.push(newRecord);
+    newMembers.push(newRecord);
   }
-  let randomUser;
-  for (let i = 0; i < userCount; i++) {
-    randomUser = createRandomUser();
-    newRecord = { PutRequest: { Item: createDynamoDBUserObject(randomUser) } };
-    users.push(newRecord);
+  return newMembers;
+};
+
+const generateUserWithRole = ({ role = "student" }) => {
+  const ramdomStudent = createRandomUser({ role });
+  const newRecord = {
+    PutRequest: { Item: createDynamoDBUserObject(ramdomStudent) },
+  };
+  return newRecord;
+};
+
+const generateAdmins = ({ count = 2 }) => {
+  let admins = [];
+  let newAdmin;
+  for (let i = 0; i < count; i++) {
+    newAdmin = generateUserWithRole({ role: "admin" });
+    admins.push(newAdmin);
   }
-  return users;
+  return admins;
+};
+
+const generatePanelists = ({ count = 4 }) => {
+  let panelists = [];
+  let newPanelist;
+  for (let i = 0; i < count; i++) {
+    newPanelist = generateUserWithRole({ role: "panelist" });
+    panelists.push(newPanelist);
+  }
+  return panelists;
+};
+const generateStudents = ({ count = 5 }) => {
+  let students = [];
+  let newStudent;
+  for (let i = 0; i < count; i++) {
+    newStudent = generateUserWithRole({ role: "student" });
+    students.push(newStudent);
+  }
+  return students;
+};
+
+const generateUsers = () => {
+  const allUsers = [];
+
+  const teamMembers = generateTeamUsers();
+  // Concat did not work, ugly but it works
+  teamMembers.map((user) => {
+    allUsers.push(user);
+    return;
+  });
+
+  const students = generateStudents({ count: 4 });
+  // Concat did not work, ugly but it works
+  students.map((user) => {
+    allUsers.push(user);
+    return;
+  });
+
+  const panelists = generatePanelists({ count: 3 });
+  // Concat did not work, ugly but it works
+  panelists.map((user) => {
+    allUsers.push(user);
+    return;
+  });
+
+  const admins = generateAdmins({ count: 2 });
+  // Concat did not work, ugly but it works
+  admins.map((user) => {
+    allUsers.push(user);
+    return;
+  });
+
+  return allUsers;
 };
 
 const createDynamoDBPanelObject = (panel) => {
@@ -153,7 +216,7 @@ const createDynamoDBPanelObject = (panel) => {
 };
 
 const createRandomPanel = () => {
-  const randomNumber = faker.number.int(100);
+  const randomNumber = faker.number.int({ min: 1, max: 100 });
   const visibility = randomNumber % 2 === 0 ? "public" : "internal";
 
   const startDate = faker.date.soon({ days: randomNumber });
