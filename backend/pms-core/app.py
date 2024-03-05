@@ -588,3 +588,18 @@ def get_all_panels():
         return {"error": str(e)}
 
     return all_panels
+
+
+@app.route(
+    "/panel/{id}",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def get_all_panels(id):
+    try:
+
+        panel = get_panel_db().get_panel(id)
+        return panel
+
+    except Exception as e:
+        return {"error": str(e)}

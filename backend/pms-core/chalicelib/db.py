@@ -88,6 +88,14 @@ class DynamoPanelDB(PanelDB):
         response = self._table.scan()
         return response["Items"]
 
+    def get_panel(self, panel_id):
+        response = self._table.get_item(
+            Key={
+                "PanelID": panel_id,
+            },
+        )
+        return response.get("Item")
+
 
 """User Database Service"""
 

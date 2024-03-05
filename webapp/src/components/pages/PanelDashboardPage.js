@@ -1,19 +1,8 @@
 import { React, useState, useEffect } from "react";
 // MUI
-import {
-  Button,
-  ButtonGroup,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemButton,
-  ListItemText,
-} from "@mui/material";
+import { List, ListItem, ListItemButton, ListItemText } from "@mui/material";
 
-import InboxIcon from "@mui/icons-material/Inbox";
-import DraftsIcon from "@mui/icons-material/Drafts";
-
-import { Outlet, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 
 import { httpClient } from "../../client";
@@ -46,10 +35,6 @@ const PanelDashboardPage = () => {
         })
       );
   }, []);
-
-  // const gridItems = options.map((option) => (
-  //   <Button onClick={() => navigate(option.path)}>{option.displayName}</Button>
-  // ));
 
   if (panels.length === 0) {
     return <LoadingSpinner />;
