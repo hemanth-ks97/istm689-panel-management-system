@@ -653,3 +653,17 @@ def get_panel(id):
 
     except Exception as e:
         return {"error": str(e)}
+
+
+@app.route(
+    "/panel/{id}/questions",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def get_questions_by_panel(id):
+    try:
+        questions = get_question_db().get_questions_by_panel(id)
+    except Exception as e:
+        return {"error": str(e)}
+
+    return questions
