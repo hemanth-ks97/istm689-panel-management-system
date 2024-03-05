@@ -1,11 +1,10 @@
 """Main application file for the PMS Core API."""
 
+import requests
 import jwt
 import boto3
 import uuid
 import pandas as pd
-import numpy as np
-from decimal import Decimal
 from io import StringIO
 from chalice import (
     Chalice,
@@ -17,7 +16,6 @@ from chalice import (
 )
 from chalicelib.config import (
     ENV,
-    GOOGLE_AUTH_CLIENT_ID,
     ALLOW_ORIGIN,
     ALLOWED_AUTHORIZATION_TYPES,
     USER_TABLE_NAME,
@@ -36,18 +34,17 @@ from chalicelib.utils import (
     get_token_issuer,
     get_token_email,
     get_base_url,
-    get_token_role
+    get_token_role,
 )
 from google.auth import exceptions
-from google.oauth2 import id_token
-from google.auth.transport import requests
 from datetime import datetime, timezone, timedelta
-from jwt.exceptions import ExpiredSignatureError
+
 
 app = Chalice(app_name=f"{ENV}-pms-core")
 _USER_DB = None
 _QUESTION_DB = None
 _PANEL_DB = None
+
 
 def get_user_db():
     global _USER_DB
@@ -72,6 +69,7 @@ def get_question_db():
         return {"error": str(e)}
     return _QUESTION_DB
 
+
 def get_panel_db():
     global _PANEL_DB
     try:
@@ -82,6 +80,7 @@ def get_panel_db():
     except Exception as e:
         return {"error": str(e)}
     return _PANEL_DB
+
 
 def dummy():
     """
@@ -238,18 +237,6 @@ def create_token():
         raise NotFoundError("User not found")
 
     return {"token": token}
-
-
-@app.route("/token/decode", methods=["POST"])
-def decode_token():
-    try:
-        json_body = app.current_request.json_body
-        incoming_token = json_body["token"]
-        decoded_token = verify_token(incoming_token)
-        return {"decoded_token": decoded_token}
-
-    except Exception as e:
-        return {"error": str(e)}
 
 
 @app.route(
@@ -473,6 +460,32 @@ def post_canvas_csv():
         return {"error": str(e)}
 
 
+@app.route("/login/panel", methods=["POST"], content_types=[REQUEST_CONTENT_TYPE_JSON])
+def get_panel():
+    incoming_json = app.current_request.json_body
+
+    params = {
+        "response": incoming_json["token"],
+        "secret": "6Lf3lIcpAAAAACFT-wrtXeX2Z3NMAQLT3pXHIENL",
+    }
+    url = "https://www.google.com/recaptcha/api/siteverify"
+    res = requests.post(url, params=params)
+    response = res.json()
+
+    if response["success"] is False:
+        raise BadRequestError(response["error-codes"])
+
+    if response["score"] <= 0.5:
+        raise BadRequestError("Score too low")
+
+    # Check if the emails is amongts the registered panelist!!!
+    # If so, generate a token and send an email
+
+    # Generate a token and Call SNS to send an email!!
+
+    return response
+
+
 @app.route(
     "/user",
     methods=["POST"],
@@ -512,7 +525,8 @@ def add_new_user():
 
     except Exception as e:
         return {"error": str(e)}
-    
+
+
 @app.route(
     "/panel",
     methods=["POST"],
@@ -523,13 +537,13 @@ def add_panel_info():
     incoming_json = app.current_request.json_body
 
     """ check if truly the admin is sending the request """
-    auth_header = app.current_request.headers.get('Authorization')    
-    incoming_token = auth_header.split(' ')[1]
+    auth_header = app.current_request.headers.get("Authorization")
+    incoming_token = auth_header.split(" ")[1]
     if get_token_role(incoming_token) != "admin":
         raise BadRequestError("Only admin can perform this action")
 
     panel = {}
-    
+
     try:
         # map json to panel object
         panel["PanelID"] = str(uuid.uuid4())
@@ -549,9 +563,10 @@ def add_panel_info():
             body={"message": "Panel added successfully"},
             status_code=200,
             headers={"Content-Type": "application/json"},
-            )
+        )
     except Exception as e:
         return {"error": str(e)}
+
 
 @app.route(
     "/panel",

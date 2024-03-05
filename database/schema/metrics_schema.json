@@ -1,0 +1,19 @@
+{
+  "Metrics": [
+    {
+      "UserID": "UIN7638",
+      "PanelID": "uniquePanelID1",
+      "QuestionStageScore": "questionsScore",
+      "TagStageInTime": "",
+      "TagStageOutTime": "",
+      "TageStageSD": "",
+      "TagStageScore": "",
+      "VoteStageInTime": "",
+      "VoteStageOutTime": "",
+      "VoteStageSD": "",
+      "VoteStageScore": "votingScore",
+      "EnteredQuestionsTotalScore": "",
+      "FinalTotalScore": "finalTotalScore"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "Panels": [
+    {
+      "PanelID": "uniquePanelID1",
+      "PanelName": "PanelName1",
+      "PanelDesc": "PanelDescription1",
+      "Panelist": "userID",
+      "PanelVideoLink": "",
+      "PanelStage": "U/Q/T/V/P/C",
+      "NumberOfQuestions": "",
+      "PanelStartDate": "",
+      "QuestionStageDeadline": "",
+      "TagStageDeadline": "",
+      "VoteStageDeadline": "",
+      "PanelPresentationDate": ""
+    }
+  ]
+}

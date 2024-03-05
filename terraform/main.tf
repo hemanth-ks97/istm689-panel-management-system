@@ -143,6 +143,8 @@ resource "cloudflare_record" "custom-domain" {
 # Database
 ##########################
 
+#### dev ###
+
 #question table
 resource "aws_dynamodb_table" "question-table" {
   name           = "${terraform.workspace}-question"
@@ -150,17 +152,14 @@ resource "aws_dynamodb_table" "question-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "QuestionID"
-
   attribute {
     name = "QuestionID"
     type = "S"
   }
-
   attribute {
     name = "PanelID"
     type = "S"
   }
-
   global_secondary_index {
     name            = "PanelIDIndex"
     hash_key        = "PanelID"
@@ -177,7 +176,6 @@ resource "aws_dynamodb_table" "panel-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "PanelID"
-
   attribute {
     name = "PanelID"
     type = "S"
@@ -191,45 +189,147 @@ resource "aws_dynamodb_table" "user-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "UserID"
-
   attribute {
     name = "UserID"
     type = "S"
   }
+  attribute {
+    name = "Role"
+    type = "S"
+  }
+  global_secondary_index {
+    name            = "RoleIndex"
+    hash_key        = "Role"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
 }
 
-#metrics table
+#metric table
 resource "aws_dynamodb_table" "metric-table" {
   name           = "${terraform.workspace}-metric"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
-  hash_key       = "StudentID"
+  hash_key       = "UserID"
   range_key      = "PanelID"
-
   attribute {
-    name = "StudentID"
+    name = "UserID"
     type = "S"
   }
-
   attribute {
     name = "PanelID"
     type = "S"
   }
-
   global_secondary_index {
-    name            = "StudentIDIndex"
-    hash_key        = "StudentID"
+    name            = "UserIDIndex"
+    hash_key        = "UserID"
     range_key       = "PanelID"
     projection_type = "ALL"
     read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
     write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
   }
-
   global_secondary_index {
     name            = "PanelIDIndex"
     hash_key        = "PanelID"
-    range_key       = "StudentID"
+    range_key       = "UserID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+}
+
+### local ###
+#question table
+resource "aws_dynamodb_table" "local-question-table" {
+  name           = "local-question"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "QuestionID"
+  attribute {
+    name = "QuestionID"
+    type = "S"
+  }
+  attribute {
+    name = "PanelID"
+    type = "S"
+  }
+  global_secondary_index {
+    name            = "PanelIDIndex"
+    hash_key        = "PanelID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+}
+
+#panel table
+resource "aws_dynamodb_table" "local-panel-table" {
+  name           = "local-panel"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "PanelID"
+  attribute {
+    name = "PanelID"
+    type = "S"
+  }
+}
+
+#user table
+resource "aws_dynamodb_table" "local-user-table" {
+  name           = "local-user"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "UserID"
+  attribute {
+    name = "UserID"
+    type = "S"
+  }
+  attribute {
+    name = "Role"
+    type = "S"
+  }
+  global_secondary_index {
+    name            = "RoleIndex"
+    hash_key        = "Role"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+}
+
+#metric table
+resource "aws_dynamodb_table" "local-metric-table" {
+  name           = "local-metric"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "UserID"
+  range_key      = "PanelID"
+  attribute {
+    name = "UserID"
+    type = "S"
+  }
+  attribute {
+    name = "PanelID"
+    type = "S"
+  }
+  global_secondary_index {
+    name            = "UserIDIndex"
+    hash_key        = "UserID"
+    range_key       = "PanelID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+  global_secondary_index {
+    name            = "PanelIDIndex"
+    hash_key        = "PanelID"
+    range_key       = "UserID"
     projection_type = "ALL"
     read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
     write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
