@@ -16,9 +16,12 @@ import {
 import { GoogleReCaptcha } from "react-google-recaptcha-v3";
 import { useSnackbar } from "notistack";
 
+import { httpClient } from "../../client";
+
 const PanelLogin = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const [isVerified, setIsVerified] = useState(false);
+  const [reCaptchaToken, setReCaptchaToken] = useState(null);
+  const [email, setEmail] = useState("");
 
   const disclaimerText = [
     "Please be advised that this login portal is exclusively designated for authorized panelists. Any attempt by students to access this platform using panelist credentials is strictly prohibited and will be recorded. We maintain a comprehensive log of all login interactions, including but not limited to IP addresses and timestamps.",
@@ -27,16 +30,26 @@ const PanelLogin = () => {
     "Thank you for your cooperation and understanding.",
   ];
 
-  const handleVerify = () => {
+  const handleVerify = (token) => {
     enqueueSnackbar("reCaptcha verified", {
       variant: "success",
       preventDuplicate: true,
     });
-    setIsVerified(true);
+    setReCaptchaToken(token);
   };
 
   const handleSubmit = () => {
-    enqueueSnackbar("An email will be sent ", { variant: "success" });
+    httpClient
+      .post("login/panel", { token: reCaptchaToken, email })
+      .then((response) => {
+        enqueueSnackbar("An email will be sent ", { variant: "success" });
+        enqueueSnackbar(JSON.stringify(response.data, null, 2), {
+          variant: "info",
+        });
+      })
+      .catch((error) => {
+        enqueueSnackbar("An error occured", { variant: "error" });
+      });
   };
 
   return (
@@ -49,7 +62,12 @@ const PanelLogin = () => {
         <CardContent>
           <FormControl>
             <InputLabel htmlFor="my-input">Email address</InputLabel>
-            <Input id="my-input" aria-describedby="my-helper-text" />
+            <Input
+              id="my-input"
+              aria-describedby="my-helper-text"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
             {disclaimerText.map((text, idx) => {
               return (
                 <FormHelperText id={`disclamer-text-${idx}`}>
@@ -63,7 +81,7 @@ const PanelLogin = () => {
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={!isVerified}
+            disabled={!reCaptchaToken}
           >
             Submit
           </Button>
