@@ -86,6 +86,16 @@ const teamMembers = [
     Section: "ISTM-622-601",
     UIN: 77777777,
   },
+  {
+    UserID: faker.string.uuid(),
+    CanvasID: 8888,
+    EmailID: "davidgomilliontest@gmail.com",
+    FName: "Test",
+    LName: "Account",
+    Role: "panelist",
+    Section: "ISTM-622-601",
+    UIN: 88888888,
+  },
 ];
 
 const createDynamoDBUserObject = (user) => {
