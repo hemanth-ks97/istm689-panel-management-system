@@ -98,6 +98,47 @@ const teamMembers = [
   },
 ];
 
+const createDynamoDBQuestionObject = (question) => {
+  const date = new Date(Date.now()).toISOString();
+
+  return {
+    QuestionID: { S: question.QuestionID },
+    DislikedBy: { L: [] }, // Should be an array of valid user IDs
+    LikedBy: { L: [] }, // Should be an array of valid user IDs
+    NeutralizedBy: { L: [] }, // Should be an array of valid user IDs
+    DislikeScore: { N: question.DislikeScore.toString() },
+    FinalScore: { N: question.FinalScore.toString() },
+    LikeScore: { N: question.LikeScore.toString() },
+    NeutralScore: { N: question.NeutralScore.toString() },
+    PanelID: { S: question.PanelID },
+    PresentationBonusScore: { N: question.PresentationBonusScore.toString() },
+    QuestionText: { S: question.QuestionText },
+    UserID: { S: question.UserID },
+    VotingStageBonusScore: { N: question.VotingStageBonusScore.toString() },
+    CreatedAt: { S: date },
+  };
+};
+
+const createDynamoDBPanelObject = (panel) => {
+  const date = new Date(Date.now()).toISOString();
+
+  return {
+    PanelID: { S: panel.PanelID },
+    NumberOfQuestions: { N: panel.NumberOfQuestions.toString() },
+    PanelDesc: { S: panel.PanelDesc },
+    Panelist: { S: panel.Panelist },
+    PanelName: { S: panel.PanelName },
+    PanelPresentationDate: { S: panel.PanelPresentationDate },
+    PanelStartDate: { S: panel.PanelStartDate },
+    PanelVideoLink: { S: panel.PanelVideoLink },
+    QuestionStageDeadline: { S: panel.QuestionStageDeadline },
+    TagStageDeadline: { S: panel.TagStageDeadline },
+    Visibility: { S: panel.Visibility },
+    VoteStageDeadline: { S: panel.VoteStageDeadline },
+    CreatedAt: { S: date },
+  };
+};
+
 const createDynamoDBUserObject = (user) => {
   const date = new Date(Date.now()).toISOString();
 
@@ -164,6 +205,7 @@ const generatePanelists = ({ count = 4 }) => {
   }
   return panelists;
 };
+
 const generateStudents = ({ count = 5 }) => {
   let students = [];
   let newStudent;
@@ -172,60 +214,6 @@ const generateStudents = ({ count = 5 }) => {
     students.push(newStudent);
   }
   return students;
-};
-
-const generateUsers = () => {
-  const allUsers = [];
-
-  const teamMembers = generateTeamUsers();
-  // Concat did not work, ugly but it works
-  teamMembers.map((user) => {
-    allUsers.push(user);
-    return;
-  });
-
-  const students = generateStudents({ count: 4 });
-  // Concat did not work, ugly but it works
-  students.map((user) => {
-    allUsers.push(user);
-    return;
-  });
-
-  const panelists = generatePanelists({ count: 3 });
-  // Concat did not work, ugly but it works
-  panelists.map((user) => {
-    allUsers.push(user);
-    return;
-  });
-
-  const admins = generateAdmins({ count: 2 });
-  // Concat did not work, ugly but it works
-  admins.map((user) => {
-    allUsers.push(user);
-    return;
-  });
-
-  return allUsers;
-};
-
-const createDynamoDBPanelObject = (panel) => {
-  const date = new Date(Date.now()).toISOString();
-
-  return {
-    PanelID: { S: panel.PanelID },
-    NumberOfQuestions: { N: panel.NumberOfQuestions.toString() },
-    PanelDesc: { S: panel.PanelDesc },
-    Panelist: { S: panel.Panelist },
-    PanelName: { S: panel.PanelName },
-    PanelPresentationDate: { S: panel.PanelPresentationDate },
-    PanelStartDate: { S: panel.PanelStartDate },
-    PanelVideoLink: { S: panel.PanelVideoLink },
-    QuestionStageDeadline: { S: panel.QuestionStageDeadline },
-    TagStageDeadline: { S: panel.TagStageDeadline },
-    Visibility: { S: panel.Visibility },
-    VoteStageDeadline: { S: panel.VoteStageDeadline },
-    CreatedAt: { S: date },
-  };
 };
 
 const createRandomPanel = () => {
@@ -264,41 +252,6 @@ const createRandomPanel = () => {
     PanelPresentationDate: presentationDate,
     PanelVideoLink: faker.image.urlLoremFlickr(),
     Visibility: visibility,
-  };
-};
-
-const generatePanels = (panelCount = 5) => {
-  const panels = [];
-  let randomPanel;
-  let newRecord;
-  for (let i = 0; i < panelCount; i++) {
-    randomPanel = createRandomPanel();
-    newRecord = {
-      PutRequest: { Item: createDynamoDBPanelObject(randomPanel) },
-    };
-    panels.push(newRecord);
-  }
-  return panels;
-};
-
-const createDynamoDBQuestionObject = (question) => {
-  const date = new Date(Date.now()).toISOString();
-
-  return {
-    QuestionID: { S: question.QuestionID },
-    DislikedBy: { L: [] }, // Should be an array of valid user IDs
-    LikedBy: { L: [] }, // Should be an array of valid user IDs
-    NeutralizedBy: { L: [] }, // Should be an array of valid user IDs
-    DislikeScore: { N: question.DislikeScore.toString() },
-    FinalScore: { N: question.FinalScore.toString() },
-    LikeScore: { N: question.LikeScore.toString() },
-    NeutralScore: { N: question.NeutralScore.toString() },
-    PanelID: { S: question.PanelID },
-    PresentationBonusScore: { N: question.PresentationBonusScore.toString() },
-    QuestionText: { S: question.QuestionText },
-    UserID: { S: question.UserID },
-    VotingStageBonusScore: { N: question.VotingStageBonusScore.toString() },
-    CreatedAt: { S: date },
   };
 };
 
@@ -348,6 +301,54 @@ const generateQuestions = (panels, users, questionsByPanel = 5) => {
   });
 
   return panelQuestions;
+};
+
+const generatePanels = (panelCount = 5) => {
+  const panels = [];
+  let randomPanel;
+  let newRecord;
+  for (let i = 0; i < panelCount; i++) {
+    randomPanel = createRandomPanel();
+    newRecord = {
+      PutRequest: { Item: createDynamoDBPanelObject(randomPanel) },
+    };
+    panels.push(newRecord);
+  }
+  return panels;
+};
+
+const generateUsers = () => {
+  const allUsers = [];
+
+  const teamMembers = generateTeamUsers();
+  // Concat did not work, ugly but it works
+  teamMembers.map((user) => {
+    allUsers.push(user);
+    return;
+  });
+
+  const students = generateStudents({ count: 4 });
+  // Concat did not work, ugly but it works
+  students.map((user) => {
+    allUsers.push(user);
+    return;
+  });
+
+  const panelists = generatePanelists({ count: 3 });
+  // Concat did not work, ugly but it works
+  panelists.map((user) => {
+    allUsers.push(user);
+    return;
+  });
+
+  const admins = generateAdmins({ count: 2 });
+  // Concat did not work, ugly but it works
+  admins.map((user) => {
+    allUsers.push(user);
+    return;
+  });
+
+  return allUsers;
 };
 
 const main = async () => {
