@@ -29,7 +29,7 @@ def send_email(
                 "Data": subject,
             },
         },
-        Source="anshita.gupta@tamu.edu",
+        Source="davidgomilliontest@gmail.com",
     )
 
     return {
