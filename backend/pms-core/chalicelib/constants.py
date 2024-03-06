@@ -5,6 +5,7 @@ AUTH_BEARER_TYPE = "Bearer"
 AUTH_BASIC_TYPE = "Basic"
 # BOTO3 Resource Types
 BOTO3_DYNAMODB_TYPE = "dynamodb"
+BOTO3_SES_TYPE = "ses"
 # Request Content Types
 REQUEST_CONTENT_TYPE_JSON = "application/json"
 

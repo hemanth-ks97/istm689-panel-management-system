@@ -520,11 +520,22 @@ def get_login_panel():
         role=user["Role"],
     )
 
+    login_link = (
+        f"https://istm689-dev.joaquingimenez.com/login/panel/verify?token={new_token}"
+    )
+
+    html_body = f"Dear {user['FName']},<p>I hope this message finds you well. As requested, here is the link to log in to your account: <a class='ulink' href='{login_link}' target='_blank'>Login Link</a>.</p><p>If you have any questions or encounter any issues, please feel free to reach out to our support team at [Support Email].</p>Best regards,<br>The Panel Management System Team"
+
+    text_body = (
+        f"Please copy and paste this link in your browser to log in: {login_link}"
+    )
+
     # If so, generate a token and send an email
     send_email(
         destination_addresses=["davidgomilliontest@gmail.com"],
-        subject="Panelist Login URL",
-        body=f"Your login URL is: https://pms.tamu.edu/panelist?token={new_token}",
+        subject=f"Login URL for {user['FName']}",
+        html_body=html_body,
+        text_body=text_body,
     )
 
     return response
