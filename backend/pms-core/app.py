@@ -215,11 +215,7 @@ def create_new_token():
         )
 
         # Register last login
-        user["LastLogin"] = (
-            datetime.now(tz=timezone.utc)
-            .isoformat(timespec="seconds")
-            .replace("+00:00", "Z")
-        )
+        user["LastLogin"] = datetime.now().isoformat(timespec="seconds")
         get_user_db().update_user(user)
     except Exception:
         # Not always true but this is a Chalice Exception
@@ -295,7 +291,7 @@ def add_new_question():
             "UserID": user_id,
             "PanelID": incoming_json["panelId"],
             "QuestionText": incoming_json["question"],
-            "CreatedAt": datetime.now().isoformat(),
+            "CreatedAt": datetime.now().isoformat(timespec="seconds"),
         }
         get_question_db().add_question(new_question)
         # Returns the result of put_item, kind of metadata and stuff
@@ -393,8 +389,8 @@ def post_howdy_csv():
                 new_user["LName"] = record["LName"]
                 new_user["UIN"] = record["UIN"]
                 new_user["Role"] = STUDENT_ROLE
-                new_user["CreatedAt"] = datetime.now().isoformat()
-                new_user["UpdatedAt"] = datetime.now().isoformat()
+                new_user["CreatedAt"] = datetime.now().isoformat(timespec="seconds")
+                new_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
                 get_user_db().add_user(new_user)
             else:
                 # The user already exists, should update some fields only
@@ -402,7 +398,7 @@ def post_howdy_csv():
                 updated_user["EmailID"] = record["EmailID"]
                 updated_user["FName"] = record["FName"]
                 updated_user["LName"] = record["LName"]
-                updated_user["UpdatedAt"] = datetime.now().isoformat()
+                updated_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
                 get_user_db().update_user(updated_user)
         return Response(
             body={
@@ -462,15 +458,15 @@ def post_canvas_csv():
                 new_user["Role"] = STUDENT_ROLE
                 new_user["Section"] = record["Section"]
                 new_user["CanvasID"] = int(record["CanvasID"])
-                new_user["CreatedAt"] = datetime.now().isoformat()
-                new_user["UpdatedAt"] = datetime.now().isoformat()
+                new_user["CreatedAt"] = datetime.now().isoformat(timespec="seconds")
+                new_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
                 get_user_db().add_user(new_user)
             else:
                 # The user already exists, should update some fields only
                 updated_user = user_exists[0]
                 updated_user["Section"] = record["Section"]
                 updated_user["CanvasID"] = int(record["CanvasID"])
-                updated_user["UpdatedAt"] = datetime.now().isoformat()
+                updated_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
                 get_user_db().update_user(updated_user)
         return Response(
             body={
@@ -570,7 +566,7 @@ def add_new_user():
         # Build User object for database
         new_user = {
             "UserID": str(uuid.uuid4()),
-            "CreatedAt": datetime.now().isoformat(),
+            "CreatedAt": datetime.now().isoformat(timespec="seconds"),
             "Name": incoming_json["name"],
             "LastName": incoming_json["lastname"],
             "Email": incoming_json["email"],
@@ -612,6 +608,7 @@ def add_panel_info():
             "PanelDesc": incoming_json["panelDesc"],
             "PanelStartDate": incoming_json["panelStartDate"],
             "Visibility": incoming_json["visibility"],
+            "CreatedAt": datetime.now().isoformat(timespec="seconds"),
         }
         get_panel_db().add_panel(new_panel)
 
