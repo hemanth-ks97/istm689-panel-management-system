@@ -86,7 +86,7 @@ resource "aws_amplify_app" "frontend-app" {
   # The default rewrites and redirects added by the Amplify Console.
   custom_rule {
     source = "/<*>"
-    status = "404"
+    status = "404-200"
     target = "/index.html"
   }
 
