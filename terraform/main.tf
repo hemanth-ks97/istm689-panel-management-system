@@ -335,3 +335,7 @@ resource "aws_dynamodb_table" "local-metric-table" {
     write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
   }
 }
+
+resource "aws_sesv2_email_identity" "ses-email-identity" {
+  email_identity = "testing@example.com"
+}
