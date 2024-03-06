@@ -64,8 +64,9 @@ const LoginCard = () => {
   return (
     <Card variant="outlined" sx={{ maxWidth: 345, minWidth: 100 }}>
       <CardMedia
-        sx={{ height: 140 }}
+        sx={{ height: 130 }}
         image={tamuLogo}
+        component={"img"}
         title="Texas A&M University"
       />
       <CardHeader
