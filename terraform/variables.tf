@@ -110,6 +110,18 @@ variable "amplify_branch_environment_variables_REACT_APP_API_BASE_URL" {
   }
 }
 
+variable "aws_ses_identity_email" {
+  description = "Email from which the messages will be sent"
+  type = object({
+    dev        = string
+    production = string
+  })
+  default = {
+    dev        = "davidgomilliontest@gmail.com"
+    production = "davidgomilliontest@gmail.com"
+  }
+}
+
 ##################################################
 # Cloudflare
 ##################################################

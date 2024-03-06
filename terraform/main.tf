@@ -337,5 +337,5 @@ resource "aws_dynamodb_table" "local-metric-table" {
 }
 
 resource "aws_sesv2_email_identity" "ses-email-identity" {
-  email_identity = "testing@example.com"
+  email_identity = var.aws_ses_identity_email[terraform.workspace]
 }
