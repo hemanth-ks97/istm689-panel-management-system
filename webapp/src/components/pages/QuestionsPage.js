@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import QuestionList from "../widgets/QuestionList";
 import { Typography, TextField, Button } from "@mui/material";
@@ -6,20 +6,49 @@ import { httpClient } from "../../client";
 import { useSnackbar } from "notistack";
 import { useSelector } from "react-redux";
 import { useLocation, useParams } from "react-router-dom";
+import LoadingSpinner from "../widgets/LoadingSpinner";
 
 const QuestionsPage = () => {
   const { pathname } = useLocation();
   const { panelId } = useParams();
   const { user } = useSelector((state) => state.user);
-  const [question, setQuestion] = useState("");
+  const [questions, setQuestions] = useState("");
+  const [noOfQuestions, setNoOfQuestions] = useState(0);
+  const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
-
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${user?.token}`,
   };
 
+  useEffect(() => {
+    httpClient
+      .get(`/panel/${panelId}`, {
+        headers,
+      })
+      .then((response) => {
+        // Convert NumberOfQuestions to a Number
+        const numberOfQuestions = Number(response.data.NumberOfQuestions);
+        setNoOfQuestions(numberOfQuestions);
+        setQuestions(Array(numberOfQuestions).fill(""));
+        setLoading(false);
+       })
+      .catch((error) => {
+        enqueueSnackbar(error.message, {
+          variant: "error",
+        });
+        setLoading(false);
+      });
+  }, [panelId]);
+
+  const handleQuestionChange = (index, value) => {
+    const newQuestions = [...questions];
+    newQuestions[index] = value;
+    setQuestions(newQuestions);
+  };
+
   const handleOnSubmit = () => {
+    questions.forEach((question, index) => {
     httpClient
       .post(
         `/question`,
@@ -31,31 +60,41 @@ const QuestionsPage = () => {
       )
       .then((response) => {
         enqueueSnackbar(response?.data?.message, { variant: "success" });
-        setQuestion("");
       })
       .catch((error) => {
         enqueueSnackbar(error.message, { variant: "error" });
       });
-  };
+    });
+      // Reset questions after submitting
+      setQuestions(Array(noOfQuestions).fill(""));
+    };
 
   let items;
 
   if (pathname.endsWith("questions")) {
     items = <QuestionList />;
   }
+  if (loading) {
+    return <LoadingSpinner />;
+  }
   if (pathname.endsWith("question")) {
     items = (
       <>
         <Typography variant="h4">QuestionsPage component</Typography>
+        {questions.map((q, index) => (
         <TextField
-          id="question1"
-          label="Question 1"
+          key={index}
+          id={`question${index}`}
+          label={`Question ${index + 1}`}
           placeholder="Please write your question"
           multiline
           variant="filled"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
+          value={q}
+          onChange={(e) => handleQuestionChange(index, e.target.value)}
+          fullWidth
+          margin="normal"
         />
+        ))}
         <p></p>
         <Button variant="contained" color="primary" onClick={handleOnSubmit}>
           Submit
