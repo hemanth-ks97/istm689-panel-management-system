@@ -4,16 +4,24 @@ import { httpClient } from "../../client";
 import { useSnackbar } from "notistack";
 import { useSelector } from "react-redux";
 import LoadingSpinner from "../widgets/LoadingSpinner";
-import { 
-  Box, Typography, Paper, Table, TableBody, TableCell, 
-  TableContainer, TableRow, TableHead, styled 
+import {
+  Box,
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
+  TableHead,
+  styled,
 } from "@mui/material";
 
 const HomePage = () => {
   const { user } = useSelector((state) => state.user);
-  const [panelDetails, fetchPanelDetails] = useState([]);
+  const [panelDetails, setPanelDetails] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
   const headers = {
@@ -43,15 +51,15 @@ const HomePage = () => {
           const deadlineB = new Date(b.QuestionStageDeadline);
           return deadlineA - deadlineB;
         });
-  
-        fetchPanelDetails(sortedPanels);
+
+        setPanelDetails(sortedPanels);
       })
       .catch((error) => {
         console.error("Error fetching panel details:", error);
         enqueueSnackbar(error.message, { variant: "error" });
       })
       .finally(() => setIsLoading(false));
-  }, []); 
+  }, []);
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -59,27 +67,40 @@ const HomePage = () => {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <Typography variant="h4" mt={2} textAlign="center" sx={{ fontFamily: "monospace" }}>
+      <Typography
+        variant="h4"
+        mt={2}
+        textAlign="center"
+        sx={{ fontFamily: "monospace" }}
+      >
         Student Dashboard
       </Typography>
-      <Box display="flex" mt={2} alignItems="center" justifyContent="center" sx={{ flexGrow: 1 }}>
+      <Box
+        display="flex"
+        mt={2}
+        alignItems="center"
+        justifyContent="center"
+        sx={{ flexGrow: 1 }}
+      >
         <DemoPaper square={false}>
           <Typography variant="h6">Assignments</Typography>
-            <TableContainer component={Paper}>
-              <Table sx={{ minWidth: 280 }} aria-label="simple table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: "bold" }}>Panel Name</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: "bold" }}>Due Date</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {panelDetails.map((panel) => (
-                    <>
+          <TableContainer component={Paper}>
+            <Table sx={{ minWidth: 280 }} aria-label="simple table">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: "bold" }}>Panel Name</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: "bold" }}>
+                    Due Date
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {panelDetails.map((panel) => (
+                  <>
                     <TableRow
                       hover
                       key={panel.PanelID}
-                      onClick={() => handleRowClick(`/panel/${panel.PanelID}`)}
+                      onClick={() => handleRowClick(`panel/${panel.PanelID}`)}
                     >
                       <TableCell component="th" scope="row">
                         {panel.PanelName}
@@ -91,44 +112,62 @@ const HomePage = () => {
                     <TableRow
                       hover
                       key={panel.PanelID}
-                      onClick={() => handleRowClick(`/panel/${panel.PanelID}/question`)}
+                      onClick={() =>
+                        handleRowClick(`panel/${panel.PanelID}/question`)
+                      }
                     >
-                      <TableCell component="th" scope="row" sx={{ pl: '40px' }}>
+                      <TableCell component="th" scope="row" sx={{ pl: "40px" }}>
                         {panel.PanelName} Submit Questions
                       </TableCell>
                       <TableCell align="right">
-                        {new Date(panel.QuestionStageDeadline).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric',})}
+                        {new Date(
+                          panel.QuestionStageDeadline
+                        ).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
                       </TableCell>
                     </TableRow>
                     <TableRow
                       hover
                       key={panel.PanelID}
-                      onClick={() => handleRowClick(`/panel/${panel.PanelID}/tagging`)}
+                      onClick={() =>
+                        handleRowClick(`panel/${panel.PanelID}/tagging`)
+                      }
                     >
-                      <TableCell component="th" scope="row" sx={{ pl: '40px' }}>
+                      <TableCell component="th" scope="row" sx={{ pl: "40px" }}>
                         {panel.PanelName} Tag Questions
                       </TableCell>
                       <TableCell align="right">
-                        {new Date(panel.TagStageDeadline).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric',})}
+                        {new Date(panel.TagStageDeadline).toLocaleDateString(
+                          "en-US",
+                          { year: "numeric", month: "long", day: "numeric" }
+                        )}
                       </TableCell>
                     </TableRow>
                     <TableRow
                       hover
-                      key={panel.PanelID} 
-                      onClick={() => handleRowClick(`/panel/${panel.PanelID}/voting`)}
+                      key={panel.PanelID}
+                      onClick={() =>
+                        handleRowClick(`panel/${panel.PanelID}/voting`)
+                      }
                     >
-                      <TableCell component="th" scope="row" sx={{ pl: '40px' }}>
+                      <TableCell component="th" scope="row" sx={{ pl: "40px" }}>
                         {panel.PanelName} Vote Questions
                       </TableCell>
                       <TableCell align="right">
-                        {new Date(panel.VoteStageDeadline).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric',})}
+                        {new Date(panel.VoteStageDeadline).toLocaleDateString(
+                          "en-US",
+                          { year: "numeric", month: "long", day: "numeric" }
+                        )}
                       </TableCell>
                     </TableRow>
-                    </>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </DemoPaper>
       </Box>
     </Box>
