@@ -103,7 +103,7 @@ const HomePage = () => {
                       onClick={() => handleRowClick(`panel/${panel.PanelID}`)}
                     >
                       <TableCell component="th" scope="row">
-                        {panel.PanelName}
+                        <Typography>{panel.PanelName}</Typography>
                       </TableCell>
                       <TableCell align="right">
                         {/* Empty cells to align with the table headers*/}
