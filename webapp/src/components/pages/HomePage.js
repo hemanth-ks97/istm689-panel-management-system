@@ -117,7 +117,7 @@ const HomePage = () => {
                       }
                     >
                       <TableCell component="th" scope="row" sx={{ pl: "40px" }}>
-                        {panel.PanelName} Submit Questions
+                        Submit Questions
                       </TableCell>
                       <TableCell align="right">
                         {new Date(
@@ -137,7 +137,7 @@ const HomePage = () => {
                       }
                     >
                       <TableCell component="th" scope="row" sx={{ pl: "40px" }}>
-                        {panel.PanelName} Tag Questions
+                        Tag Questions
                       </TableCell>
                       <TableCell align="right">
                         {new Date(panel.TagStageDeadline).toLocaleDateString(
@@ -154,7 +154,7 @@ const HomePage = () => {
                       }
                     >
                       <TableCell component="th" scope="row" sx={{ pl: "40px" }}>
-                        {panel.PanelName} Vote Questions
+                        Vote Questions
                       </TableCell>
                       <TableCell align="right">
                         {new Date(panel.VoteStageDeadline).toLocaleDateString(
