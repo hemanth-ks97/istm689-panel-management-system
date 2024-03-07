@@ -107,6 +107,16 @@ const HomePage = () => {
                       </TableCell>
                       <TableCell align="right">
                         {/* Empty cells to align with the table headers*/}
+                        {user.role === "admin" && (
+                          <Typography
+                            sx={{
+                              color:
+                                panel.Visibility === "public" ? "green" : "red",
+                            }}
+                          >
+                            {panel.Visibility}
+                          </Typography>
+                        )}
                       </TableCell>
                     </TableRow>
                     <TableRow

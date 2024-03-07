@@ -5,7 +5,7 @@ import {
   BatchWriteItemCommand,
 } from "@aws-sdk/client-dynamodb";
 
-const ENV = process.env.ENV || "local";
+const ENV = process.env.ENV || "dev";
 
 const TABLE_NAME = {
   USER: `${ENV}-user`,
