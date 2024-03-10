@@ -1,6 +1,6 @@
 """Main application file for the PMS Core API."""
 
-import jwt
+import requests
 import boto3
 import uuid
 import pandas as pd
@@ -8,6 +8,7 @@ import numpy as np
 import random
 import math
 from decimal import Decimal
+
 from io import StringIO
 from chalice import (
     Chalice,
@@ -17,36 +18,42 @@ from chalice import (
     BadRequestError,
     Response,
 )
+from chalicelib.email import send_email
 from chalicelib.config import (
     ENV,
-    GOOGLE_AUTH_CLIENT_ID,
     ALLOW_ORIGIN,
     ALLOWED_AUTHORIZATION_TYPES,
     USER_TABLE_NAME,
     QUESTION_TABLE_NAME,
+    PANEL_TABLE_NAME,
     JWT_SECRET,
+    GOOGLE_RECAPTCHA_SECRET_KEY,
     JWT_AUDIENCE,
     JWT_ISSUER,
     JWT_TOKEN_EXPIRATION_DAYS,
 )
-from chalicelib.constants import BOTO3_DYNAMODB_TYPE, REQUEST_CONTENT_TYPE_JSON
+from chalicelib.constants import (
+    BOTO3_DYNAMODB_TYPE,
+    REQUEST_CONTENT_TYPE_JSON,
+    GOOGLE_RECAPTCHA_VERIFY_URL,
+    ADMIN_ROLE,
+    STUDENT_ROLE,
+    PANELIST_ROLE,
+)
 from chalicelib import db
 from chalicelib.utils import (
     verify_token,
     get_token_subject,
-    get_token_issuer,
-    get_token_email,
-    get_base_url,
+    create_token,
 )
 from google.auth import exceptions
-from google.oauth2 import id_token
-from google.auth.transport import requests
 from datetime import datetime, timezone, timedelta
-from jwt.exceptions import ExpiredSignatureError
+
 
 app = Chalice(app_name=f"{ENV}-pms-core")
 _USER_DB = None
 _QUESTION_DB = None
+_PANEL_DB = None
 
 
 def get_user_db():
@@ -73,6 +80,18 @@ def get_question_db():
     return _QUESTION_DB
 
 
+def get_panel_db():
+    global _PANEL_DB
+    try:
+        if _PANEL_DB is None:
+            _PANEL_DB = db.DynamoPanelDB(
+                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(PANEL_TABLE_NAME)
+            )
+    except Exception as e:
+        return {"error": str(e)}
+    return _PANEL_DB
+
+
 def dummy():
     """
     Collection of all functions that we need.
@@ -86,6 +105,9 @@ def dummy():
     dummy_db.update_item()
     dummy_db.scan()
     dummy_db.query()
+    # SES
+    dummy_ses = boto3.client("ses")
+    dummy_ses.send_email()
     # S3
     # dummy_s3 = boto3.client("s3")
     # dummy_s3.put_object()
@@ -166,9 +188,9 @@ def index():
     "/token/create",
     methods=["POST"],
 )
-def create_token():
-    """Need to recieive a token, decoded and return a new custom token with internal user ID"""
-    user = None
+def create_new_token():
+    """Need to receive a token, decoded and return a new custom token with internal user ID"""
+
     try:
         json_body = app.current_request.json_body
         incoming_token = json_body["token"]
@@ -178,68 +200,33 @@ def create_token():
         if not valid_and_verified_token:
             raise ValueError("Invalid Token")
 
-        # Need to validate the token subject?? It is not needed?
-        token_issuer = get_token_issuer(incoming_token)
+        user_email = valid_and_verified_token["email"]
 
-        if token_issuer != "https://accounts.google.com":
-            raise ValueError("Invalid Token Issuer")
-        token_subject = get_token_subject(incoming_token)
-
-        users_found = get_user_db().get_user_by_google_id(token_subject)
+        users_found = get_user_db().get_user_by_email(user_email)
 
         # Check if result was found
         if not users_found:
-            user_email = get_token_email(incoming_token)
-            users_found = get_user_db().get_user_by_email(user_email)
-            user = users_found[0]
-            # Add google ID to the register
-            user["GoogleID"] = token_subject
-            user["UpdatedAt"] = datetime.now().isoformat()
-            # Update user
-            get_user_db().update_user(user)
+            raise NotFoundError("User not found")
 
-        # Does not have the updated items
         user = users_found[0]
-        current_time = datetime.now(tz=timezone.utc)
-        expiration = datetime.now(tz=timezone.utc) + timedelta(
-            days=int(JWT_TOKEN_EXPIRATION_DAYS)
+
+        # Create a new token with the user id
+        new_token = create_token(
+            user_id=user["UserID"],
+            email_id=user["EmailID"],
+            name=valid_and_verified_token["name"],
+            picture=valid_and_verified_token["picture"],
+            role=user["Role"],
         )
 
-        payload_data = {
-            "iss": JWT_ISSUER,
-            "aud": JWT_AUDIENCE,
-            "iat": current_time,
-            "nbf": current_time,
-            "exp": expiration,
-            "sub": user["UserID"],
-            "email": user["EmailID"],
-            "name": valid_and_verified_token["name"],
-            "picture": valid_and_verified_token["picture"],
-            "role": user["Role"],
-        }
-
-        token = jwt.encode(
-            payload=payload_data,
-            key=JWT_SECRET,
-            algorithm="HS256",
-        )
+        # Register last login
+        user["LastLogin"] = datetime.now().isoformat(timespec="seconds")
+        get_user_db().update_user(user)
     except Exception:
         # Not always true but this is a Chalice Exception
         raise NotFoundError("User not found")
 
-    return {"token": token}
-
-
-@app.route("/token/decode", methods=["POST"])
-def decode_token():
-    try:
-        json_body = app.current_request.json_body
-        incoming_token = json_body["token"]
-        decoded_token = verify_token(incoming_token)
-        return {"decoded_token": decoded_token}
-
-    except Exception as e:
-        return {"error": str(e)}
+    return {"token": new_token}
 
 
 @app.route(
@@ -250,12 +237,21 @@ def decode_token():
 def get_all_questions():
     """
     Question route, testing purposes.
+
     """
+    user_id = app.current_request.context["authorizer"]["principalId"]
 
     try:
-        return get_question_db().list_questions()
+
+        user_role = get_user_db().get_user_role(user_id)
+
+        if user_role != ADMIN_ROLE:
+            raise BadRequestError("Only admin can perform this action")
+
+        questions = get_question_db().list_questions()
     except Exception as e:
         return {"error": str(e)}
+    return questions
 
 
 @app.route(
@@ -284,20 +280,24 @@ def add_new_question():
     try:
         """`app.current_request.json_body` works because the request has the header `Content-Type: application/json` set."""
         incoming_json = app.current_request.json_body
-
         # Check for all required fields
         if "question" not in incoming_json:
             raise BadRequestError("Key 'question' not found in incoming request")
+        if "panelId" not in incoming_json:
+            raise BadRequestError("Key 'panelId' not found in incoming request")
 
         user_id = app.current_request.context["authorizer"]["principalId"]
-        origin_ip = app.current_request.context["identity"]["sourceIp"]
+
+        # Validate if panel still acepts questions!!
+
         # Build Question object for database
-        new_question = dict()
-        new_question["QuestionID"] = str(uuid.uuid4())
-        new_question["UserID"] = user_id
-        new_question["OriginIP"] = origin_ip
-        new_question["CreatedAt"] = datetime.now().isoformat()
-        new_question["Question"] = incoming_json["question"]
+        new_question = {
+            "QuestionID": str(uuid.uuid4()),
+            "UserID": user_id,
+            "PanelID": incoming_json["panelId"],
+            "QuestionText": incoming_json["question"],
+            "CreatedAt": datetime.now().isoformat(timespec="seconds"),
+        }
         get_question_db().add_question(new_question)
         # Returns the result of put_item, kind of metadata and stuff
         return {
@@ -318,10 +318,18 @@ def get_all_users():
     """
     User route, testing purposes.
     """
+    user_id = app.current_request.context["authorizer"]["principalId"]
+
     try:
-        return get_user_db().list_users()
+        user_role = get_user_db().get_user_role(user_id)
+
+        if user_role != ADMIN_ROLE:
+            raise BadRequestError("Only admin can perform this action")
+
+        users = get_user_db().list_users()
     except Exception as e:
         return {"error": str(e)}
+    return users
 
 
 @app.route(
@@ -399,7 +407,14 @@ def distribute_questions(panel_id):
     content_types=["text/plain"],
 )
 def post_howdy_csv():
+    user_id = app.current_request.context["authorizer"]["principalId"]
     try:
+
+        user_role = get_user_db().get_user_role(user_id)
+
+        if user_role != ADMIN_ROLE:
+            raise BadRequestError("Only admin can perform this action")
+
         # Access the CSV file from the request body
         csv_data = app.current_request.raw_body.decode("utf-8")
 
@@ -431,9 +446,9 @@ def post_howdy_csv():
                 new_user["FName"] = record["FName"]
                 new_user["LName"] = record["LName"]
                 new_user["UIN"] = record["UIN"]
-                new_user["Role"] = "student"
-                new_user["CreatedAt"] = datetime.now().isoformat()
-                new_user["UpdatedAt"] = datetime.now().isoformat()
+                new_user["Role"] = STUDENT_ROLE
+                new_user["CreatedAt"] = datetime.now().isoformat(timespec="seconds")
+                new_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
                 get_user_db().add_user(new_user)
             else:
                 # The user already exists, should update some fields only
@@ -441,7 +456,7 @@ def post_howdy_csv():
                 updated_user["EmailID"] = record["EmailID"]
                 updated_user["FName"] = record["FName"]
                 updated_user["LName"] = record["LName"]
-                updated_user["UpdatedAt"] = datetime.now().isoformat()
+                updated_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
                 get_user_db().update_user(updated_user)
         return Response(
             body={
@@ -461,7 +476,13 @@ def post_howdy_csv():
     content_types=["text/plain"],
 )
 def post_canvas_csv():
+    user_id = app.current_request.context["authorizer"]["principalId"]
     try:
+        user_role = get_user_db().get_user_role(user_id)
+
+        if user_role != ADMIN_ROLE:
+            raise BadRequestError("Only admin can perform this action")
+
         # Access the CSV file from the request body
         csv_data = app.current_request.raw_body.decode("utf-8")
 
@@ -492,18 +513,18 @@ def post_canvas_csv():
                 new_user = dict()
                 new_user["UserID"] = str(uuid.uuid4())
                 new_user["UIN"] = int(record["UIN"])
-                new_user["Role"] = "student"
+                new_user["Role"] = STUDENT_ROLE
                 new_user["Section"] = record["Section"]
                 new_user["CanvasID"] = int(record["CanvasID"])
-                new_user["CreatedAt"] = datetime.now().isoformat()
-                new_user["UpdatedAt"] = datetime.now().isoformat()
+                new_user["CreatedAt"] = datetime.now().isoformat(timespec="seconds")
+                new_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
                 get_user_db().add_user(new_user)
             else:
                 # The user already exists, should update some fields only
                 updated_user = user_exists[0]
                 updated_user["Section"] = record["Section"]
                 updated_user["CanvasID"] = int(record["CanvasID"])
-                updated_user["UpdatedAt"] = datetime.now().isoformat()
+                updated_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
                 get_user_db().update_user(updated_user)
         return Response(
             body={
@@ -516,6 +537,64 @@ def post_canvas_csv():
         return {"error": str(e)}
 
 
+@app.route("/login/panel", methods=["POST"], content_types=[REQUEST_CONTENT_TYPE_JSON])
+def get_login_panel():
+    incoming_json = app.current_request.json_body
+
+    params = {
+        "response": incoming_json["token"],
+        "secret": GOOGLE_RECAPTCHA_SECRET_KEY,
+    }
+    url = GOOGLE_RECAPTCHA_VERIFY_URL
+    res = requests.post(url, params=params)
+    response = res.json()
+
+    if response["success"] is False:
+        raise BadRequestError(response["error-codes"])
+
+    if response["score"] <= 0.5:
+        raise BadRequestError("Score too low")
+
+    panelist_email = incoming_json["email"]
+    users = get_user_db().get_user_by_email(panelist_email)
+
+    if not users:
+        raise NotFoundError("User not found")
+
+    user = users[0]
+
+    if user["Role"] != PANELIST_ROLE:
+        raise BadRequestError("User is not a panelist")
+
+    new_token = create_token(
+        user_id=user["UserID"],
+        email_id=user["EmailID"],
+        name=f"{user['FName']} {user['LName']}",
+        picture="",
+        role=user["Role"],
+    )
+
+    login_link = (
+        f"https://istm689-dev.joaquingimenez.com/login/panel/verify?token={new_token}"
+    )
+
+    html_body = f"Dear {user['FName']},<p>I hope this message finds you well. As requested, here is the link to log in to your account: <a class='ulink' href='{login_link}' target='_blank'>Login Link</a>.</p><p>If you have any questions or encounter any issues, please feel free to reach out to our support team at [Support Email].</p>Best regards,<br>The Panel Management System Team"
+
+    text_body = (
+        f"Please copy and paste this link in your browser to log in: {login_link}"
+    )
+
+    # If so, generate a token and send an email
+    send_email(
+        destination_addresses=["davidgomilliontest@gmail.com"],
+        subject=f"Login URL for {user['FName']}",
+        html_body=html_body,
+        text_body=text_body,
+    )
+
+    return response
+
+
 @app.route(
     "/user",
     methods=["POST"],
@@ -524,8 +603,14 @@ def post_canvas_csv():
 )
 def add_new_user():
     """User route, testing purposes."""
+    user_id = app.current_request.context["authorizer"]["principalId"]
+
     try:
-        """`app.current_request.json_body` works because the request has the header `Content-Type: application/json` set."""
+        user_role = get_user_db().get_user_role(user_id)
+
+        if user_role != ADMIN_ROLE:
+            raise BadRequestError("Only admin can perform this action")
+
         incoming_json = app.current_request.json_body
 
         # Check for all required fields
@@ -536,22 +621,119 @@ def add_new_user():
         if "email" not in incoming_json:
             raise BadRequestError("Key 'email' not found in incoming request")
 
-        # Fetch principalID (Google ID) from incoming request.
-        # Not a real case scenario
-        google_id = app.current_request.context["authorizer"]["principalId"]
-        origin_ip = app.current_request.context["identity"]["sourceIp"]
         # Build User object for database
-        new_user = dict()
-        new_user["UserID"] = str(uuid.uuid4())
-        new_user["GoogleID"] = google_id
-        new_user["OriginIP"] = origin_ip
-        new_user["CreatedAt"] = datetime.now().isoformat()
-        new_user["Name"] = incoming_json["name"]
-        new_user["LastName"] = incoming_json["lastname"]
-        new_user["Email"] = incoming_json["email"]
+        new_user = {
+            "UserID": str(uuid.uuid4()),
+            "CreatedAt": datetime.now().isoformat(timespec="seconds"),
+            "Name": incoming_json["name"],
+            "LastName": incoming_json["lastname"],
+            "Email": incoming_json["email"],
+        }
 
         get_user_db().add_user(new_user)
         # Returns the result of put_item, kind of metadata and stuff
 
     except Exception as e:
         return {"error": str(e)}
+
+
+@app.route(
+    "/panel",
+    methods=["POST"],
+    authorizer=token_authorizer,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def add_panel_info():
+    user_id = app.current_request.context["authorizer"]["principalId"]
+    try:
+        user_role = get_user_db().get_user_role(user_id)
+
+        if user_role != ADMIN_ROLE:
+            raise BadRequestError("Only admin can perform this action")
+
+        incoming_json = app.current_request.json_body
+
+        new_panel = {
+            "PanelID": str(uuid.uuid4()),
+            "NumberOfQuestions": incoming_json["numberOfQuestions"],
+            "PanelName": incoming_json["panelName"],
+            "Panelist": incoming_json["panelist"],
+            "QuestionStageDeadline": incoming_json["questionStageDeadline"],
+            "VoteStageDeadline": incoming_json["voteStageDeadline"],
+            "TagStageDeadline": incoming_json["tagStageDeadline"],
+            "PanelVideoLink": incoming_json["panelVideoLink"],
+            "PanelPresentationDate": incoming_json["panelPresentationDate"],
+            "PanelDesc": incoming_json["panelDesc"],
+            "PanelStartDate": incoming_json["panelStartDate"],
+            "Visibility": incoming_json["visibility"],
+            "CreatedAt": datetime.now().isoformat(timespec="seconds"),
+        }
+        get_panel_db().add_panel(new_panel)
+
+        # We don't know if we added the panel successfully
+        return Response(
+            body={"message": "Panel added successfully"},
+            status_code=200,
+            headers={"Content-Type": "application/json"},
+        )
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.route(
+    "/panel",
+    methods=["GET"],
+    authorizer=token_authorizer,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def get_all_panels():
+    user_id = app.current_request.context["authorizer"]["principalId"]
+    try:
+        user_role = get_user_db().get_user_role(user_id)
+
+        if user_role == ADMIN_ROLE:
+            panels = get_panel_db().get_all_panels()
+        else:
+            panels = get_panel_db().get_public_panels()
+
+        # Check user role
+
+    except Exception as e:
+        return {"error": str(e)}
+
+    return panels
+
+
+@app.route(
+    "/panel/{id}",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def get_panel(id):
+    # Fetch user id
+    user_id = app.current_request.context["authorizer"]["principalId"]
+    try:
+        user_role = get_user_db().get_user_role(user_id)
+        panel = get_panel_db().get_panel(id)
+
+        if user_role != ADMIN_ROLE and panel["Visibility"] == "internal":
+            raise BadRequestError("Only admin can view this panel")
+
+        return panel
+
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.route(
+    "/panel/{id}/questions",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def get_questions_by_panel(id):
+    try:
+        questions = get_question_db().get_questions_by_panel(id)
+    except Exception as e:
+        return {"error": str(e)}
+
+    return questions

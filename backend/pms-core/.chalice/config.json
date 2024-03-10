@@ -8,6 +8,7 @@
       "environment_variables": {
         "ENV": "production",
         "GOOGLE_AUTH_CLIENT_ID": "979252554614-r05g1fdg6unklck10sjnamb3701r0u88.apps.googleusercontent.com",
+        "GOOGLE_RECAPTCHA_SECRET_KEY":"6LfnmocpAAAAAE0Res2ZA73Bxroags4KPrTVSvVT",
         "ALLOW_ORIGIN": "https://istm689.joaquingimenez.com",
         "DYNAMODB_USER_TABLE_NAME": "production-user",
         "DYNAMODB_QUESTION_TABLE_NAME": "production-question",
@@ -22,6 +23,7 @@
       "environment_variables": {
         "ENV": "dev",
         "GOOGLE_AUTH_CLIENT_ID": "979252554614-0gjt8bjrpkht2n0le6uoo12nhs8pgrv3.apps.googleusercontent.com",
+        "GOOGLE_RECAPTCHA_SECRET_KEY":"6LdJk4cpAAAAAMZqg2ZEk9kqMJ1RYT247BHStOzU",
         "ALLOW_ORIGIN": "https://istm689-dev.joaquingimenez.com",
         "DYNAMODB_USER_TABLE_NAME": "dev-user",
         "DYNAMODB_QUESTION_TABLE_NAME": "dev-question",
@@ -36,6 +38,7 @@
       "environment_variables": {
         "ENV": "local",
         "GOOGLE_AUTH_CLIENT_ID": "370940936724-4qh7n4qh6vrgli6bsf3je6kbe2lsotef.apps.googleusercontent.com",
+        "GOOGLE_RECAPTCHA_SECRET_KEY":"6Lf3lIcpAAAAACFT-wrtXeX2Z3NMAQLT3pXHIENL",
         "ALLOW_ORIGIN": "http://localhost:3000",
         "DYNAMODB_USER_TABLE_NAME": "local-user",
         "DYNAMODB_QUESTION_TABLE_NAME": "local-question",

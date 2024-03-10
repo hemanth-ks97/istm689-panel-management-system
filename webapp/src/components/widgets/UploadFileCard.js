@@ -79,8 +79,8 @@ const UploadFileCard = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const csvString = e.target.result;
-        sendHowdyCSVToServer(csvString)
-        event.target.value = '';
+        sendHowdyCSVToServer(csvString);
+        event.target.value = "";
         enqueueSnackbar("Howdy file parsed", {
           variant: "info",
         });
@@ -95,8 +95,8 @@ const UploadFileCard = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const csvString = e.target.result;
-        sendCanvasCSVToServer(csvString)
-        event.target.value = '';
+        sendCanvasCSVToServer(csvString);
+        event.target.value = "";
         enqueueSnackbar("Canvas file parsed", {
           variant: "info",
         });
@@ -107,6 +107,7 @@ const UploadFileCard = () => {
 
   return (
     <div>
+      <p></p>
       <Button
         component="label"
         role={undefined}
@@ -118,6 +119,7 @@ const UploadFileCard = () => {
         Upload Howdy file
         <VisuallyHiddenInput type="file" onChange={handleHowdyFileChange} />
       </Button>
+      <p></p>
       <Button
         component="label"
         role={undefined}

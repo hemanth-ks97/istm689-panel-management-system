@@ -5,7 +5,7 @@ import {
   BatchWriteItemCommand,
 } from "@aws-sdk/client-dynamodb";
 
-const ENV = process.env.ENV || "local";
+const ENV = process.env.ENV || "dev";
 
 const TABLE_NAME = {
   USER: `${ENV}-user`,
@@ -86,7 +86,58 @@ const teamMembers = [
     Section: "ISTM-622-601",
     UIN: 77777777,
   },
+  {
+    UserID: faker.string.uuid(),
+    CanvasID: 8888,
+    EmailID: "davidgomilliontest@gmail.com",
+    FName: "Test",
+    LName: "Account",
+    Role: "panelist",
+    Section: "ISTM-622-601",
+    UIN: 88888888,
+  },
 ];
+
+const createDynamoDBQuestionObject = (question) => {
+  const date = new Date(Date.now()).toISOString();
+
+  return {
+    QuestionID: { S: question.QuestionID },
+    DislikedBy: { L: [] }, // Should be an array of valid user IDs
+    LikedBy: { L: [] }, // Should be an array of valid user IDs
+    NeutralizedBy: { L: [] }, // Should be an array of valid user IDs
+    DislikeScore: { N: question.DislikeScore.toString() },
+    FinalScore: { N: question.FinalScore.toString() },
+    LikeScore: { N: question.LikeScore.toString() },
+    NeutralScore: { N: question.NeutralScore.toString() },
+    PanelID: { S: question.PanelID },
+    PresentationBonusScore: { N: question.PresentationBonusScore.toString() },
+    QuestionText: { S: question.QuestionText },
+    UserID: { S: question.UserID },
+    VotingStageBonusScore: { N: question.VotingStageBonusScore.toString() },
+    CreatedAt: { S: date },
+  };
+};
+
+const createDynamoDBPanelObject = (panel) => {
+  const date = new Date(Date.now()).toISOString();
+
+  return {
+    PanelID: { S: panel.PanelID },
+    NumberOfQuestions: { N: panel.NumberOfQuestions.toString() },
+    PanelDesc: { S: panel.PanelDesc },
+    Panelist: { S: panel.Panelist },
+    PanelName: { S: panel.PanelName },
+    PanelPresentationDate: { S: panel.PanelPresentationDate },
+    PanelStartDate: { S: panel.PanelStartDate },
+    PanelVideoLink: { S: panel.PanelVideoLink },
+    QuestionStageDeadline: { S: panel.QuestionStageDeadline },
+    TagStageDeadline: { S: panel.TagStageDeadline },
+    Visibility: { S: panel.Visibility },
+    VoteStageDeadline: { S: panel.VoteStageDeadline },
+    CreatedAt: { S: date },
+  };
+};
 
 const createDynamoDBUserObject = (user) => {
   const date = new Date(Date.now()).toISOString();
@@ -104,9 +155,7 @@ const createDynamoDBUserObject = (user) => {
   };
 };
 
-const createRandomUser = () => {
-  const randomNumber = faker.number.int(100);
-  const role = randomNumber % 2 === 0 ? "student" : "admin";
+const createRandomUser = ({ role = "student" }) => {
   return {
     UserID: faker.string.uuid(),
     CanvasID: faker.number.int({ min: 100, max: 500 }),
@@ -119,41 +168,56 @@ const createRandomUser = () => {
   };
 };
 
-const generateUsers = (userCount = 3) => {
-  const users = [];
+const generateTeamUsers = () => {
   let newRecord;
+  let newMembers = [];
   for (const member of teamMembers) {
     newRecord = { PutRequest: { Item: createDynamoDBUserObject(member) } };
-    users.push(newRecord);
+    newMembers.push(newRecord);
   }
-  let randomUser;
-  for (let i = 0; i < userCount; i++) {
-    randomUser = createRandomUser();
-    newRecord = { PutRequest: { Item: createDynamoDBUserObject(randomUser) } };
-    users.push(newRecord);
-  }
-  return users;
+  return newMembers;
 };
 
-const createDynamoDBPanelObject = (panel) => {
-  return {
-    PanelID: { S: panel.PanelID },
-    NumberOfQuestions: { N: panel.NumberOfQuestions.toString() },
-    PanelDesc: { S: panel.PanelDesc },
-    Panelist: { S: panel.Panelist },
-    PanelName: { S: panel.PanelName },
-    PanelPresentationDate: { S: panel.PanelPresentationDate },
-    PanelStartDate: { S: panel.PanelStartDate },
-    PanelVideoLink: { S: panel.PanelVideoLink },
-    QuestionStageDeadline: { S: panel.QuestionStageDeadline },
-    TagStageDeadline: { S: panel.TagStageDeadline },
-    Visibility: { S: panel.Visibility },
-    VoteStageDeadline: { S: panel.VoteStageDeadline },
+const generateUserWithRole = ({ role = "student" }) => {
+  const ramdomStudent = createRandomUser({ role });
+  const newRecord = {
+    PutRequest: { Item: createDynamoDBUserObject(ramdomStudent) },
   };
+  return newRecord;
+};
+
+const generateAdmins = ({ count = 2 }) => {
+  let admins = [];
+  let newAdmin;
+  for (let i = 0; i < count; i++) {
+    newAdmin = generateUserWithRole({ role: "admin" });
+    admins.push(newAdmin);
+  }
+  return admins;
+};
+
+const generatePanelists = ({ count = 4 }) => {
+  let panelists = [];
+  let newPanelist;
+  for (let i = 0; i < count; i++) {
+    newPanelist = generateUserWithRole({ role: "panelist" });
+    panelists.push(newPanelist);
+  }
+  return panelists;
+};
+
+const generateStudents = ({ count = 5 }) => {
+  let students = [];
+  let newStudent;
+  for (let i = 0; i < count; i++) {
+    newStudent = generateUserWithRole({ role: "student" });
+    students.push(newStudent);
+  }
+  return students;
 };
 
 const createRandomPanel = () => {
-  const randomNumber = faker.number.int(100);
+  const randomNumber = faker.number.int({ min: 1, max: 100 });
   const visibility = randomNumber % 2 === 0 ? "public" : "internal";
 
   const startDate = faker.date.soon({ days: randomNumber });
@@ -188,38 +252,6 @@ const createRandomPanel = () => {
     PanelPresentationDate: presentationDate,
     PanelVideoLink: faker.image.urlLoremFlickr(),
     Visibility: visibility,
-  };
-};
-
-const generatePanels = (panelCount = 5) => {
-  const panels = [];
-  let randomPanel;
-  let newRecord;
-  for (let i = 0; i < panelCount; i++) {
-    randomPanel = createRandomPanel();
-    newRecord = {
-      PutRequest: { Item: createDynamoDBPanelObject(randomPanel) },
-    };
-    panels.push(newRecord);
-  }
-  return panels;
-};
-
-const createDynamoDBQuestionObject = (question) => {
-  return {
-    QuestionID: { S: question.QuestionID },
-    DislikedBy: { SS: question.DislikedBy }, // Should be an array of valid user IDs
-    DislikeScore: { N: question.DislikeScore.toString() },
-    FinalScore: { N: question.FinalScore.toString() },
-    LikedBy: { SS: question.LikedBy }, // Should be an array of valid user IDs
-    LikeScore: { N: question.LikeScore.toString() },
-    NeutralizedBy: { SS: question.NeutralizedBy }, // Should be an array of valid user IDs
-    NeutralScore: { N: question.NeutralScore.toString() },
-    PanelID: { S: question.PanelID },
-    PresentationBonusScore: { N: question.PresentationBonusScore.toString() },
-    QuestionText: { S: question.QuestionText },
-    UserID: { S: question.UserID },
-    VotingStageBonusScore: { N: question.VotingStageBonusScore.toString() },
   };
 };
 
@@ -271,6 +303,54 @@ const generateQuestions = (panels, users, questionsByPanel = 5) => {
   return panelQuestions;
 };
 
+const generatePanels = (panelCount = 5) => {
+  const panels = [];
+  let randomPanel;
+  let newRecord;
+  for (let i = 0; i < panelCount; i++) {
+    randomPanel = createRandomPanel();
+    newRecord = {
+      PutRequest: { Item: createDynamoDBPanelObject(randomPanel) },
+    };
+    panels.push(newRecord);
+  }
+  return panels;
+};
+
+const generateUsers = () => {
+  const allUsers = [];
+
+  const teamMembers = generateTeamUsers();
+  // Concat did not work, ugly but it works
+  teamMembers.map((user) => {
+    allUsers.push(user);
+    return;
+  });
+
+  const students = generateStudents({ count: 4 });
+  // Concat did not work, ugly but it works
+  students.map((user) => {
+    allUsers.push(user);
+    return;
+  });
+
+  const panelists = generatePanelists({ count: 3 });
+  // Concat did not work, ugly but it works
+  panelists.map((user) => {
+    allUsers.push(user);
+    return;
+  });
+
+  const admins = generateAdmins({ count: 2 });
+  // Concat did not work, ugly but it works
+  admins.map((user) => {
+    allUsers.push(user);
+    return;
+  });
+
+  return allUsers;
+};
+
 const main = async () => {
   const users = generateUsers();
   const panels = generatePanels();
@@ -293,8 +373,10 @@ const main = async () => {
     batchItems = {};
     batchItems[TABLE_NAME.QUESTIONS] = questions;
   }
-  // BatchWriteItemCommand only can handle 25 at the time
-  // Need to split for the questions
+  /**
+   * BatchWriteItemCommand only can handle 25 at the time
+   * Need to split for the questions
+   */
   const putQuestions = new BatchWriteItemCommand({
     RequestItems: batchItems,
   });

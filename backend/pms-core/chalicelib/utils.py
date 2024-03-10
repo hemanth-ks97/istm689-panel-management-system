@@ -1,9 +1,17 @@
-from jwt import decode, get_unverified_header
+from datetime import datetime, timezone, timedelta
+from jwt import decode, get_unverified_header, encode
 from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-from .config import JWT_SECRET, GOOGLE_AUTH_CLIENT_ID, ENV, JWT_AUDIENCE
+from .config import (
+    JWT_SECRET,
+    GOOGLE_AUTH_CLIENT_ID,
+    ENV,
+    JWT_AUDIENCE,
+    JWT_ISSUER,
+    JWT_TOKEN_EXPIRATION_DAYS,
+)
 
 
 def decode_and_validate_google_token(token):
@@ -68,6 +76,12 @@ def get_token_issuer(token):
     return unverified_token["iss"]
 
 
+def get_token_role(token):
+    """Get the role of the token."""
+    unverified_token = unverified_decode(token)
+    return unverified_token["role"]
+
+
 def unverified_decode(token):
     """Decode token without verifying signature. Used to get the issuer."""
     return decode(token, options={"verify_signature": False})
@@ -83,3 +97,31 @@ def get_base_url(request):
     if "stage" in request.context:
         base_url = "%s/%s" % (base_url, request.context.get("stage"))
     return base_url
+
+
+def create_token(user_id, email_id, name, picture, role):
+    current_time = datetime.now(tz=timezone.utc)
+    expiration = datetime.now(tz=timezone.utc) + timedelta(
+        days=int(JWT_TOKEN_EXPIRATION_DAYS)
+    )
+
+    payload_data = {
+        "iss": JWT_ISSUER,
+        "aud": JWT_AUDIENCE,
+        "iat": current_time,
+        "nbf": current_time,
+        "exp": expiration,
+        "sub": user_id,
+        "email": email_id,
+        "name": name,
+        "picture": picture,
+        "role": role,
+    }
+
+    token = encode(
+        payload=payload_data,
+        key=JWT_SECRET,
+        algorithm="HS256",
+    )
+
+    return token

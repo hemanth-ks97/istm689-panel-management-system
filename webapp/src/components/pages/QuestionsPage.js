@@ -1,113 +1,108 @@
-import React, { useState } from "react";
-// MUI
-import { Typography, TextField, Button, List, ListItem } from "@mui/material";
-// Redux
-import { useSelector } from "react-redux";
-// Utils
+import React, { useState, useEffect } from "react";
+
+import QuestionList from "../widgets/QuestionList";
+import { Typography, TextField, Button } from "@mui/material";
 import { httpClient } from "../../client";
-import QuestionCard from "../widgets/QuestionCard";
 import { useSnackbar } from "notistack";
+import { useSelector } from "react-redux";
+import { useLocation, useParams } from "react-router-dom";
+import LoadingSpinner from "../widgets/LoadingSpinner";
 
 const QuestionsPage = () => {
+  const { pathname } = useLocation();
+  const { panelId } = useParams();
   const { user } = useSelector((state) => state.user);
+  const [questions, setQuestions] = useState("");
+  const [noOfQuestions, setNoOfQuestions] = useState(0);
+  const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
-  const [question, setQuestion] = useState("");
-  const [allQuestions, setAllQuestions] = useState([]);
-
-  const [isApiWaiting, setIsApiWaiting] = useState(false);
-
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${user?.token}`,
   };
-  const handleOnSubmit = () => {
-    setIsApiWaiting(true);
-    if (question === "") {
-      enqueueSnackbar("Question cannot be empty", { variant: "error" });
-      setIsApiWaiting(false);
-      return;
-    }
 
-    const data = { question: question.trim() };
+  useEffect(() => {
     httpClient
-      .post("/question", data, {
-        headers: headers,
+      .get(`/panel/${panelId}`, {
+        headers,
       })
       .then((response) => {
-        enqueueSnackbar("Submited!", { variant: "success" });
-        setQuestion("");
-      })
-      .catch((error) => enqueueSnackbar(error.message, { variant: "error" }))
-      .finally(() => setIsApiWaiting(false));
+        // Convert NumberOfQuestions to a Number
+        const numberOfQuestions = Number(response.data.NumberOfQuestions);
+        setNoOfQuestions(numberOfQuestions);
+        setQuestions(Array(numberOfQuestions).fill(""));
+        setLoading(false);
+       })
+      .catch((error) => {
+        enqueueSnackbar(error.message, {
+          variant: "error",
+        });
+        setLoading(false);
+      });
+  }, [panelId]);
+
+  const handleQuestionChange = (index, value) => {
+    const newQuestions = [...questions];
+    newQuestions[index] = value;
+    setQuestions(newQuestions);
   };
 
-  const handleGetQuestions = () => {
-    setIsApiWaiting(true);
-
+  const handleOnSubmit = () => {
+    questions.forEach((question, index) => {
     httpClient
-      .get("/question", {
-        headers: headers,
-      })
+      .post(
+        `/question`,
+        {
+          panelId,
+          question,
+        },
+        { headers }
+      )
       .then((response) => {
-        setAllQuestions(response.data);
-        enqueueSnackbar(`Fetched ${response?.data?.length}  questions`, {
-          variant: "success",
-        });
+        enqueueSnackbar(response?.data?.message, { variant: "success" });
       })
       .catch((error) => {
         enqueueSnackbar(error.message, { variant: "error" });
-      })
-      .finally(() => setIsApiWaiting(false));
-  };
+      });
+    });
+      // Reset questions after submitting
+      setQuestions(Array(noOfQuestions).fill(""));
+    };
 
-  return (
-    <>
-      <Typography variant="h4">QuestionsPage component</Typography>
-      <TextField
-        id="question1"
-        label="Question 1"
-        placeholder="Please write your question"
-        multiline
-        variant="filled"
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-      />
-      <p></p>
-      <Button
-        variant="contained"
-        color="primary"
-        disabled={isApiWaiting}
-        onClick={handleOnSubmit}
-      >
-        Submit
-      </Button>{" "}
-      <Button
-        variant="contained"
-        color="primary"
-        disabled={isApiWaiting}
-        onClick={handleGetQuestions}
-      >
-        Fetch all Questions
-      </Button>
-      {allQuestions.length > 0 ? (
-        <List>
-          {allQuestions.map((question, idx) => {
-            return (
-              <ListItem key={idx}>
-                <QuestionCard
-                  questionText={question?.Question}
-                  questionID={question?.QuestionID}
-                  questionNumber={idx + 1}
-                />
-              </ListItem>
-            );
-          })}
-        </List>
-      ) : (
-        <Typography>No questions fetched</Typography>
-      )}
-    </>
-  );
+  let items;
+
+  if (pathname.endsWith("questions")) {
+    items = <QuestionList />;
+  }
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+  if (pathname.endsWith("question")) {
+    items = (
+      <>
+        <Typography variant="h4">QuestionsPage component</Typography>
+        {questions.map((q, index) => (
+        <TextField
+          key={index}
+          id={`question${index}`}
+          label={`Question ${index + 1}`}
+          placeholder="Please write your question"
+          multiline
+          variant="filled"
+          value={q}
+          onChange={(e) => handleQuestionChange(index, e.target.value)}
+          fullWidth
+          margin="normal"
+        />
+        ))}
+        <p></p>
+        <Button variant="contained" color="primary" onClick={handleOnSubmit}>
+          Submit
+        </Button>{" "}
+      </>
+    );
+  }
+  return <>{items}</>;
 };
 
 export default QuestionsPage;

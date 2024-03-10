@@ -59,6 +59,10 @@ class DynamoQuestionDB(QuestionDB):
         )
         return [item["QuestionID"] for item in response["Items"]]
 
+    def get_questions_by_panel(self, panel_id):
+        response = self._table.scan(FilterExpression=Attr("PanelID").eq(panel_id))
+        return response["Items"]
+
     def delete_question(self, question_id):
         self._table.delete_item(
             Key={
@@ -72,6 +76,45 @@ class DynamoQuestionDB(QuestionDB):
         return expression & condition
 
 
+""" Panel DB service """
+
+
+class PanelDB(object):
+
+    def add_panel(self, panel):
+        pass
+
+    def get_panel(self, panel_id):
+        pass
+
+    def get_all_panels(self):
+        pass
+
+
+class DynamoPanelDB(PanelDB):
+    def __init__(self, table_resource):
+        self._table = table_resource
+
+    def add_panel(self, panel):
+        return self._table.put_item(Item=panel)
+
+    def get_all_panels(self):
+        response = self._table.scan()
+        return response["Items"]
+
+    def get_public_panels(self):
+        response = self._table.scan(FilterExpression=Attr("Visibility").eq("public"))
+        return response["Items"]
+
+    def get_panel(self, panel_id):
+        response = self._table.get_item(
+            Key={
+                "PanelID": panel_id,
+            },
+        )
+        return response.get("Item")
+
+
 """User Database Service"""
 
 
@@ -83,6 +126,9 @@ class UserDB(object):
         pass
 
     def get_user(self, user_id):
+        pass
+
+    def get_user_role(self, user_id):
         pass
 
     def update_user(self, user):
@@ -155,6 +201,10 @@ class DynamoUserDB(UserDB):
             },
         )
         return response.get("Item")
+
+    def get_user_role(self, user_id):
+        user = self.get_user(user_id)
+        return user["Role"]
 
     def get_user_by_google_id(self, google_id):
         response = self._table.scan(FilterExpression=Attr("GoogleID").eq(google_id))

@@ -53,17 +53,24 @@ const TopBar = () => {
         handleCloseNavMenu();
       },
     },
+    // {
+    //   name: "Questions",
+    //   handleOnClick: () => {
+    //     navigate("/questions");
+    //     handleCloseNavMenu();
+    //   },
+    // },
+    // {
+    //   name: "Voting",
+    //   handleOnClick: () => {
+    //     navigate("/voting");
+    //     handleCloseNavMenu();
+    //   },
+    // },
     {
-      name: "Questions",
+      name: "Panels",
       handleOnClick: () => {
-        navigate("/questions");
-        handleCloseNavMenu();
-      },
-    },
-    {
-      name: "Voting",
-      handleOnClick: () => {
-        navigate("/voting");
+        navigate("/panels");
         handleCloseNavMenu();
       },
     },
@@ -85,13 +92,6 @@ const TopBar = () => {
       },
     },
     {
-      name: "My account",
-      handleOnClick: () => {
-        navigate("/");
-        handleClose();
-      },
-    },
-    {
       name: "Logout",
       handleOnClick: () => {
         dispatch(clearUser());
@@ -99,6 +99,16 @@ const TopBar = () => {
       },
     },
   ];
+
+  if (user.role === "admin") {
+    settings.unshift({
+      name: "Admin",
+      handleOnClick: () => {
+        navigate("/admin");
+        handleClose();
+      },
+    });
+  }
 
   return (
     <Box>
