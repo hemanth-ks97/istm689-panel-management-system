@@ -483,6 +483,15 @@ def post_canvas_csv():
 def get_login_panel():
     incoming_json = app.current_request.json_body
 
+    # Check for all required fields
+    if "email" not in incoming_json:
+        raise BadRequestError("Key 'email' not found in incoming request")
+    if "token" not in incoming_json:
+        raise BadRequestError("Key 'token' not found in incoming request")
+    if "callerUrl" not in incoming_json:
+        raise BadRequestError("Key 'callerUrl' not found in incoming request")
+
+    # Validate reCaptcha token and get score
     params = {
         "response": incoming_json["token"],
         "secret": GOOGLE_RECAPTCHA_SECRET_KEY,
@@ -516,9 +525,9 @@ def get_login_panel():
         role=user["Role"],
     )
 
-    login_link = (
-        f"https://istm689-dev.joaquingimenez.com/login/panel/verify?token={new_token}"
-    )
+    caller_url = incoming_json["callerUrl"]
+
+    login_link = f"{caller_url}/verify?token={new_token}"
 
     html_body = f"Dear {user['FName']},<p>I hope this message finds you well. As requested, here is the link to log in to your account: <a class='ulink' href='{login_link}' target='_blank'>Login Link</a>.</p><p>If you have any questions or encounter any issues, please feel free to reach out to our support team at [Support Email].</p>Best regards,<br>The Panel Management System Team"
 

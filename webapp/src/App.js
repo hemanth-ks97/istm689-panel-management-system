@@ -66,7 +66,9 @@ const App = () => {
           {/* Public pages */}
           <Route element={<LoginPage />} path="login">
             <Route index element={<StudentLogin />} />
-            <Route element={<PanelLogin />} path="panel" />
+            <Route element={<PanelLogin />} path="panel">
+              <Route element={<PanelLogin />} path="verify" />
+            </Route>
             <Route path="*" element={<Navigate to="/" />} />
           </Route>
           <Route element={<NotFoundPage />} path="notfound" />

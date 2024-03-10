@@ -32,7 +32,7 @@ const QuestionsPage = () => {
         setNoOfQuestions(numberOfQuestions);
         setQuestions(Array(numberOfQuestions).fill(""));
         setLoading(false);
-       })
+      })
       .catch((error) => {
         enqueueSnackbar(error.message, {
           variant: "error",
@@ -49,51 +49,53 @@ const QuestionsPage = () => {
 
   const handleOnSubmit = () => {
     questions.forEach((question, index) => {
-    httpClient
-      .post(
-        `/question`,
-        {
-          panelId,
-          question,
-        },
-        { headers }
-      )
-      .then((response) => {
-        enqueueSnackbar(response?.data?.message, { variant: "success" });
-      })
-      .catch((error) => {
-        enqueueSnackbar(error.message, { variant: "error" });
-      });
+      httpClient
+        .post(
+          `/question`,
+          {
+            panelId,
+            question,
+          },
+          { headers }
+        )
+        .then((response) => {
+          enqueueSnackbar(response?.data?.message, { variant: "success" });
+        })
+        .catch((error) => {
+          enqueueSnackbar(error.message, { variant: "error" });
+        });
     });
-      // Reset questions after submitting
-      setQuestions(Array(noOfQuestions).fill(""));
-    };
+    // Reset questions after submitting
+    setQuestions(Array(noOfQuestions).fill(""));
+  };
 
   let items;
 
-  if (pathname.endsWith("questions")) {
-    items = <QuestionList />;
-  }
   if (loading) {
     return <LoadingSpinner />;
   }
+
+  if (pathname.endsWith("questions") && panelId) {
+    items = <QuestionList panelId={panelId} />;
+  }
+
   if (pathname.endsWith("question")) {
     items = (
       <>
         <Typography variant="h4">QuestionsPage component</Typography>
         {questions.map((q, index) => (
-        <TextField
-          key={index}
-          id={`question${index}`}
-          label={`Question ${index + 1}`}
-          placeholder="Please write your question"
-          multiline
-          variant="filled"
-          value={q}
-          onChange={(e) => handleQuestionChange(index, e.target.value)}
-          fullWidth
-          margin="normal"
-        />
+          <TextField
+            key={index}
+            id={`question${index}`}
+            label={`Question ${index + 1}`}
+            placeholder="Please write your question"
+            multiline
+            variant="filled"
+            value={q}
+            onChange={(e) => handleQuestionChange(index, e.target.value)}
+            fullWidth
+            margin="normal"
+          />
         ))}
         <p></p>
         <Button variant="contained" color="primary" onClick={handleOnSubmit}>
