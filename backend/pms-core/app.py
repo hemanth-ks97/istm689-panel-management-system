@@ -1,4 +1,7 @@
 """Main application file for the PMS Core API."""
+import itertools
+import json
+from collections import Counter
 
 import requests
 import boto3
@@ -10,6 +13,8 @@ import math
 from decimal import Decimal
 
 from io import StringIO
+
+from IPython.lib.pretty import pprint
 from chalice import (
     Chalice,
     AuthResponse,
@@ -348,57 +353,109 @@ def get_user(id):
 
 
 @app.route(
-    "/{panel_id}/distribute",
+    "/panel/{panel_id}/distribute",
     methods=["GET"],
     #authorizer=token_authorizer,
 )
-def distribute_questions(panel_id):
-    # nS = number of students, nQ = number of questions, QpS = Questions per student = 20 (fixed)
-    # Qs = nS * QpS (Total Question slots)
-    # Qcount = Qs/nQ (Number of question appearances)
-    QpS = 20
+def distribute_tag_questions(panel_id):
 
-    # Get total number of questions for the given panel --> Should contain the student_id mapping too to prevent student from getting assigned their own questions to themselves
+    # Get total questions for that panel from the usersDB
     question_ids = get_question_db().get_question_ids_by_panel_id(panel_id)
-    nQ = len(question_ids)
-    question_count_map = {q: 0 for q in question_ids}
-    
+
     # Get total students from the usersDB
-    student_ids = get_user_db().get_student_user_ids()
-    
-    # Calculations
-    nS = len(student_ids)
-    Qs = nS * QpS
-    Qcount = (Qs//nQ) if Qs%nQ == 0 else (Qs//nQ) + 1
+    student_ids = list(get_user_db().get_student_user_ids())
 
-    print("nQ = ", nQ)
-    print("nS = ", nS)
-    print("Qs = ", Qs)
-    print("Qcount = ", Qcount)
-    
-    # Shuffle the questions
-    random.shuffle(question_ids)
+    # Variables
+    number_of_questions_per_student = 10
+    number_of_questions = len(question_ids)
+    number_of_students = len(student_ids)
+    number_of_question_slots = number_of_questions_per_student * number_of_students
+    min_repetition_of_questions = number_of_question_slots // number_of_questions
+    number_of_extra_question_slots = number_of_question_slots % number_of_questions
 
-    # TODO - Add a check to prevent questions written by students from appearing on their assigned list
+    print(f"Number of questions per student: {number_of_questions_per_student}")
+    print(f"Total number of questions: {number_of_questions}")
+    print(f"Total number of students: {number_of_students}")
+    print(f"Total number of question slots: {number_of_question_slots}")
+    print(f"Minimum repetition of questions: {min_repetition_of_questions}")
+    print(f"Number of extra question slots: {number_of_extra_question_slots}")
 
-    student_question_map = {s:[] for s in student_ids}
-    # Assign every question at-least once
-    for q in question_ids:
-        for s in student_ids:
-            if len(student_question_map[s]) < QpS and question_count_map[q] < Qcount - 2 and q not in student_question_map[s]:
-                student_question_map[s].append(q)
-                question_count_map[q] += 1
-    
-    # Round robin to assign each question to students until the Qcount value is reached for each question
-    for s in student_ids:
-        for q in question_ids:
-            if len(student_question_map[s]) < QpS and question_count_map[q] < Qcount and q not in student_question_map[s]:
-                    student_question_map[s].append(q)
-                    question_count_map[q] += 1
+    # Distribute questions to slots
+    slots_per_question = min_repetition_of_questions
+    distributed_question_slots = []
 
-    # TODO - Add the student_question_map to an S3 bucket
+    # Append each question to the list with repetitions
+    for question in question_ids:
+        distributed_question_slots.extend([question] * slots_per_question)
 
-    return ({"student_question_map":student_question_map, "question_count_map":question_count_map})
+    # Fill remaining slots with top questions and append to the list
+    if number_of_extra_question_slots > 0:
+        top_questions = question_ids[:number_of_extra_question_slots]
+        distributed_question_slots.extend(top_questions)
+
+    # Shuffle the question slots to randomize the order
+    # random.shuffle(distributed_question_slots)
+
+    # Create the student_question_assignment JSON map
+    student_question_assignment_map = {}
+
+    # Assign questions sequentially to each student
+    for student_id in student_ids:
+        student_question_assignment_map[student_id] = distributed_question_slots[:number_of_questions_per_student]
+        distributed_question_slots = distributed_question_slots[number_of_questions_per_student:]
+
+    question_repetition_count_map = Counter(itertools.chain.from_iterable(student_question_assignment_map.values()))
+
+    return student_question_assignment_map, question_repetition_count_map
+
+
+# def distribute_questions(panel_id):
+#     # nS = number of students, nQ = number of questions, QpS = Questions per student = 20 (fixed)
+#     # Qs = nS * QpS (Total Question slots)
+#     # Qcount = Qs/nQ (Number of question appearances)
+#     QpS = 20
+#
+#     # Get total number of questions for the given panel --> Should contain the student_id mapping too to prevent student from getting assigned their own questions to themselves
+#     question_ids = get_question_db().get_question_ids_by_panel_id(panel_id)
+#     nQ = len(question_ids)
+#     question_count_map = {q: 0 for q in question_ids}
+#
+#     # Get total students from the usersDB
+#     student_ids = get_user_db().get_student_user_ids()
+#
+#     # Calculations
+#     nS = len(student_ids)
+#     Qs = nS * QpS
+#     Qcount = (Qs//nQ) if Qs%nQ == 0 else (Qs//nQ) + 1
+#
+#     print("nQ = ", nQ)
+#     print("nS = ", nS)
+#     print("Qs = ", Qs)
+#     print("Qcount = ", Qcount)
+#
+#     # Shuffle the questions
+#     random.shuffle(question_ids)
+#
+#     # TODO - Add a check to prevent questions written by students from appearing on their assigned list
+#
+#     student_question_map = {s:[] for s in student_ids}
+#     # Assign every question at-least once
+#     for q in question_ids:
+#         for s in student_ids:
+#             if len(student_question_map[s]) < QpS and question_count_map[q] < Qcount - 2 and q not in student_question_map[s]:
+#                 student_question_map[s].append(q)
+#                 question_count_map[q] += 1
+#
+#     # Round robin to assign each question to students until the Qcount value is reached for each question
+#     for s in student_ids:
+#         for q in question_ids:
+#             if len(student_question_map[s]) < QpS and question_count_map[q] < Qcount and q not in student_question_map[s]:
+#                     student_question_map[s].append(q)
+#                     question_count_map[q] += 1
+#
+#     # TODO - Add the student_question_map to an S3 bucket
+#
+#     return ({"student_question_map":student_question_map, "question_count_map":question_count_map})
 
 @app.route(
     "/howdycsv",
