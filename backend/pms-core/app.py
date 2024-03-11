@@ -358,14 +358,14 @@ def get_user(id):
 )
 def distribute_tag_questions(panel_id):
 
+    # Variables
     # Get total questions for that panel from the usersDB
     question_ids = get_question_db().get_question_ids_by_panel_id(panel_id)
 
     # Get total students from the usersDB
     student_ids = list(get_user_db().get_student_user_ids())
 
-    # Variables
-    number_of_questions_per_student = 20
+    number_of_questions_per_student = get_panel_db().get_number_of_questions_by_panel_id(panel_id)[0]
     number_of_questions = len(question_ids)
     number_of_students = len(student_ids)
     number_of_question_slots = number_of_questions_per_student * number_of_students
@@ -396,7 +396,7 @@ def distribute_tag_questions(panel_id):
     random.shuffle(distributed_question_slots)
 
     # Create a collection to store questionSubLists
-    questions_sub_lists_collection = []
+    student_questions_map = {}
 
     for _ in range(number_of_students):
         # Create a sublist for each iteration
@@ -415,15 +415,16 @@ def distribute_tag_questions(panel_id):
 
             question_sublist.append(question)
 
-        # Add the sublist to the collection
-        questions_sub_lists_collection.append(question_sublist)
+        # Assign the sublist to the next available student ID
+        student_id = student_ids.pop(0)
+        student_questions_map[student_id] = question_sublist
 
     # Map students to question sub lists
-    student_question_assignment_map = dict(zip(student_ids, questions_sub_lists_collection))
+    # student_question_assignment_map = dict(zip(student_ids, questions_sub_lists_collection))
 
-    question_repetition_count_map = Counter(itertools.chain.from_iterable(student_question_assignment_map.values()))
+    question_repetition_count_map = Counter(itertools.chain.from_iterable(student_questions_map.values()))
 
-    return student_question_assignment_map, question_repetition_count_map
+    return student_questions_map, question_repetition_count_map
 
 
 # def distribute_questions(panel_id):

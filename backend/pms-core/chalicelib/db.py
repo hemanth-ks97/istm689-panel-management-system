@@ -90,6 +90,8 @@ class PanelDB(object):
     def get_all_panels(self):
         pass
 
+    def get_number_of_questions_by_panel_id(self,panel_id):
+        pass
 
 class DynamoPanelDB(PanelDB):
     def __init__(self, table_resource):
@@ -114,6 +116,15 @@ class DynamoPanelDB(PanelDB):
         )
         return response.get("Item")
 
+    def get_number_of_questions_by_panel_id(self,panel_id):
+        response = self._table.query(
+            # IndexName='PanelID',
+            KeyConditionExpression = 'PanelID = :panel_id',
+            ExpressionAttributeValues = {
+                ':panel_id': panel_id
+            }
+        )
+        return [int(item["NumberOfQuestions"]) for item in response["Items"]]
 
 """User Database Service"""
 
