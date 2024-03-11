@@ -1,6 +1,5 @@
 """Main application file for the PMS Core API."""
 import itertools
-import json
 from collections import Counter
 
 import requests
@@ -366,7 +365,7 @@ def distribute_tag_questions(panel_id):
     student_ids = list(get_user_db().get_student_user_ids())
 
     # Variables
-    number_of_questions_per_student = 10
+    number_of_questions_per_student = 20
     number_of_questions = len(question_ids)
     number_of_students = len(student_ids)
     number_of_question_slots = number_of_questions_per_student * number_of_students
@@ -394,15 +393,33 @@ def distribute_tag_questions(panel_id):
         distributed_question_slots.extend(top_questions)
 
     # Shuffle the question slots to randomize the order
-    # random.shuffle(distributed_question_slots)
+    random.shuffle(distributed_question_slots)
 
-    # Create the student_question_assignment JSON map
-    student_question_assignment_map = {}
+    # Create a collection to store questionSubLists
+    questions_sub_lists_collection = []
 
-    # Assign questions sequentially to each student
-    for student_id in student_ids:
-        student_question_assignment_map[student_id] = distributed_question_slots[:number_of_questions_per_student]
-        distributed_question_slots = distributed_question_slots[number_of_questions_per_student:]
+    for _ in range(number_of_students):
+        # Create a sublist for each iteration
+        question_sublist = []
+
+        # Pop questions from the questions slot list to put in the sublist
+        for _ in range(number_of_questions_per_student):
+            question = distributed_question_slots.pop(0)
+
+            # Check uniqueness in the sublist
+            while question in question_sublist:
+                # If not unique, append it to the end of the master list and fetch the next question
+                distributed_question_slots.append(question)
+                random.shuffle(distributed_question_slots)  # Shuffle to add randomness
+                question = distributed_question_slots.pop(0)
+
+            question_sublist.append(question)
+
+        # Add the sublist to the collection
+        questions_sub_lists_collection.append(question_sublist)
+
+    # Map students to question sub lists
+    student_question_assignment_map = dict(zip(student_ids, questions_sub_lists_collection))
 
     question_repetition_count_map = Counter(itertools.chain.from_iterable(student_question_assignment_map.values()))
 
