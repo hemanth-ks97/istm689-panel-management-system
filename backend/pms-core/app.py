@@ -353,8 +353,7 @@ def get_user(id):
 
 @app.route(
     "/panel/{panel_id}/distribute",
-    methods=["GET"],
-    #authorizer=token_authorizer,
+    methods=["GET"]
 )
 def distribute_tag_questions(panel_id):
 
@@ -364,7 +363,6 @@ def distribute_tag_questions(panel_id):
 
     # Get total students from the usersDB
     student_ids = list(get_user_db().get_student_user_ids())
-
     number_of_questions_per_student = get_panel_db().get_number_of_questions_by_panel_id(panel_id)[0]
     number_of_questions = len(question_ids)
     number_of_students = len(student_ids)
@@ -372,14 +370,15 @@ def distribute_tag_questions(panel_id):
     min_repetition_of_questions = number_of_question_slots // number_of_questions
     number_of_extra_question_slots = number_of_question_slots % number_of_questions
 
-    print(f"Number of questions per student: {number_of_questions_per_student}")
-    print(f"Total number of questions: {number_of_questions}")
-    print(f"Total number of students: {number_of_students}")
-    print(f"Total number of question slots: {number_of_question_slots}")
-    print(f"Minimum repetition of questions: {min_repetition_of_questions}")
-    print(f"Number of extra question slots: {number_of_extra_question_slots}")
+    # Print variable values
+    print("Number of questions per student: ", number_of_questions_per_student)
+    print("Total number of questions: ", number_of_questions)
+    print("Total number of students: ", number_of_students)
+    print("Total number of question slots: ", number_of_question_slots)
+    print("Minimum repetition of questions: ", min_repetition_of_questions)
+    print("Number of extra question slots: ", number_of_extra_question_slots)
 
-    # Distribute questions to slots
+# Distribute questions to slots
     slots_per_question = min_repetition_of_questions
     distributed_question_slots = []
 
@@ -399,6 +398,8 @@ def distribute_tag_questions(panel_id):
     student_questions_map = {}
 
     for _ in range(number_of_students):
+        student_id = student_ids.pop(0)
+
         # Create a sublist for each iteration
         question_sublist = []
 
@@ -406,74 +407,26 @@ def distribute_tag_questions(panel_id):
         for _ in range(number_of_questions_per_student):
             question = distributed_question_slots.pop(0)
 
-            # Check uniqueness in the sublist
-            while question in question_sublist:
-                # If not unique, append it to the end of the master list and fetch the next question
+            # Check uniqueness in the sublist and check if question was entered by user
+            while (question in question_sublist): #| (student_id == get_question_db().get_user_id_by_question_id(question))
+
+                # Append it to the end of the master list and fetch the next question
                 distributed_question_slots.append(question)
-                random.shuffle(distributed_question_slots)  # Shuffle to add randomness
+
+                # Get next question from the questions list
                 question = distributed_question_slots.pop(0)
 
+            # Add question to sublist
             question_sublist.append(question)
 
         # Assign the sublist to the next available student ID
-        student_id = student_ids.pop(0)
         student_questions_map[student_id] = question_sublist
-
-    # Map students to question sub lists
-    # student_question_assignment_map = dict(zip(student_ids, questions_sub_lists_collection))
 
     question_repetition_count_map = Counter(itertools.chain.from_iterable(student_questions_map.values()))
 
-    return student_questions_map, question_repetition_count_map
+    # TODO - Add the student_question_map to an S3 bucket
 
-
-# def distribute_questions(panel_id):
-#     # nS = number of students, nQ = number of questions, QpS = Questions per student = 20 (fixed)
-#     # Qs = nS * QpS (Total Question slots)
-#     # Qcount = Qs/nQ (Number of question appearances)
-#     QpS = 20
-#
-#     # Get total number of questions for the given panel --> Should contain the student_id mapping too to prevent student from getting assigned their own questions to themselves
-#     question_ids = get_question_db().get_question_ids_by_panel_id(panel_id)
-#     nQ = len(question_ids)
-#     question_count_map = {q: 0 for q in question_ids}
-#
-#     # Get total students from the usersDB
-#     student_ids = get_user_db().get_student_user_ids()
-#
-#     # Calculations
-#     nS = len(student_ids)
-#     Qs = nS * QpS
-#     Qcount = (Qs//nQ) if Qs%nQ == 0 else (Qs//nQ) + 1
-#
-#     print("nQ = ", nQ)
-#     print("nS = ", nS)
-#     print("Qs = ", Qs)
-#     print("Qcount = ", Qcount)
-#
-#     # Shuffle the questions
-#     random.shuffle(question_ids)
-#
-#     # TODO - Add a check to prevent questions written by students from appearing on their assigned list
-#
-#     student_question_map = {s:[] for s in student_ids}
-#     # Assign every question at-least once
-#     for q in question_ids:
-#         for s in student_ids:
-#             if len(student_question_map[s]) < QpS and question_count_map[q] < Qcount - 2 and q not in student_question_map[s]:
-#                 student_question_map[s].append(q)
-#                 question_count_map[q] += 1
-#
-#     # Round robin to assign each question to students until the Qcount value is reached for each question
-#     for s in student_ids:
-#         for q in question_ids:
-#             if len(student_question_map[s]) < QpS and question_count_map[q] < Qcount and q not in student_question_map[s]:
-#                     student_question_map[s].append(q)
-#                     question_count_map[q] += 1
-#
-#     # TODO - Add the student_question_map to an S3 bucket
-#
-#     return ({"student_question_map":student_question_map, "question_count_map":question_count_map})
+    return question_repetition_count_map, student_questions_map
 
 @app.route(
     "/howdycsv",
