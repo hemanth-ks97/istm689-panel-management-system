@@ -48,6 +48,16 @@ class DynamoQuestionDB(QuestionDB):
             },
         )
         return response.get("Item")
+    
+    def get_question_ids_by_panel_id(self, panel_id):
+        response = self._table.query(
+            IndexName='PanelIDIndex',
+            KeyConditionExpression = 'PanelID = :panel_id',
+            ExpressionAttributeValues = {
+                ':panel_id': panel_id
+            }
+        )
+        return [item["QuestionID"] for item in response["Items"]]
 
     def get_questions_by_panel(self, panel_id):
         response = self._table.scan(FilterExpression=Attr("PanelID").eq(panel_id))
@@ -65,7 +75,6 @@ class DynamoQuestionDB(QuestionDB):
             return condition
         return expression & condition
 
-
 """ Panel DB service """
 
 
@@ -80,6 +89,8 @@ class PanelDB(object):
     def get_all_panels(self):
         pass
 
+    def get_number_of_questions_by_panel_id(self,panel_id):
+        pass
 
 class DynamoPanelDB(PanelDB):
     def __init__(self, table_resource):
@@ -104,6 +115,14 @@ class DynamoPanelDB(PanelDB):
         )
         return response.get("Item")
 
+    def get_number_of_questions_by_panel_id(self,panel_id):
+        response = self._table.query(
+            KeyConditionExpression = 'PanelID = :panel_id',
+            ExpressionAttributeValues = {
+                ':panel_id': panel_id
+            }
+        )
+        return [int(item["NumberOfQuestions"]) for item in response["Items"]]
 
 """User Database Service"""
 
@@ -156,6 +175,19 @@ class DynamoUserDB(UserDB):
             scan_params["FilterExpression"] = filter_expression
         response = self._table.scan(**scan_params)
         return response["Items"]
+    
+    def get_student_user_ids(self):
+        response = self._table.query(
+            IndexName='RoleIndex',
+            KeyConditionExpression='#roleAttr = :roleVal',
+            ExpressionAttributeNames={
+                '#roleAttr': 'Role',  # Placeholder for the reserved word 'role'
+            },
+            ExpressionAttributeValues={
+                ':roleVal': 'student', 
+            }
+        )
+        return {item["UserID"] for item in response["Items"]}
 
     def add_user(self, user):
         return self._table.put_item(Item=user)
