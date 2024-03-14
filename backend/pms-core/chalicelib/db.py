@@ -75,16 +75,6 @@ class DynamoQuestionDB(QuestionDB):
             return condition
         return expression & condition
 
-    def get_user_id_by_question_id(self, question_id):
-        response = self._table.query(
-            # IndexName='PanelIDIndex',
-            KeyConditionExpression = 'QuestionID = :question_id',
-            ExpressionAttributeValues = {
-                ':question_id': question_id
-            }
-        )
-        return [item["UserID"] for item in response["Items"]]
-
 """ Panel DB service """
 
 

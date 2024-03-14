@@ -357,9 +357,18 @@ def get_user(id):
 )
 def distribute_tag_questions(panel_id):
 
-    # Variables
-    # Get total questions for that panel from the usersDB
-    question_ids = get_question_db().get_question_ids_by_panel_id(panel_id)
+    # Get list of all questions for that panel from the usersDB
+    questions = get_questions_by_panel(panel_id)
+
+    # Creating map to store questionID and corresponding userID
+    question_id_user_id_map = {}
+
+    # Get all questionIDs and corresponding UserID from questions
+    for question in questions:
+        question_id_user_id_map[question.get('QuestionID')] = question.get('UserID')
+
+    # Store all questionIDs from Map
+    question_ids = list(question_id_user_id_map.keys())
 
     # Get total students from the usersDB
     student_ids = list(get_user_db().get_student_user_ids())
@@ -378,55 +387,54 @@ def distribute_tag_questions(panel_id):
     print("Minimum repetition of questions: ", min_repetition_of_questions)
     print("Number of extra question slots: ", number_of_extra_question_slots)
 
-# Distribute questions to slots
-    slots_per_question = min_repetition_of_questions
-    distributed_question_slots = []
+    # Distribute questions to slots
+    distributed_question_id_slots = []
 
-    # Append each question to the list with repetitions
-    for question in question_ids:
-        distributed_question_slots.extend([question] * slots_per_question)
+    # Append each question id to the list with repetitions
+    for question_id in question_ids:
+        distributed_question_id_slots.extend([question_id] * min_repetition_of_questions)
 
-    # Fill remaining slots with top questions and append to the list
+    # Fill remaining slots with top question ids and append to the list
     if number_of_extra_question_slots > 0:
         top_questions = question_ids[:number_of_extra_question_slots]
-        distributed_question_slots.extend(top_questions)
+        distributed_question_id_slots.extend(top_questions)
 
     # Shuffle the question slots to randomize the order
-    random.shuffle(distributed_question_slots)
+    random.shuffle(distributed_question_id_slots)
 
     # Create a collection to store questionSubLists
-    student_questions_map = {}
+    student_id_question_ids_map = {}
 
     for _ in range(number_of_students):
         student_id = student_ids.pop(0)
 
         # Create a sublist for each iteration
-        question_sublist = []
+        question_id_sublist = []
 
         # Pop questions from the questions slot list to put in the sublist
         for _ in range(number_of_questions_per_student):
-            question = distributed_question_slots.pop(0)
+            question_id = distributed_question_id_slots.pop(0)
 
             # Check uniqueness in the sublist and check if question was entered by user
-            while (question in question_sublist): #| (student_id == get_question_db().get_user_id_by_question_id(question))
+            while (question_id in question_id_sublist) or (student_id == question_id_user_id_map.get(question_id)):
 
                 # Append it to the end of the master list and fetch the next question
-                distributed_question_slots.append(question)
+                distributed_question_id_slots.append(question_id)
 
                 # Get next question from the questions list
-                question = distributed_question_slots.pop(0)
+                question_id = distributed_question_id_slots.pop(0)
 
             # Add question to sublist
-            question_sublist.append(question)
+            question_id_sublist.append(question_id)
 
         # Assign the sublist to the next available student ID
-        student_questions_map[student_id] = question_sublist
+        student_id_question_ids_map[student_id] = question_id_sublist
 
-    question_repetition_count_map = Counter(itertools.chain.from_iterable(student_questions_map.values()))
+    question_id_repetition_count_map = Counter(itertools.chain.from_iterable(student_id_question_ids_map.values()))
 
     # TODO - Add the student_question_map to an S3 bucket
 
-    return question_repetition_count_map, student_questions_map
+    return question_id_repetition_count_map, student_id_question_ids_map
 
 @app.route(
     "/howdycsv",
