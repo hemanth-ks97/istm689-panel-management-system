@@ -16,7 +16,7 @@ import {
 import { GoogleReCaptcha } from "react-google-recaptcha-v3";
 import { useSnackbar } from "notistack";
 
-import { httpClient } from "../../client";
+import { httpClient } from "../../../client";
 
 const PanelLogin = () => {
   const { enqueueSnackbar } = useSnackbar();

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { httpClient } from "../../client";
+import { httpClient } from "../../../client";
 import { useSnackbar } from "notistack";
 import { useSelector } from "react-redux";
-import LoadingSpinner from "../widgets/LoadingSpinner";
+import LoadingSpinner from "../../widgets/LoadingSpinner";
 import {
   Box,
   Typography,

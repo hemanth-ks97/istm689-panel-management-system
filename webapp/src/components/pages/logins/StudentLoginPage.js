@@ -2,7 +2,7 @@ import React from "react";
 // MUI
 import { Grid } from "@mui/material";
 // Widgets
-import LoginCard from "../widgets/LoginCard";
+import LoginCard from "../../widgets/LoginCard";
 
 const StudentLogin = () => {
   return (
