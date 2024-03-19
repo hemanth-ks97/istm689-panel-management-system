@@ -608,8 +608,9 @@ def get_login_panel():
     if response["success"] is False:
         raise BadRequestError(response["error-codes"])
 
-    if response["score"] <= 0.5:
-        raise BadRequestError("Score too low")
+    # We are having a problem because real users get a score of 0.1, likely to be a robot
+    # if response["score"] <= 0.5:
+    #     raise BadRequestError("Score too low")
 
     panelist_email = incoming_json["email"]
     users = get_user_db().get_user_by_email(panelist_email)
