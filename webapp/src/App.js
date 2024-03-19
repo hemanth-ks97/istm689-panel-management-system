@@ -9,35 +9,37 @@ import {
 } from "react-router-dom";
 // Redux
 import { useSelector } from "react-redux";
-// Components
 
 // Layouts
 import PublicLayout from "./components/layout/PublicLayout";
 import PrivateRoutes from "./components/utils/PrivateRoutes";
 
-// Dashboard
+// Dashboard Pages
 import DashboardPage from "./components/pages/dashboards/DashboardPage";
 
-// Login
+// Login Pages
 import LoginPage from "./components/pages/logins/LoginPage";
 import StudentLoginPage from "./components/pages/logins/StudentLoginPage";
 import PanelLoginPage from "./components/pages/logins/PanelLoginPage";
 
-// Admin
+// Admin Pages
 import AdminGradesPage from "./components/pages/admin/AdminGradesPage";
 import AdminUsersPage from "./components/pages/admin/AdminUsersPage";
 import AdminImportPage from "./components/pages/admin/AdminImportPage";
 import AdminPanelsPage from "./components/pages/admin/AdminPanelsPage";
 
-// Student
+// Panelist Pages
+import PanelistPanelsPage from "./components/pages/panelist/PanelistPanelsPage";
 
-// Pages
+// Student Pages
+import QuestionsPage from "./components/pages/student/QuestionsPage";
+import GradesPage from "./components/pages/student/GradesPage";
+import PanelPage from "./components/pages/student/PanelPage";
+import VotingPage from "./components/pages/student/VotingPage";
+import TaggingPage from "./components/pages/student/TaggingPage";
+
+// Common Pages
 import ProfilePage from "./components/pages/ProfilePage";
-import PanelPage from "./components/pages/PanelPage";
-import QuestionsPage from "./components/pages/QuestionsPage";
-import GradesPage from "./components/pages/GradesPage";
-import VotingPage from "./components/pages/VotingPage";
-import TaggingPage from "./components/pages/TaggingPage";
 import PrivacyPage from "./components/pages/PrivacyPage";
 import TermsPage from "./components/pages/TermsPage";
 import NotFoundPage from "./components/pages/NotFoundPage";
@@ -75,27 +77,24 @@ const App = () => {
             <Route element={<AdminGradesPage />} path="grades" />
             <Route element={<AdminUsersPage />} path="users" />
             <Route element={<AdminImportPage />} path="import" />
-
-            <Route path="*" element={<Navigate to="/" />} />
           </Route>
         </Route>
 
         {/* Pages available only to PANELIST */}
         <Route element={<PrivateRoutes isAllowed={user?.role === PANELIST} />}>
           <Route element={<Outlet />} path="panelist">
-            <Route element={<AdminPanelsPage />} path="panels" />
-            <Route element={<AdminPanelsPage />} path="panel/:panelId" />
-
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route element={<PanelistPanelsPage />} path="panels" />
+            <Route element={<PanelistPanelsPage />} path="panel/:panelId" />
           </Route>
         </Route>
 
+        {/* Pages available to ALL the internet */}
         <Route element={<PublicLayout />}>
-          {/* Public pages */}
           <Route element={<LoginPage />} path="login">
             <Route index element={<StudentLoginPage />} />
-            <Route element={<PanelLoginPage />} path="panel" />
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route element={<PanelLoginPage />} path="panel">
+              <Route element={<PanelLoginPage />} path="verify" />
+            </Route>
           </Route>
           <Route element={<NotFoundPage />} path="notfound" />
           {/* Privacy and Terms are required to use Google oAuth2 client */}
