@@ -1,32 +1,52 @@
 import React from "react";
 // React Router
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
 // Redux
 import { useSelector } from "react-redux";
-// Components
+
+// Layouts
 import PublicLayout from "./components/layout/PublicLayout";
 import PrivateRoutes from "./components/utils/PrivateRoutes";
-import HomePage from "./components/pages/HomePage";
-import LoginPage from "./components/pages/LoginPage";
+
+// Dashboard Pages
+import DashboardPage from "./components/pages/dashboards/DashboardPage";
+import AdminDashboardPage from "./components/pages/dashboards/AdminDashboardPage";
+
+// Login Pages
+import LoginPage from "./components/pages/logins/LoginPage";
+import StudentLoginPage from "./components/pages/logins/StudentLoginPage";
+import PanelLoginPage from "./components/pages/logins/PanelLoginPage";
+
+// Admin Pages
+import AdminGradesPage from "./components/pages/admin/AdminGradesPage";
+import AdminUsersPage from "./components/pages/admin/AdminUsersPage";
+import AdminImportPage from "./components/pages/admin/AdminImportPage";
+import AdminPanelsPage from "./components/pages/admin/AdminPanelsPage";
+
+// Panelist Pages
+import PanelistPanelsPage from "./components/pages/panelist/PanelistPanelsPage";
+
+// Student Pages
+import QuestionsPage from "./components/pages/student/QuestionsPage";
+import GradesPage from "./components/pages/student/GradesPage";
+import PanelPage from "./components/pages/student/PanelPage";
+import VotingPage from "./components/pages/student/VotingPage";
+import TaggingPage from "./components/pages/student/TaggingPage";
+
+// Common Pages
 import ProfilePage from "./components/pages/ProfilePage";
-import AdminDashboardPage from "./components/pages/AdminDashboardPage";
-import AdminGradesPage from "./components/pages/AdminGradesPage";
-import PanelDashboardPage from "./components/pages/PanelDashboardPage";
-import AdminPanelsPage from "./components/pages/AdminPanelsPage";
-import AdminUsersPage from "./components/pages/AdminUsersPage";
-import QuestionsPage from "./components/pages/QuestionsPage";
-import GradesPage from "./components/pages/GradesPage";
-import VotingPage from "./components/pages/VotingPage";
-import TaggingPage from "./components/pages/TaggingPage";
-import AdminImportPage from "./components/pages/AdminImportPage";
 import PrivacyPage from "./components/pages/PrivacyPage";
 import TermsPage from "./components/pages/TermsPage";
-import StudentLogin from "./components/pages/StudentLogin";
-import PanelLogin from "./components/pages/PanelLogin";
 import NotFoundPage from "./components/pages/NotFoundPage";
-import PanelPage from "./components/pages/PanelPage";
-//constants
-import { ADMIN } from "./config/constants";
+
+// Constants
+import { ADMIN, PANELIST, STUDENT } from "./config/constants";
 
 const App = () => {
   const { user } = useSelector((state) => state.user);
@@ -34,40 +54,48 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Need auth users to visit these pages */}
-        {/* Student allowed routes */}
+        {/* Authenticated users only */}
+        {/* Pages available to ALL users */}
         <Route element={<PrivateRoutes isAllowed={!!user} />}>
-          <Route element={<HomePage />} path="/" exact />
+          <Route element={<DashboardPage />} path="/" exact />
           <Route element={<ProfilePage />} path="profile" />
+        </Route>
+        {/* Pages available only to STUDENTS */}
+        <Route element={<PrivateRoutes isAllowed={user?.role === STUDENT} />}>
           <Route element={<GradesPage />} path="grades" />
-          <Route element={<PanelDashboardPage />} path="panels" />
-
+          <Route element={<PanelPage />} path="panels" />
           <Route element={<PanelPage />} path="panel/:panelId">
             <Route element={<QuestionsPage />} path="questions" />
             <Route element={<QuestionsPage />} path="question" />
             <Route element={<VotingPage />} path="voting" />
             <Route element={<TaggingPage />} path="tagging" />
-            <Route path="*" element={<Navigate to="/" />} />
           </Route>
         </Route>
-        {/* allow only admin to view these pages */}
+        {/* Pages available only to ADMIN */}
         <Route element={<PrivateRoutes isAllowed={user?.role === ADMIN} />}>
-          <Route element={<AdminDashboardPage />} path="admin">
+          <Route element={<AdminDashboardPage user={user} />} path="admin">
             <Route element={<AdminPanelsPage />} path="panels" />
             <Route element={<AdminGradesPage />} path="grades" />
             <Route element={<AdminUsersPage />} path="users" />
             <Route element={<AdminImportPage />} path="import" />
-
-            <Route path="*" element={<Navigate to="/" />} />
           </Route>
         </Route>
 
+        {/* Pages available only to PANELIST */}
+        <Route element={<PrivateRoutes isAllowed={user?.role === PANELIST} />}>
+          <Route element={<Outlet />} path="panelist">
+            <Route element={<PanelistPanelsPage />} path="panels" />
+            <Route element={<PanelistPanelsPage />} path="panel/:panelId" />
+          </Route>
+        </Route>
+
+        {/* Pages available to ALL the internet */}
         <Route element={<PublicLayout />}>
-          {/* Public pages */}
           <Route element={<LoginPage />} path="login">
-            <Route index element={<StudentLogin />} />
-            <Route element={<PanelLogin />} path="panel" />
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route index element={<StudentLoginPage />} />
+            <Route element={<PanelLoginPage />} path="panel">
+              <Route element={<PanelLoginPage />} path="verify" />
+            </Route>
           </Route>
           <Route element={<NotFoundPage />} path="notfound" />
           {/* Privacy and Terms are required to use Google oAuth2 client */}

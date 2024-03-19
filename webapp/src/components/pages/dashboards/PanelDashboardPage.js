@@ -1,27 +1,32 @@
 import { React, useState, useEffect } from "react";
 // MUI
-import { List, ListItem, ListItemButton, ListItemText } from "@mui/material";
+import {
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Typography,
+} from "@mui/material";
 
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 
-import { httpClient } from "../../client";
+import { httpClient } from "../../../client";
 
-import { useSelector } from "react-redux";
+import LoadingSpinner from "../../widgets/LoadingSpinner";
 
-import LoadingSpinner from "../widgets/LoadingSpinner";
-
-const PanelDashboardPage = () => {
+const PanelDashboardPage = ({ user }) => {
+  const [panels, setPanels] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { user } = useSelector((state) => state.user);
-  const [panels, setPanels] = useState([]);
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${user?.token}`,
   };
 
   useEffect(() => {
+    setIsLoading(true);
     httpClient
       .get("/panel", {
         headers,
@@ -33,16 +38,23 @@ const PanelDashboardPage = () => {
         enqueueSnackbar(error.message, {
           variant: "error",
         })
-      );
+      )
+      .finally(() => setIsLoading(false));
   }, []);
 
-  if (!panels || panels.length === 0) {
+  if (isLoading) {
     return <LoadingSpinner />;
+  }
+
+  if (!panels || panels.length === 0) {
+    return <Typography>Did not find any panels</Typography>;
   }
 
   const listItems = panels.map((panel) => (
     <ListItem disablePadding key={panel.PanelID}>
-      <ListItemButton onClick={() => navigate(`/panel/${panel.PanelID}`)}>
+      <ListItemButton
+        onClick={() => navigate(`/panelist/panel/${panel.PanelID}`)}
+      >
         <ListItemText
           primary={panel.PanelName}
           secondary={panel.PanelStartDate}
@@ -51,7 +63,14 @@ const PanelDashboardPage = () => {
     </ListItem>
   ));
 
-  return <List>{listItems}</List>;
+  return (
+    <>
+      <Typography color={"red"}>
+        Will return panels associated with this panelist
+      </Typography>
+      <List>{listItems}</List>
+    </>
+  );
 };
 
 export default PanelDashboardPage;

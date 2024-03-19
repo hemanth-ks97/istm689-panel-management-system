@@ -6,14 +6,12 @@ import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
 import ListDisplay from "./ListDisplay";
 import LoadingSpinner from "./LoadingSpinner";
-import { useParams } from "react-router-dom";
 
-const QuestionList = () => {
+const QuestionList = ({ panelId }) => {
   const { user } = useSelector((state) => state.user);
   const [questions, setQuestions] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
   const [isLoading, setIsLoading] = useState(true);
-  const { panelId } = useParams();
 
   const headers = {
     "Content-Type": "application/json",
@@ -30,7 +28,7 @@ const QuestionList = () => {
       })
       .then((response) => {
         setQuestions(response.data);
-        enqueueSnackbar(`Fetched ${response?.data?.length}  questions`, {
+        enqueueSnackbar(`Fetched ${response?.data?.length} questions`, {
           variant: "success",
         });
       })
