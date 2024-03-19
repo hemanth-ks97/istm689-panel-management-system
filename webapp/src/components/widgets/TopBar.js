@@ -67,13 +67,13 @@ const TopBar = () => {
     //     handleCloseNavMenu();
     //   },
     // },
-    {
-      name: "Panels",
-      handleOnClick: () => {
-        navigate("/panels");
-        handleCloseNavMenu();
-      },
-    },
+    // {
+    //   name: "Panels",
+    //   handleOnClick: () => {
+    //     navigate("/panels");
+    //     handleCloseNavMenu();
+    //   },
+    // },
     {
       name: "Grades",
       handleOnClick: () => {
