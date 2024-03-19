@@ -12,16 +12,26 @@ import {
   CardActionArea,
   Button,
 } from "@mui/material";
+import { useDispatch } from "react-redux";
 
 import { GoogleReCaptcha } from "react-google-recaptcha-v3";
 import { useSnackbar } from "notistack";
 
 import { httpClient } from "../../../client";
 
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+
+import { setUser } from "../../../store/slices/userSlice";
+
 const PanelLogin = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [reCaptchaToken, setReCaptchaToken] = useState(null);
   const [email, setEmail] = useState("");
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
 
   const disclaimerText = [
     "Please be advised that this login portal is exclusively designated for authorized panelists. Any attempt by students to access this platform using panelist credentials is strictly prohibited and will be recorded. We maintain a comprehensive log of all login interactions, including but not limited to IP addresses and timestamps.",
@@ -53,11 +63,15 @@ const PanelLogin = () => {
     }
 
     httpClient
-      .post("login/panel", { token: reCaptchaToken, email })
-      .then(() => {
-        // Do nothing
+      .post("login/panel", {
+        token: reCaptchaToken,
+        email,
+        callerUrl: window?.location?.href,
       })
-      .catch((error) => {
+      .then(() => {
+        // Do nothing on purpose
+      })
+      .catch(() => {
         // Do nothing on purpose
       })
       .finally(() => {
@@ -65,6 +79,19 @@ const PanelLogin = () => {
         enqueueSnackbar("An email will be sent ", { variant: "success" });
       });
   };
+
+  if (pathname.endsWith("verify")) {
+    let token = null;
+    try {
+      token = searchParams.get("token");
+
+      dispatch(setUser(token));
+      navigate("/");
+    } catch (error) {
+      console.log("An error occured", error.message);
+    }
+    return <></>;
+  }
 
   return (
     <>

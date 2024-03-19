@@ -71,12 +71,14 @@ const QuestionsPage = () => {
 
   let items;
 
-  if (pathname.endsWith("questions")) {
-    items = <QuestionList />;
-  }
   if (loading) {
     return <LoadingSpinner />;
   }
+
+  if (pathname.endsWith("questions") && panelId) {
+    items = <QuestionList panelId={panelId} />;
+  }
+
   if (pathname.endsWith("question")) {
     items = (
       <>

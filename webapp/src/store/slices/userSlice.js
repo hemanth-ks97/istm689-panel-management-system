@@ -10,11 +10,11 @@ export const userSlice = createSlice({
     setUser: (state, action) => {
       const pmsUser = jwtDecode(action.payload);
       state.user = {
-        name: pmsUser.name,
-        email: pmsUser.email,
-        picture: pmsUser.picture,
+        name: pmsUser?.name,
+        email: pmsUser?.email,
+        picture: pmsUser?.picture,
+        role: pmsUser?.role,
         token: action.payload,
-        role: pmsUser.role
       };
     },
     clearUser: (state) => {
