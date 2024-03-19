@@ -11,6 +11,8 @@ import random
 
 from io import StringIO
 
+from urllib.parse import quote
+
 from chalice import (
     Chalice,
     AuthResponse,
@@ -620,11 +622,13 @@ def get_login_panel():
     if user["Role"] != PANELIST_ROLE:
         raise BadRequestError("User is not a panelist")
 
+    url_safe_name = quote(f"{user['FName']} {user['LName']}")
+
     new_token = create_token(
         user_id=user["UserID"],
         email_id=user["EmailID"],
         name=f"{user['FName']} {user['LName']}",
-        picture="https://eu.ui-avatars.com/api/?name=Panelist",
+        picture=f"https://eu.ui-avatars.com/api/?name={url_safe_name}",
         role=user["Role"],
     )
 
@@ -632,7 +636,15 @@ def get_login_panel():
 
     login_link = f"{caller_url}/verify?token={new_token}"
 
-    html_body = f"Dear {user['FName']},<p>I hope this message finds you well. As requested, here is the link to log in to your account: <a class='ulink' href='{login_link}' target='_blank'>Login Link</a>.</p><p>If you have any questions or encounter any issues, please feel free to reach out to our support team at [Support Email].</p>Best regards,<br>The Panel Management System Team"
+    html_body = f"""
+    Dear {user['FName']},
+    <p>I hope this message finds you well. As requested, here is the link to log in to your account:</p>
+    <p><a class='ulink' href='{login_link}' target='_blank'>{login_link}</a>.</p>
+    <p>If you have any questions or encounter any issues, please feel free to reach out to our support team at [Support Email].
+    </p>Best regards,
+    <br>
+    The Panel Management System Team
+    """
 
     text_body = (
         f"Please copy and paste this link in your browser to log in: {login_link}"
@@ -645,6 +657,10 @@ def get_login_panel():
         html_body=html_body,
         text_body=text_body,
     )
+
+    # Register last login
+    user["LastLogin"] = datetime.now().isoformat(timespec="seconds")
+    get_user_db().update_user(user)
 
     return response
 

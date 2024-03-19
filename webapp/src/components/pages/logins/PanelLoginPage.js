@@ -19,7 +19,9 @@ import { useSnackbar } from "notistack";
 
 import { httpClient } from "../../../client";
 
-import { setUser } from "../../store/slices/userSlice";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+
+import { setUser } from "../../../store/slices/userSlice";
 
 const PanelLogin = () => {
   const { enqueueSnackbar } = useSnackbar();
