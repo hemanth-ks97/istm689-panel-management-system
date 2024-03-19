@@ -637,9 +637,6 @@ def get_login_panel():
 
     login_link = f"{caller_url}/verify?token={new_token}"
 
-    # Prevent forming a bad URL
-    login_link = login_link.replace("//", "/")
-
     html_body = f"""
     Dear {user['FName']},
     <p>I hope this message finds you well. As requested, here is the link to log in to your account:</p>
