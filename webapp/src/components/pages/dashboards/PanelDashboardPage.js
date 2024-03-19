@@ -52,7 +52,9 @@ const PanelDashboardPage = ({ user }) => {
 
   const listItems = panels.map((panel) => (
     <ListItem disablePadding key={panel.PanelID}>
-      <ListItemButton onClick={() => navigate(`/panel/${panel.PanelID}`)}>
+      <ListItemButton
+        onClick={() => navigate(`/panelist/panel/${panel.PanelID}`)}
+      >
         <ListItemText
           primary={panel.PanelName}
           secondary={panel.PanelStartDate}
