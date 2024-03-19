@@ -2,7 +2,7 @@ import React from "react";
 
 import { Outlet } from "react-router-dom";
 
-import { GOOGLE_RECAPTCHA_KEY } from "../../config";
+import { GOOGLE_RECAPTCHA_KEY } from "../../../config";
 
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 

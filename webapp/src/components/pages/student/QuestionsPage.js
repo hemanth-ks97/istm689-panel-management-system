@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 
-import QuestionList from "../widgets/QuestionList";
 import { Typography, TextField, Button } from "@mui/material";
-import { httpClient } from "../../client";
+import { httpClient } from "../../../client";
 import { useSnackbar } from "notistack";
 import { useSelector } from "react-redux";
 import { useLocation, useParams } from "react-router-dom";
-import LoadingSpinner from "../widgets/LoadingSpinner";
+import LoadingSpinner from "../../widgets/LoadingSpinner";
+import QuestionList from "../../widgets/QuestionList";
 
 const QuestionsPage = () => {
   const { pathname } = useLocation();

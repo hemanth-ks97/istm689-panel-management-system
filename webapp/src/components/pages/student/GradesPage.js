@@ -1,7 +1,7 @@
 import React from "react";
 // MUI
-import { Box, Typography } from "@mui/material";
-import UploadFileCard from "../widgets/UploadFileCard";
+import { Typography } from "@mui/material";
+
 const GradesPage = () => {
   return (
     <Typography mt={2} variant="h4">

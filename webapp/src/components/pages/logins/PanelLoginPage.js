@@ -16,8 +16,8 @@ import { useDispatch } from "react-redux";
 
 import { GoogleReCaptcha } from "react-google-recaptcha-v3";
 import { useSnackbar } from "notistack";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { httpClient } from "../../client";
+
+import { httpClient } from "../../../client";
 
 import { setUser } from "../../store/slices/userSlice";
 
@@ -43,21 +43,38 @@ const PanelLogin = () => {
   };
 
   const handleSubmit = () => {
+    if (!email) {
+      enqueueSnackbar("Email is required", { variant: "warning" });
+      return;
+    }
+
+    if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(email)) {
+      enqueueSnackbar("Invalid email address", { variant: "error" });
+      return;
+    }
+
+    if (!reCaptchaToken) {
+      enqueueSnackbar("Please verify you are not a robot", {
+        variant: "error",
+      });
+      return;
+    }
+
     httpClient
       .post("login/panel", {
         token: reCaptchaToken,
         email,
         callerUrl: window?.location?.href,
       })
-      .then((response) => {
-        enqueueSnackbar("An email will be sent ", { variant: "success" });
-        enqueueSnackbar(JSON.stringify(response.data, null, 2), {
-          variant: "info",
-        });
-        // navigate("/");
+      .then(() => {
+        // Do nothing on purpose
       })
-      .catch((error) => {
-        enqueueSnackbar("An error occured", { variant: "error" });
+      .catch(() => {
+        // Do nothing on purpose
+      })
+      .finally(() => {
+        // Always send a success message, only users with panelist role will receieve the email
+        enqueueSnackbar("An email will be sent ", { variant: "success" });
       });
   };
 
@@ -83,10 +100,9 @@ const PanelLogin = () => {
         />
         <CardContent>
           <FormControl>
-            <InputLabel htmlFor="my-input">Email address</InputLabel>
+            <InputLabel htmlFor="panelist-email">Email address</InputLabel>
             <Input
-              id="my-input"
-              aria-describedby="my-helper-text"
+              id="panelist-email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
