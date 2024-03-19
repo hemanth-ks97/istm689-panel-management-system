@@ -5,11 +5,11 @@ import { List, ListItem, ListItemButton, ListItemText } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 
-import { httpClient } from "../../client";
+import { httpClient } from "../../../client";
 
 import { useSelector } from "react-redux";
 
-import LoadingSpinner from "../widgets/LoadingSpinner";
+import LoadingSpinner from "../../widgets/LoadingSpinner";
 
 const PanelDashboardPage = () => {
   const navigate = useNavigate();
