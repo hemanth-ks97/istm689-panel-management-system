@@ -7,10 +7,7 @@ import requests
 import boto3
 import uuid
 import pandas as pd
-import numpy as np
 import random
-import math
-from decimal import Decimal
 
 from io import StringIO
 
@@ -618,7 +615,7 @@ def get_login_panel():
         user_id=user["UserID"],
         email_id=user["EmailID"],
         name=f"{user['FName']} {user['LName']}",
-        picture="",
+        picture="https://eu.ui-avatars.com/api/?name=Panelist",
         role=user["Role"],
     )
 
