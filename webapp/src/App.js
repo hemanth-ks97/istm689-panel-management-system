@@ -16,6 +16,7 @@ import PrivateRoutes from "./components/utils/PrivateRoutes";
 
 // Dashboard Pages
 import DashboardPage from "./components/pages/dashboards/DashboardPage";
+import AdminDashboardPage from "./components/pages/dashboards/AdminDashboardPage";
 
 // Login Pages
 import LoginPage from "./components/pages/logins/LoginPage";
@@ -72,7 +73,7 @@ const App = () => {
         </Route>
         {/* Pages available only to ADMIN */}
         <Route element={<PrivateRoutes isAllowed={user?.role === ADMIN} />}>
-          <Route element={<Outlet />} path="admin">
+          <Route element={<AdminDashboardPage user={user} />} path="admin">
             <Route element={<AdminPanelsPage />} path="panels" />
             <Route element={<AdminGradesPage />} path="grades" />
             <Route element={<AdminUsersPage />} path="users" />

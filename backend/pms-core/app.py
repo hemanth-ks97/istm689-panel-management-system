@@ -640,7 +640,7 @@ def get_login_panel():
     html_body = f"""
     Dear {user['FName']},
     <p>I hope this message finds you well. As requested, here is the link to log in to your account:</p>
-    <p><a class='ulink' href='{login_link}' target='_blank'>{login_link}</a></p>
+    <p><a class='ulink' href='{login_link}' target='_blank' rel='noopener'>{login_link}</a></p>
     <p>If you have any questions or encounter any issues, please feel free to reach out to our support team at [Support Email].
     </p>Best regards,
     <br>
