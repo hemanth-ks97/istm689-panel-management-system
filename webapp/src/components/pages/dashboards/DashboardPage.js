@@ -23,7 +23,11 @@ const DashboardPage = () => {
       output = <PanelDashboardPage user={user} />;
       break;
     default:
-      output = <Typography>Role not found</Typography>;
+      output = (
+        <Typography>
+          We are sorry you are seeing this page, please contact the support team
+        </Typography>
+      );
       break;
   }
 
