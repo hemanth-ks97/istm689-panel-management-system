@@ -31,24 +31,38 @@ const PanelLogin = () => {
   ];
 
   const handleVerify = (token) => {
-    enqueueSnackbar("reCaptcha verified", {
-      variant: "success",
-      preventDuplicate: true,
-    });
     setReCaptchaToken(token);
   };
 
   const handleSubmit = () => {
+    if (!email) {
+      enqueueSnackbar("Email is required", { variant: "warning" });
+      return;
+    }
+
+    if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(email)) {
+      enqueueSnackbar("Invalid email address", { variant: "error" });
+      return;
+    }
+
+    if (!reCaptchaToken) {
+      enqueueSnackbar("Please verify you are not a robot", {
+        variant: "error",
+      });
+      return;
+    }
+
     httpClient
       .post("login/panel", { token: reCaptchaToken, email })
-      .then((response) => {
-        enqueueSnackbar("An email will be sent ", { variant: "success" });
-        enqueueSnackbar(JSON.stringify(response.data, null, 2), {
-          variant: "info",
-        });
+      .then(() => {
+        // Do nothing
       })
       .catch((error) => {
-        enqueueSnackbar("An error occured", { variant: "error" });
+        // Do nothing on purpose
+      })
+      .finally(() => {
+        // Always send a success message, only users with panelist role will receieve the email
+        enqueueSnackbar("An email will be sent ", { variant: "success" });
       });
   };
 
@@ -61,10 +75,9 @@ const PanelLogin = () => {
         />
         <CardContent>
           <FormControl>
-            <InputLabel htmlFor="my-input">Email address</InputLabel>
+            <InputLabel htmlFor="panelist-email">Email address</InputLabel>
             <Input
-              id="my-input"
-              aria-describedby="my-helper-text"
+              id="panelist-email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
