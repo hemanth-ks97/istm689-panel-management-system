@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Typography } from "@mui/material";
 
-import { httpClient } from "../../client";
+import { httpClient } from "../../../client";
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
 
-import LoadingSpinner from "../widgets/LoadingSpinner";
-import ListDisplay from "../widgets/ListDisplay";
+import LoadingSpinner from "../../widgets/LoadingSpinner";
+import ListDisplay from "../../widgets/ListDisplay";
 const AdminUsersPage = () => {
   const { user } = useSelector((state) => state.user);
   const [users, setUsers] = useState([]);

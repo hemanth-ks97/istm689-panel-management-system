@@ -1,7 +1,7 @@
 import { React } from "react";
 
 import { Typography } from "@mui/material";
-import UploadFileCard from "../widgets/UploadFileCard";
+import UploadFileCard from "../../widgets/UploadFileCard";
 
 const AdminImportPage = () => {
   return (

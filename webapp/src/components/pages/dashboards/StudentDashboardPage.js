@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { httpClient } from "../../client";
+import { httpClient } from "../../../client";
 import { useSnackbar } from "notistack";
 import { useSelector } from "react-redux";
-import LoadingSpinner from "../widgets/LoadingSpinner";
+import LoadingSpinner from "../../widgets/LoadingSpinner";
 import {
   Box,
   Typography,
@@ -17,8 +17,7 @@ import {
   styled,
 } from "@mui/material";
 
-const HomePage = () => {
-  const { user } = useSelector((state) => state.user);
+const StudentDashboardPage = ({ user }) => {
   const [panelDetails, setPanelDetails] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -184,4 +183,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default StudentDashboardPage;

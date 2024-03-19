@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 
-import QuestionList from "../widgets/QuestionList";
 import { Typography, TextField, Button } from "@mui/material";
-import { httpClient } from "../../client";
+import { httpClient } from "../../../client";
 import { useSnackbar } from "notistack";
 import { useSelector } from "react-redux";
 import { useLocation, useParams } from "react-router-dom";
-import LoadingSpinner from "../widgets/LoadingSpinner";
+import LoadingSpinner from "../../widgets/LoadingSpinner";
+import QuestionList from "../../widgets/QuestionList";
 
 const QuestionsPage = () => {
   const { pathname } = useLocation();
@@ -32,7 +32,7 @@ const QuestionsPage = () => {
         setNoOfQuestions(numberOfQuestions);
         setQuestions(Array(numberOfQuestions).fill(""));
         setLoading(false);
-       })
+      })
       .catch((error) => {
         enqueueSnackbar(error.message, {
           variant: "error",
@@ -49,25 +49,25 @@ const QuestionsPage = () => {
 
   const handleOnSubmit = () => {
     questions.forEach((question, index) => {
-    httpClient
-      .post(
-        `/question`,
-        {
-          panelId,
-          question,
-        },
-        { headers }
-      )
-      .then((response) => {
-        enqueueSnackbar(response?.data?.message, { variant: "success" });
-      })
-      .catch((error) => {
-        enqueueSnackbar(error.message, { variant: "error" });
-      });
+      httpClient
+        .post(
+          `/question`,
+          {
+            panelId,
+            question,
+          },
+          { headers }
+        )
+        .then((response) => {
+          enqueueSnackbar(response?.data?.message, { variant: "success" });
+        })
+        .catch((error) => {
+          enqueueSnackbar(error.message, { variant: "error" });
+        });
     });
-      // Reset questions after submitting
-      setQuestions(Array(noOfQuestions).fill(""));
-    };
+    // Reset questions after submitting
+    setQuestions(Array(noOfQuestions).fill(""));
+  };
 
   let items;
 
@@ -82,18 +82,18 @@ const QuestionsPage = () => {
       <>
         <Typography variant="h4">QuestionsPage component</Typography>
         {questions.map((q, index) => (
-        <TextField
-          key={index}
-          id={`question${index}`}
-          label={`Question ${index + 1}`}
-          placeholder="Please write your question"
-          multiline
-          variant="filled"
-          value={q}
-          onChange={(e) => handleQuestionChange(index, e.target.value)}
-          fullWidth
-          margin="normal"
-        />
+          <TextField
+            key={index}
+            id={`question${index}`}
+            label={`Question ${index + 1}`}
+            placeholder="Please write your question"
+            multiline
+            variant="filled"
+            value={q}
+            onChange={(e) => handleQuestionChange(index, e.target.value)}
+            fullWidth
+            margin="normal"
+          />
         ))}
         <p></p>
         <Button variant="contained" color="primary" onClick={handleOnSubmit}>

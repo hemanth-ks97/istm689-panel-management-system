@@ -5,8 +5,8 @@ import { Box, Typography, Button, ButtonGroup } from "@mui/material";
 import { useParams, Outlet, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
-import { httpClient } from "../../client";
-import LoadingSpinner from "../widgets/LoadingSpinner";
+import { httpClient } from "../../../client";
+import LoadingSpinner from "../../widgets/LoadingSpinner";
 
 const PanelPage = () => {
   const { panelId } = useParams();
