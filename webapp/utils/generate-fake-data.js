@@ -5,12 +5,13 @@ import {
   BatchWriteItemCommand,
 } from "@aws-sdk/client-dynamodb";
 
-const ENV = process.env.ENV || "dev";
+const ENV = process.env.ENV || "local";
 
 const TABLE_NAME = {
   USER: `${ENV}-user`,
   PANEL: `${ENV}-panel`,
-  QUESTIONS: `${ENV}-question`,
+  QUESTION: `${ENV}-question`,
+  METRIC: `${ENV}-metric`,
 };
 
 const client = new DynamoDBClient({});
@@ -436,7 +437,7 @@ const main = async () => {
   batchItems = {};
 
   if (questions.length > 0 && panels.length > 0 && questions.length > 0) {
-    batchItems[TABLE_NAME.QUESTIONS] = questions;
+    batchItems[TABLE_NAME.QUESTION] = questions;
   }
   /**
    * BatchWriteItemCommand only can handle 25 at the time
@@ -446,22 +447,23 @@ const main = async () => {
     RequestItems: batchItems,
   });
   await client.send(putQuestions);
-  // Cleam batch items
-  batchItems = {};
 
   if (metrics.length > 0) {
-    batchItems[TABLE_NAME.METRICS] = metrics;
-  }
+    const chunkSize = 25;
+    for (let i = 0; i < metrics.length; i += chunkSize) {
+      // Cleam batch items
+      batchItems = {};
 
-  const chunkSize = 25;
-  for (let i = 0; i < metrics.length; i += chunkSize) {
-    const chunk = metrics.slice(i, i + chunkSize);
+      const chunk = metrics.slice(i, i + chunkSize);
 
-    const putMetrics = new BatchWriteItemCommand({
-      RequestItems: chunk,
-    });
+      batchItems[TABLE_NAME.METRIC] = chunk;
 
-    await client.send(putMetrics);
+      const putMetrics = new BatchWriteItemCommand({
+        RequestItems: batchItems,
+      });
+
+      await client.send(putMetrics);
+    }
   }
 };
 
