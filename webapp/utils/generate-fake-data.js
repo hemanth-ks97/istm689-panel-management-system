@@ -10,7 +10,8 @@ const ENV = process.env.ENV || "dev";
 const TABLE_NAME = {
   USER: `${ENV}-user`,
   PANEL: `${ENV}-panel`,
-  QUESTIONS: `${ENV}-question`,
+  QUESTION: `${ENV}-question`,
+  METRIC: `${ENV}-metric`,
 };
 
 const client = new DynamoDBClient({});
@@ -135,6 +136,28 @@ const createDynamoDBPanelObject = (panel) => {
     TagStageDeadline: { S: panel.TagStageDeadline },
     Visibility: { S: panel.Visibility },
     VoteStageDeadline: { S: panel.VoteStageDeadline },
+    CreatedAt: { S: date },
+  };
+};
+const createDynamoDBMetricObject = (metric) => {
+  const date = new Date(Date.now()).toISOString();
+
+  return {
+    PanelID: { S: metric.PanelID },
+    UserID: { S: metric.UserID },
+    QuestionStageScore: { N: metric.QuestionStageScore.toString() },
+    TagStageInTime: { S: metric.TagStageInTime },
+    TagStageOutTime: { S: metric.TagStageOutTime },
+    TagStageSD: { N: metric.TagStageSD.toString() },
+    TagStageScore: { N: metric.TagStageScore.toString() },
+    VoteStageInTime: { S: metric.VoteStageInTime },
+    VoteStageOutTime: { S: metric.VoteStageOutTime },
+    VoteStageSD: { N: metric.VoteStageSD.toString() },
+    VoteStageScore: { N: metric.VoteStageScore.toString() },
+    EnteredQuestionsTotalScore: {
+      N: metric.EnteredQuestionsTotalScore.toString(),
+    },
+    FinalTotalScore: { N: metric.FinalTotalScore.toString() },
     CreatedAt: { S: date },
   };
 };
@@ -274,6 +297,47 @@ const createRandomQuestion = (panelID, userID) => {
   return question;
 };
 
+const createRandomMetric = (panelID, userID) => {
+  const metric = {
+    PanelID: panelID,
+    UserID: userID,
+    QuestionStageScore: faker.number.int({ min: 1, max: 100 }),
+    TagStageInTime: faker.date.soon(),
+    TagStageOutTime: faker.date.soon(),
+    TagStageSD: faker.number.int({ min: 1, max: 100 }), // Do we need to calculate the standar deviation HERE????
+    TagStageScore: faker.number.int({ min: 1, max: 100 }),
+    VoteStageInTime: faker.date.soon(),
+    VoteStageOutTime: faker.date.soon(),
+    VoteStageSD: faker.number.int({ min: 1, max: 100 }), // Do we need to calculate the standar deviation HERE????
+    VoteStageScore: faker.number.int({ min: 1, max: 100 }),
+    EnteredQuestionsTotalScore: faker.number.int({ min: 1, max: 100 }),
+    FinalTotalScore: faker.number.int({ min: 1, max: 100 }),
+  };
+  return metric;
+};
+
+const generateMetrics = (panels, users) => {
+  let panelID;
+  let userID;
+
+  let newMetrics = [];
+
+  // Loop through each generated panel to create questions
+
+  for (let panel of panels) {
+    panelID = panel.PutRequest.Item.PanelID.S;
+    for (let user of users) {
+      userID = user.PutRequest.Item.UserID.S;
+      const metric = createRandomMetric(panelID, userID);
+      newMetrics.push({
+        PutRequest: { Item: createDynamoDBMetricObject(metric) },
+      });
+    }
+  }
+
+  return newMetrics;
+};
+
 const generateQuestions = (panels, users, questionsByPanel = 5) => {
   let panelID;
   let userID;
@@ -355,6 +419,7 @@ const main = async () => {
   const users = generateUsers();
   const panels = generatePanels();
   const questions = generateQuestions(panels, users);
+  const metrics = generateMetrics(panels, users);
 
   let batchItems = {};
 
@@ -368,10 +433,11 @@ const main = async () => {
     RequestItems: batchItems,
   });
   await client.send(putItems);
+  // Clean batch items
+  batchItems = {};
 
   if (questions.length > 0 && panels.length > 0 && questions.length > 0) {
-    batchItems = {};
-    batchItems[TABLE_NAME.QUESTIONS] = questions;
+    batchItems[TABLE_NAME.QUESTION] = questions;
   }
   /**
    * BatchWriteItemCommand only can handle 25 at the time
@@ -381,6 +447,24 @@ const main = async () => {
     RequestItems: batchItems,
   });
   await client.send(putQuestions);
+
+  if (metrics.length > 0) {
+    const chunkSize = 25;
+    for (let i = 0; i < metrics.length; i += chunkSize) {
+      // Cleam batch items
+      batchItems = {};
+
+      const chunk = metrics.slice(i, i + chunkSize);
+
+      batchItems[TABLE_NAME.METRIC] = chunk;
+
+      const putMetrics = new BatchWriteItemCommand({
+        RequestItems: batchItems,
+      });
+
+      await client.send(putMetrics);
+    }
+  }
 };
 
 main();
