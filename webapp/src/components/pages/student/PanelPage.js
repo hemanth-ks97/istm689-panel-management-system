@@ -107,12 +107,19 @@ const PanelPage = () => {
         textAlign="left"
         sx={{ fontWeight: "bold" }}
       >
-        Number of questions:
+        Number of Questions:
       </Typography>
       <Typography mx={2}>{panel.NumberOfQuestions}</Typography>
-      <br />
-      <Typography mx={2} textAlign="left" sx={{ fontWeight: "bold" }}>
-        Link to the Video: <span />
+
+      <Typography
+        variant="h6"
+        mx={2}
+        textAlign="left"
+        sx={{ fontWeight: "bold" }}
+      >
+        Link to the Video:
+      </Typography>
+      <Typography mx={2}>
         <Link
           href={panel.PanelVideoLink}
           underline="hover"
