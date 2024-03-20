@@ -64,73 +64,82 @@ const PanelPage = () => {
         variant="h4"
         mt={2}
         textAlign="center"
-        sx={{ fontFamily: "monospace", fontWeight:"bold" }}>
-          {panel.PanelName}
+        sx={{ fontFamily: "monospace", fontWeight: "bold" }}
+      >
+        {panel.PanelName}
       </Typography>
       <Typography
         variant="h6"
         mx={2}
         textAlign="left"
-        sx={{ fontWeight:"bold" }}>
-          Description: 
+        sx={{ fontWeight: "bold" }}
+      >
+        Description:
       </Typography>
       <Typography mx={2}> {panel.PanelDesc} </Typography>
       <Typography
         variant="h6"
         mx={2}
         textAlign="left"
-        sx={{ fontWeight:"bold" }}>
-          Panelist: 
+        sx={{ fontWeight: "bold" }}
+      >
+        Panelist:
       </Typography>
       <Typography mx={2}>{panel.Panelist}</Typography>
       <Typography
         variant="h6"
         mx={2}
         textAlign="left"
-        sx={{ fontWeight:"bold" }}>
-        Presentation Date: 
+        sx={{ fontWeight: "bold" }}
+      >
+        Presentation Date:
       </Typography>
       <Typography mx={2}>
-      {new Date(panel.PanelPresentationDate
-                ).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-      })}</Typography>
-      <br />
+        {new Date(panel.PanelPresentationDate).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })}
+      </Typography>
       <Typography
+        variant="h6"
         mx={2}
         textAlign="left"
-        sx={{ fontWeight:"bold" }}>
-        Link to the Video: {" "}  <span />
-        <Button variant="contained">
+        sx={{ fontWeight: "bold" }}
+      >
+        Number of questions:
+      </Typography>
+      <Typography mx={2}>{panel.NumberOfQuestions}</Typography>
+      <br />
+      <Typography mx={2} textAlign="left" sx={{ fontWeight: "bold" }}>
+        Link to the Video: <span />
         <Link
           href={panel.PanelVideoLink}
           underline="hover"
           target="_blank"
           rel="noopener"
-          color={'white'}
         >
-          Video
-        </Link></Button>
+          {panel.PanelVideoLink}
+        </Link>
       </Typography>
       <br />
       <Divider />
       <br />
-      <Grid container spacing={2} mx={2} width={'97%'}>
+      <Grid container spacing={2} mx={2} width={"97%"}>
         {menus.map((menu) => {
           return (
             <Grid item xs={2} md={4}>
               <Paper elevation={3} align="center">
                 <br />
                 <Typography variant="h6">{menu.title}</Typography>
-                <Typography>Deadline {new Date(
-                          panel[menu.objectKey]
-                        ).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}</Typography>
+                <Typography>
+                  Deadline{" "}
+                  {new Date(panel[menu.objectKey]).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </Typography>
                 <br />
                 <Divider />
                 <br />
