@@ -29,11 +29,8 @@ from chalicelib.config import (
     USER_TABLE_NAME,
     QUESTION_TABLE_NAME,
     PANEL_TABLE_NAME,
-    JWT_SECRET,
+    METRIC_TABLE_NAME,
     GOOGLE_RECAPTCHA_SECRET_KEY,
-    JWT_AUDIENCE,
-    JWT_ISSUER,
-    JWT_TOKEN_EXPIRATION_DAYS,
 )
 from chalicelib.constants import (
     BOTO3_DYNAMODB_TYPE,
@@ -57,6 +54,7 @@ app = Chalice(app_name=f"{ENV}-pms-core")
 _USER_DB = None
 _QUESTION_DB = None
 _PANEL_DB = None
+_METRIC_DB = None
 
 
 def get_user_db():
@@ -93,6 +91,18 @@ def get_panel_db():
     except Exception as e:
         return {"error": str(e)}
     return _PANEL_DB
+
+
+def get_metric_db():
+    global _METRIC_DB
+    try:
+        if _METRIC_DB is None:
+            _METRIC_DB = db.DynamoMetricDB(
+                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(METRIC_TABLE_NAME)
+            )
+    except Exception as e:
+        return {"error": str(e)}
+    return _METRIC_DB
 
 
 def dummy():
@@ -808,3 +818,51 @@ def get_questions_by_panel(id):
         return {"error": str(e)}
 
     return questions
+
+
+@app.route(
+    "/metric",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def get_all_metrics_():
+    try:
+        metrics = get_metric_db().list_metrics()
+    except Exception as e:
+        return {"error": str(e)}
+
+    return metrics
+
+
+@app.route(
+    "/panel/{id}/metrics",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def get_metrics_by_panel(id):
+    # Need to check
+    # Only for admins
+    try:
+        metrics = get_metric_db().get_metrics_by_panel(id)
+    except Exception as e:
+        return {"error": str(e)}
+
+    return metrics
+
+
+@app.route(
+    "/user/{id}/metrics",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def get_metrics_by_user(id):
+
+    # Need to check
+    # If you are a user, you can only request your grades!
+    # if you are an admin, you get a free pass
+    try:
+        metrics = get_metric_db().get_metrics_by_user(id)
+    except Exception as e:
+        return {"error": str(e)}
+
+    return metrics

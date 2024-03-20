@@ -237,3 +237,63 @@ class DynamoUserDB(UserDB):
         if expression is None:
             return condition
         return expression & condition
+
+
+"""Metric Database Service"""
+
+
+class MetricDB(object):
+    def add_metric(self, metric):
+        pass
+
+    def get_metric(self, user_id, panel_id):
+        pass
+
+    def list_metrics(self):
+        pass
+
+    def delete_metric(self, user_id, panel_id):
+        pass
+
+    def get_metrics_by_user(self, user_id):
+        pass
+
+    def get_metrics_by_panel(self, panel_id):
+        pass
+
+
+class DynamoMetricDB(MetricDB):
+    def __init__(self, table_resource):
+        self._table = table_resource
+
+    def add_metric(self, metric):
+        return self._table.put_item(Item=metric)
+
+    def get_metric(self, user_id, panel_id):
+        response = self._table.get_item(
+            Key={
+                "UserID": user_id,
+                "PanelID": panel_id,
+            },
+        )
+        return response.get("Item")
+
+    def list_metrics(self):
+        response = self._table.scan()
+        return response["Items"]
+
+    def delete_metric(self, user_id, panel_id):
+        self._table.delete_item(
+            Key={
+                "UserID": user_id,
+                "PanelID": panel_id,
+            }
+        )
+
+    def get_metrics_by_user(self, user_id):
+        response = self._table.scan(FilterExpression=Attr("UserID").eq(user_id))
+        return response["Items"]
+
+    def get_metrics_by_panel(self, panel_id):
+        response = self._table.scan(FilterExpression=Attr("PanelID").eq(panel_id))
+        return response["Items"]
