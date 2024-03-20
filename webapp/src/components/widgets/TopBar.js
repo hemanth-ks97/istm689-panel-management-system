@@ -127,6 +127,7 @@ const TopBar = () => {
               fontFamily: "monospace",
               fontWeight: "800",
               letterSpacing: ".1rem",
+              mx: 1
             }}
           >
             Panel Management System
