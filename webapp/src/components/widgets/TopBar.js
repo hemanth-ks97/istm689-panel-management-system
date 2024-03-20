@@ -67,13 +67,13 @@ const TopBar = () => {
     //     handleCloseNavMenu();
     //   },
     // },
-    {
-      name: "Panels",
-      handleOnClick: () => {
-        navigate("/panels");
-        handleCloseNavMenu();
-      },
-    },
+    // {
+    //   name: "Panels",
+    //   handleOnClick: () => {
+    //     navigate("/panels");
+    //     handleCloseNavMenu();
+    //   },
+    // },
     {
       name: "Grades",
       handleOnClick: () => {
@@ -127,6 +127,7 @@ const TopBar = () => {
               fontFamily: "monospace",
               fontWeight: "800",
               letterSpacing: ".1rem",
+              mx: 1
             }}
           >
             Panel Management System
