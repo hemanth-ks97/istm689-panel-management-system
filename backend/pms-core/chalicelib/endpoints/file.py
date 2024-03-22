@@ -20,26 +20,28 @@ from chalicelib.constants import (
 )
 from datetime import datetime
 
-csv_file_routes = Blueprint(__name__)
+file_routes = Blueprint(__name__)
 
 
-@csv_file_routes.route(
-    "/howdycsv",
+@file_routes.route(
+    "/howdy",
     methods=["POST"],
     authorizer=token_authorizer,
     content_types=["text/plain"],
 )
 def post_howdy_csv():
-    user_id = csv_file_routes.current_request.context["authorizer"]["principalId"]
+    user_id = file_routes.current_request.context["authorizer"]["principalId"]
     try:
 
         user_role = get_user_db().get_user_role(user_id)
+
+        # Should get authorizaed oaths from authorizer function
 
         if user_role != ADMIN_ROLE:
             raise BadRequestError("Only admin can perform this action")
 
         # Access the CSV file from the request body
-        csv_data = csv_file_routes.current_request.raw_body.decode("utf-8")
+        csv_data = file_routes.current_request.raw_body.decode("utf-8")
 
         # Convert the CSV file to a string
         csv_file = StringIO(csv_data)
@@ -92,14 +94,14 @@ def post_howdy_csv():
         return {"error": str(e)}
 
 
-@csv_file_routes.route(
-    "/canvascsv",
+@file_routes.route(
+    "/canvas",
     methods=["POST"],
     authorizer=token_authorizer,
     content_types=["text/plain"],
 )
 def post_canvas_csv():
-    user_id = csv_file_routes.current_request.context["authorizer"]["principalId"]
+    user_id = file_routes.current_request.context["authorizer"]["principalId"]
     try:
         user_role = get_user_db().get_user_role(user_id)
 
@@ -107,7 +109,7 @@ def post_canvas_csv():
             raise BadRequestError("Only admin can perform this action")
 
         # Access the CSV file from the request body
-        csv_data = csv_file_routes.current_request.raw_body.decode("utf-8")
+        csv_data = file_routes.current_request.raw_body.decode("utf-8")
 
         # Convert the CSV file to a string
         csv_file = StringIO(csv_data)

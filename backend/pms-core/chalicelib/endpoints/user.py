@@ -1,4 +1,4 @@
-from chalicelib.database.db_provider import get_user_db
+from chalicelib.database.db_provider import get_user_db, get_metric_db
 from chalicelib.auth.token_authorizer import token_authorizer
 from chalicelib.constants import (
     REQUEST_CONTENT_TYPE_JSON,
@@ -20,9 +20,9 @@ user_routes = Blueprint(__name__)
 
 
 @user_routes.route(
-    "/user",
+    "/",
     methods=["GET"],
-    authorizer=token_authorizer,
+    # authorizer=token_authorizer,
 )
 def get_all_users():
     """
@@ -43,22 +43,7 @@ def get_all_users():
 
 
 @user_routes.route(
-    "/user/{id}",
-    methods=["GET"],
-    authorizer=token_authorizer,
-)
-def get_user(id):
-    """
-    User route, testing purposes.
-    """
-    item = get_user_db().get_user(user_id=id)
-    if item is None:
-        raise NotFoundError("User (%s) not found" % id)
-    return item
-
-
-@user_routes.route(
-    "/user",
+    "/",
     methods=["POST"],
     authorizer=token_authorizer,
     content_types=[REQUEST_CONTENT_TYPE_JSON],
@@ -97,3 +82,36 @@ def add_new_user():
 
     except Exception as e:
         return {"error": str(e)}
+
+
+@user_routes.route(
+    "/{id}",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def get_user(id):
+    """
+    User route, testing purposes.
+    """
+    item = get_user_db().get_user(user_id=id)
+    if item is None:
+        raise NotFoundError("User (%s) not found" % id)
+    return item
+
+
+@user_routes.route(
+    "/{id}/metrics",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def get_metrics_by_user(id):
+
+    # Need to check
+    # If you are a user, you can only request your grades!
+    # if you are an admin, you get a free pass
+    try:
+        metrics = get_metric_db().get_metrics_by_user(id)
+    except Exception as e:
+        return {"error": str(e)}
+
+    return metrics
