@@ -63,13 +63,11 @@ const App = () => {
         {/* Pages available only to STUDENTS */}
         <Route element={<PrivateRoutes isAllowed={user?.role === STUDENT} />}>
           <Route element={<GradesPage />} path="grades" />
-          <Route element={<PanelPage />} path="panels" />
-          <Route element={<PanelPage />} path="panel/:panelId">
-            <Route element={<QuestionsPage />} path="questions" />
-            <Route element={<QuestionsPage />} path="question" />
-            <Route element={<VotingPage />} path="voting" />
-            <Route element={<TaggingPage />} path="tagging" />
-          </Route>
+          <Route element={<PanelPage />} path="panel/:panelId" />
+          {/* Not ideal, but it works for the demo */}
+          <Route element={<QuestionsPage />} path="panel/:panelId/question" />
+          <Route element={<VotingPage />} path="panel/:panelId/voting" />
+          <Route element={<TaggingPage />} path="panel/:panelId/tagging" />
         </Route>
         {/* Pages available only to ADMIN */}
         <Route element={<PrivateRoutes isAllowed={user?.role === ADMIN} />}>

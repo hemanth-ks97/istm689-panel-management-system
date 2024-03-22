@@ -2,6 +2,7 @@ from chalicelib.config import (
     USER_TABLE_NAME,
     QUESTION_TABLE_NAME,
     PANEL_TABLE_NAME,
+    METRIC_TABLE_NAME
 )
 from chalicelib.constants import (
     BOTO3_DYNAMODB_TYPE,
@@ -13,7 +14,7 @@ from chalicelib import db
 _USER_DB = None
 _QUESTION_DB = None
 _PANEL_DB = None
-
+_METRIC_DB = None
 
 def get_panel_db():
     global _PANEL_DB
@@ -49,3 +50,15 @@ def get_question_db():
     except Exception as e:
         return {"error": str(e)}
     return _QUESTION_DB
+
+
+def get_metric_db():
+    global _METRIC_DB
+    try:
+        if _METRIC_DB is None:
+            _METRIC_DB = db.DynamoMetricDB(
+                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(METRIC_TABLE_NAME)
+            )
+    except Exception as e:
+        return {"error": str(e)}
+    return _METRIC_DB

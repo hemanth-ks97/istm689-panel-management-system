@@ -13,7 +13,9 @@ from chalicelib.config import ENV, ALLOW_ORIGIN
     The order matters to avoid ciruclar import problems
 """
 app = Chalice(app_name=f"{ENV}-pms-core")
-
+app.api.cors = CORSConfig(
+    allow_origin=ALLOW_ORIGIN,
+)
 
 """
     Import any external module from chalice lib here
@@ -25,6 +27,7 @@ from chalicelib.endpoints.user import user_routes
 from chalicelib.endpoints.csv_file import csv_file_routes
 from chalicelib.endpoints.token import token_routes
 from chalicelib.endpoints.panel_login import panel_login_routes
+from chalicelib.endpoints.metric import metric_routes
 
 """
     Register the endpoints here after importing 
@@ -35,7 +38,7 @@ app.register_blueprint(user_routes)
 app.register_blueprint(csv_file_routes)
 app.register_blueprint(token_routes)
 app.register_blueprint(panel_login_routes)
-
+app.register_blueprint(metric_routes)
 
 
 def dummy():
@@ -61,11 +64,6 @@ def dummy():
     # dummy_s3.get_object()
     # dummy_s3.list_objects_v2()
     # dummy_s3.get_bucket_location()
-
-
-app.api.cors = CORSConfig(
-    allow_origin=ALLOW_ORIGIN,
-)
 
 
 @app.route("/")
