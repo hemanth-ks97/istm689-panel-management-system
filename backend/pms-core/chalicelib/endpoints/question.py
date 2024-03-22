@@ -2,9 +2,9 @@ from chalicelib.database.db_provider import get_panel_db, get_user_db, get_quest
 from chalicelib.auth.token_authorizer import token_authorizer
 from chalicelib.constants import REQUEST_CONTENT_TYPE_JSON, ADMIN_ROLE
 from chalice import Blueprint
-import itertools
-from collections import Counter
-import uuid
+from itertools import chain
+from collections import Counter, defaultdict
+from uuid import uuid4
 import random
 from chalice import (
     NotFoundError,
@@ -42,7 +42,7 @@ def add_new_question():
 
         # Build Question object for database
         new_question = {
-            "QuestionID": str(uuid.uuid4()),
+            "QuestionID": str(uuid4()),
             "UserID": user_id,
             "PanelID": incoming_json["panelId"],
             "QuestionText": incoming_json["question"],
@@ -200,7 +200,7 @@ def distribute_tag_questions(id):
             student_id_question_ids_map[student_id] = question_id_sublist
 
         question_id_repetition_count_map = Counter(
-            itertools.chain.from_iterable(student_id_question_ids_map.values())
+            chain.from_iterable(student_id_question_ids_map.values())
         )
 
         # TODO - Add the student_question_map to an S3 bucket
@@ -208,12 +208,13 @@ def distribute_tag_questions(id):
         return question_id_repetition_count_map, student_id_question_ids_map
     except Exception as e:
         return {"error": str(e)}
-    
+
+
 @question_routes.route(
-"/mark_similar",
-methods=["POST"],
-authorizer=token_authorizer,
-content_types=[REQUEST_CONTENT_TYPE_JSON],
+    "/mark_similar",
+    methods=["POST"],
+    authorizer=token_authorizer,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def retrieve_distributed_questions():
     # Request Format {"similar":["<id_1>", "<id_2>",..., "<id_n>"]}
@@ -226,15 +227,61 @@ def retrieve_distributed_questions():
         for id in similar_set:
             question_obj = get_question_db().get_question(id)
             if not question_obj:
-                raise BadRequestError("Invalid question_id",id) 
+                raise BadRequestError("Invalid question_id", id)
             other_ids = similar_set.copy()
             other_ids.remove(id)
             if "SimilarTo" in question_obj:
-                question_obj["SimilarTo"].extend(id for id in other_ids if id not in question_obj["SimilarTo"])
+                question_obj["SimilarTo"].extend(
+                    id for id in other_ids if id not in question_obj["SimilarTo"]
+                )
             else:
                 question_obj["SimilarTo"] = list(other_ids)
             get_question_db().add_question(question_obj)
 
         return f"{len(similar_list)} questions marked as similar"
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@question_routes.route(
+    "/panel/{panel_id}/group_similar",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def group_similar_questions(panel_id):
+    try:
+        questions = get_question_db().get_questions_by_panel(panel_id)
+
+        # Build adjacency list {<q_id> : [q_id1, q_id2, ..., q_idn]} for every q_id present in panel_id
+        adj_list = defaultdict(list)
+        for question_obj in questions:
+            if "SimilarTo" in question_obj:
+                adj_list[question_obj["QuestionID"]] = question_obj["SimilarTo"]
+
+        # DFS helper function
+        def dfs(node, visited):
+            if node in visited:
+                return (False, None)
+
+            visited.add(node)
+            cluster = [node]
+            for neighbor in adj_list[node]:
+                if neighbor not in visited:
+                    cluster.extend(dfs(neighbor, visited)[1])
+
+            return (True, cluster)
+
+        # Iterate through all questions and perform DFS
+        similar_culsters = []
+        visited = set()
+        for question in questions:
+            is_new, cluster = dfs(question["QuestionID"], visited)
+            if is_new:
+                similar_culsters.append(cluster)
+
+        # TODO - Store similar_culsters "somewhere"
+
+        return similar_culsters
+
     except Exception as e:
         return {"error": str(e)}
