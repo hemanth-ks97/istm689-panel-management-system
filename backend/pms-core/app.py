@@ -2,6 +2,7 @@
 
 import itertools
 from collections import Counter
+from collections import defaultdict
 
 import requests
 import boto3
@@ -455,6 +456,50 @@ def distribute_tag_questions(id):
         return question_id_repetition_count_map, student_id_question_ids_map
     except Exception as e:
         return {"error": str(e)}
+
+
+@app.route(
+    "/panel/{panel_id}/group_similar",
+    methods=["GET"],
+    authorizer=token_authorizer,
+)
+def group_similar_questions(panel_id):
+    try:
+        questions = get_question_db().get_questions_by_panel(panel_id)
+
+        # Build adjacency list {<q_id> : [q_id1, q_id2, ..., q_idn]} for every q_id present in panel_id
+        adj_list = defaultdict(list)
+        for question_obj in questions:
+            if "SimilarTo" in question_obj:
+                adj_list[question_obj["QuestionID"]] = question_obj["SimilarTo"]
+
+        # DFS helper function
+        def dfs(node, visited):
+            if node in visited:
+                return (False, None)
+
+            visited.add(node)
+            cluster = [node]
+            for neighbor in adj_list[node]:
+                if neighbor not in visited:
+                    cluster.extend(dfs(neighbor, visited)[1])
+        
+            return (True, cluster)
+
+        # Iterate through all questions and perform DFS
+        similar_culsters = []
+        visited = set()
+        for question in questions:
+            is_new, cluster = dfs(question["QuestionID"], visited)
+            if is_new:
+                similar_culsters.append(cluster)
+
+        # TODO - Store similar_culsters "somewhere"
+
+        return similar_culsters
+    
+    except Exception as e:
+        return{"error": str(e)}
 
 
 @app.route(
