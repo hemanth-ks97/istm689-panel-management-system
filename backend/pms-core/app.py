@@ -58,10 +58,10 @@ def dummy():
     dummy_ses = boto3.client("ses")
     dummy_ses.send_email()
     # S3
-    # dummy_s3 = boto3.client("s3")
-    # dummy_s3.put_object()
+    dummy_s3 = boto3.client("s3")
+    dummy_s3.put_object()
+    dummy_s3.get_object()
     # dummy_s3.download_file()
-    # dummy_s3.get_object()
     # dummy_s3.list_objects_v2()
     # dummy_s3.get_bucket_location()
 
