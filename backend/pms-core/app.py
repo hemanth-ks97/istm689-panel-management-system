@@ -8,6 +8,14 @@ from chalice import (
 
 from chalicelib.config import ENV, ALLOW_ORIGIN
 
+from chalicelib.auth.token_authorizer import auth_routes
+from chalicelib.endpoints.panel import panel_routes
+from chalicelib.endpoints.question import question_routes
+from chalicelib.endpoints.user import user_routes
+from chalicelib.endpoints.file import file_routes
+from chalicelib.endpoints.login import login_routes
+from chalicelib.endpoints.metric import metric_routes
+
 """
     Register app with chalice before importing modules from chalicelib
     The order matters to avoid ciruclar import problems
@@ -17,20 +25,11 @@ app.api.cors = CORSConfig(
     allow_origin=ALLOW_ORIGIN,
 )
 
-"""
-    Import any external module from chalice lib here
-    This should only be done after registering chalice app
-"""
-from chalicelib.endpoints.panel import panel_routes
-from chalicelib.endpoints.question import question_routes
-from chalicelib.endpoints.user import user_routes
-from chalicelib.endpoints.file import file_routes
-from chalicelib.endpoints.login import login_routes
-from chalicelib.endpoints.metric import metric_routes
 
 """
     Register the endpoints here after importing 
 """
+app.register_blueprint(auth_routes)
 app.register_blueprint(
     panel_routes,
     url_prefix="/panel",
