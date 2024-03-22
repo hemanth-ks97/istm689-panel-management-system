@@ -1,7 +1,7 @@
+from chalice import Blueprint
+
 from chalicelib.database.db_provider import get_metric_db
 from chalicelib.auth.token_authorizer import token_authorizer
-
-from chalice import Blueprint
 
 
 metric_routes = Blueprint(__name__)

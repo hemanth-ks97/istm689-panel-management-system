@@ -1,3 +1,5 @@
+from chalice import Blueprint
+
 from chalicelib.database.db_provider import (
     get_panel_db,
     get_user_db,
@@ -12,8 +14,7 @@ from chalicelib.constants import (
     REQUEST_CONTENT_TYPE_JSON,
     ADMIN_ROLE,
 )
-from chalice import Blueprint
-import uuid
+from uuid import uuid4
 from chalice import (
     BadRequestError,
     Response,
@@ -63,7 +64,7 @@ def add_panel_info():
         incoming_json = panel_routes.current_request.json_body
 
         new_panel = {
-            "PanelID": str(uuid.uuid4()),
+            "PanelID": str(uuid4()),
             "NumberOfQuestions": incoming_json["numberOfQuestions"],
             "PanelName": incoming_json["panelName"],
             "Panelist": incoming_json["panelist"],

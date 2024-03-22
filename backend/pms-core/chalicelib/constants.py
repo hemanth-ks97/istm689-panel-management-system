@@ -13,4 +13,8 @@ ADMIN_ROLE = "admin"
 STUDENT_ROLE = "student"
 PANELIST_ROLE = "panelist"
 
+STUDENT_ROLE_AUTHORIZE_ROUTES = ["/student", "/student/*"]
+ADMIN_ROLE_AUTHORIZE_ROUTES = ["/admin", "/admin/*"]
+PANELIST_ROLE_AUTHORIZE_ROUTES = ["/panelist", "/panelist/*"]
+
 GOOGLE_RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"

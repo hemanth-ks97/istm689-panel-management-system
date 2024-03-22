@@ -5,10 +5,10 @@ from chalicelib.constants import (
     STUDENT_ROLE,
 )
 from chalice import Blueprint
-import uuid
+from uuid import uuid4
 import pandas as pd
 from io import StringIO
-from urllib.parse import quote
+
 
 from chalice import (
     BadRequestError,
@@ -66,7 +66,7 @@ def post_howdy_csv():
             if not user_exists:
                 # If the user does not exists, create a new one from scratch
                 new_user = dict()
-                new_user["UserID"] = str(uuid.uuid4())
+                new_user["UserID"] = str(uuid4())
                 new_user["EmailID"] = record["EmailID"]
                 new_user["FName"] = record["FName"]
                 new_user["LName"] = record["LName"]
@@ -136,7 +136,7 @@ def post_canvas_csv():
             if not user_exists:
                 # If the user does not exists, create a new one from scratch
                 new_user = dict()
-                new_user["UserID"] = str(uuid.uuid4())
+                new_user["UserID"] = str(uuid4())
                 new_user["UIN"] = int(record["UIN"])
                 new_user["Role"] = STUDENT_ROLE
                 new_user["Section"] = record["Section"]
