@@ -211,6 +211,39 @@ def distribute_tag_questions(id):
 
 
 @question_routes.route(
+    "/mark_similar",
+    methods=["POST"],
+    authorizer=token_authorizer,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def retrieve_distributed_questions():
+    # Request Format {"similar":["<id_1>", "<id_2>",..., "<id_n>"]}
+    # for every question_id in the list, append to its "similar-to" lsit in the database with every other question_id
+    try:
+        request = question_routes.current_request.json_body
+        similar_list = request["similar"]
+        similar_set = set(similar_list)
+
+        for id in similar_set:
+            question_obj = get_question_db().get_question(id)
+            if not question_obj:
+                raise BadRequestError("Invalid question_id", id)
+            other_ids = similar_set.copy()
+            other_ids.remove(id)
+            if "SimilarTo" in question_obj:
+                question_obj["SimilarTo"].extend(
+                    id for id in other_ids if id not in question_obj["SimilarTo"]
+                )
+            else:
+                question_obj["SimilarTo"] = list(other_ids)
+            get_question_db().add_question(question_obj)
+
+        return f"{len(similar_list)} questions marked as similar"
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@question_routes.route(
     "/panel/{panel_id}/group_similar",
     methods=["GET"],
     authorizer=token_authorizer,
