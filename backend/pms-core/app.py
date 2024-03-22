@@ -1,13 +1,5 @@
 """Main application file for the PMS Core API."""
 
-<<<<<<< HEAD
-import itertools
-from collections import Counter
-from collections import defaultdict
-
-import requests
-=======
->>>>>>> origin/dev
 import boto3
 from chalice import (
     Chalice,
