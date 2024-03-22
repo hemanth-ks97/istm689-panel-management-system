@@ -2,7 +2,7 @@ from chalicelib.config import (
     USER_TABLE_NAME,
     QUESTION_TABLE_NAME,
     PANEL_TABLE_NAME,
-    METRIC_TABLE_NAME
+    METRIC_TABLE_NAME,
 )
 from chalicelib.constants import (
     BOTO3_DYNAMODB_TYPE,
@@ -15,6 +15,7 @@ _USER_DB = None
 _QUESTION_DB = None
 _PANEL_DB = None
 _METRIC_DB = None
+
 
 def get_panel_db():
     global _PANEL_DB

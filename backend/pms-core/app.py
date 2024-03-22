@@ -1,11 +1,11 @@
 """Main application file for the PMS Core API."""
 
 import boto3
-import pandas as pd
 from chalice import (
     Chalice,
     CORSConfig,
 )
+
 from chalicelib.config import ENV, ALLOW_ORIGIN
 
 """
@@ -68,11 +68,10 @@ def dummy():
 
 @app.route("/")
 def index():
-    """Index route, only for testing purposes."""
+    """Index route. Dummy endpoint"""
 
     # Workaround to force chalice to generate all policies
     # It never executes
     if False:
         dummy()
     return {"API": app.app_name}
-

@@ -34,14 +34,6 @@ def token_authorizer(auth_request):
         # Extract the token from the authorization header
         token = auth_header[1]
 
-        # We can check the token issuer for more security
-        # token_issuer = get_token_issuer(token)
-        # base_url = "http://localhost:8000"
-
-        # # Only accepts own token. Not Google's token
-        # if token_issuer != base_url:
-        #     raise ValueError("Invalid Token Issuer")
-
         decoded_token = verify_token(token)
 
         if decoded_token is None:
@@ -50,7 +42,11 @@ def token_authorizer(auth_request):
         # At this point the token is valid and verified
         # Proceed to fetch user roles and match allowed routes
 
+        # Here we need to check for the role of the current user
+        # assign the allowed routes based on the role
+        # Should not check for it on the endpoint
         allowed_routes.append("*")
+
         principal_id = get_token_subject(token)
 
     except exceptions.GoogleAuthError as e:

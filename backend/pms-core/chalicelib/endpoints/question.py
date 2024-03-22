@@ -1,28 +1,23 @@
 from chalicelib.database.db_provider import get_panel_db, get_user_db, get_question_db
 from chalicelib.auth.token_authorizer import token_authorizer
-from chalicelib.constants import (
-    REQUEST_CONTENT_TYPE_JSON,
-    ADMIN_ROLE
-)
+from chalicelib.constants import REQUEST_CONTENT_TYPE_JSON, ADMIN_ROLE
 from chalice import Blueprint
 import itertools
 from collections import Counter
 import uuid
 import random
 from chalice import (
-
     NotFoundError,
     BadRequestError,
-
 )
 from chalicelib.constants import (
     REQUEST_CONTENT_TYPE_JSON,
     ADMIN_ROLE,
-
 )
 from datetime import datetime
 
 question_routes = Blueprint(__name__)
+
 
 @question_routes.route(
     "/question",
@@ -62,7 +57,8 @@ def add_new_question():
 
     except Exception as e:
         return {"error": str(e)}
-    
+
+
 @question_routes.route(
     "/question",
     methods=["GET"],
@@ -101,6 +97,7 @@ def get_question(id):
     if item is None:
         raise NotFoundError("Question (%s) not found" % id)
     return item
+
 
 @question_routes.route(
     "/panel/{id}/questions",
