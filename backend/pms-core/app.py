@@ -24,21 +24,22 @@ app.api.cors = CORSConfig(
 from chalicelib.endpoints.panel import panel_routes
 from chalicelib.endpoints.question import question_routes
 from chalicelib.endpoints.user import user_routes
-from chalicelib.endpoints.csv_file import csv_file_routes
-from chalicelib.endpoints.token import token_routes
-from chalicelib.endpoints.panel_login import panel_login_routes
+from chalicelib.endpoints.file import file_routes
+from chalicelib.endpoints.login import login_routes
 from chalicelib.endpoints.metric import metric_routes
 
 """
     Register the endpoints here after importing 
 """
-app.register_blueprint(panel_routes)
-app.register_blueprint(question_routes)
-app.register_blueprint(user_routes)
-app.register_blueprint(csv_file_routes)
-app.register_blueprint(token_routes)
-app.register_blueprint(panel_login_routes)
-app.register_blueprint(metric_routes)
+app.register_blueprint(
+    panel_routes,
+    url_prefix="/panel",
+)
+app.register_blueprint(question_routes, url_prefix="/question")
+app.register_blueprint(user_routes, url_prefix="/user")
+app.register_blueprint(file_routes, url_prefix="/file")
+app.register_blueprint(login_routes, url_prefix="/login")
+app.register_blueprint(metric_routes, url_prefix="/metric")
 
 
 def dummy():
