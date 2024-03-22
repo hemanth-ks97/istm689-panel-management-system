@@ -28,10 +28,11 @@ from chalicelib.endpoints.csv_file import csv_file_routes
 from chalicelib.endpoints.token import token_routes
 from chalicelib.endpoints.panel_login import panel_login_routes
 from chalicelib.endpoints.metric import metric_routes
-
+from chalicelib.auth.token_authorizer import auth_routes
 """
     Register the endpoints here after importing 
 """
+app.register_blueprint(auth_routes)
 app.register_blueprint(panel_routes)
 app.register_blueprint(question_routes)
 app.register_blueprint(user_routes)

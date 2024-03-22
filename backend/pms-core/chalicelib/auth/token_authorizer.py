@@ -1,7 +1,7 @@
-from app import app
 from chalicelib.config import (
     ALLOWED_AUTHORIZATION_TYPES,
 )
+from chalice import Blueprint
 from chalicelib.utils import (
     verify_token,
     get_token_subject,
@@ -11,8 +11,9 @@ from chalice import (
 )
 from google.auth import exceptions
 
+auth_routes = Blueprint(__name__)
 
-@app.authorizer()
+@auth_routes.authorizer()
 def token_authorizer(auth_request):
     """
     Lambda function to check authorization of incoming requests.
