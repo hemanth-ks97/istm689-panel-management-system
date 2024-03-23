@@ -32,7 +32,7 @@ const UploadFileCard = () => {
   const sendHowdyCSVToServer = (csvData) => {
     setIsApiWaiting(true);
     httpClient
-      .post("/howdycsv", csvData, {
+      .post("/file/howdy", csvData, {
         headers: {
           Authorization: `Bearer ${user?.token}`,
           "Content-Type": "text/plain",
@@ -54,7 +54,7 @@ const UploadFileCard = () => {
   const sendCanvasCSVToServer = (csvData) => {
     setIsApiWaiting(true);
     httpClient
-      .post("/canvascsv", csvData, {
+      .post("/file/canvas", csvData, {
         headers: {
           Authorization: `Bearer ${user?.token}`,
           "Content-Type": "text/plain",

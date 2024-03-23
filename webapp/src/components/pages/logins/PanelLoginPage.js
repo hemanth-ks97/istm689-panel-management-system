@@ -63,7 +63,7 @@ const PanelLogin = () => {
     }
 
     httpClient
-      .post("login/panel", {
+      .post("/login/panel", {
         token: reCaptchaToken,
         email,
         callerUrl: window?.location?.href,
