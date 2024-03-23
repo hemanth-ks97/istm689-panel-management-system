@@ -590,21 +590,6 @@ def get_questions():
 
 
 @app.route(
-    "/question/{id}",
-    methods=["GET"],
-    authorizer=authorizers,
-)
-def get_question(id):
-    """
-    Question route, testing purposes.
-    """
-    item = get_question_db().get_question(question_id=id)
-    if item is None:
-        raise NotFoundError("Question (%s) not found" % id)
-    return item
-
-
-@app.route(
     "/question",
     methods=["POST"],
     authorizer=authorizers,
@@ -632,12 +617,91 @@ def post_question():
             "PanelID": incoming_json["panelId"],
             "QuestionText": incoming_json["question"],
             "CreatedAt": datetime.now().isoformat(timespec="seconds"),
+            "DislikedBy": [],
+            "LikedBy": [],
+            "NeutralizedBy": [],
+            "DislikeScore": -1,
+            "FinalScore": -1,
+            "LikeScore": -1,
+            "NeutralScore": -1,
+            "PresentationBonusScore": -1,
+            "VotingStageBonusScore": -1,
         }
         get_question_db().add_question(new_question)
         # Returns the result of put_item, kind of metadata and stuff
         return {
             "message": "Question successfully inserted in the DB",
             "QuestionID": new_question["QuestionID"],
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.route(
+    "/question/{id}",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_question(id):
+    """
+    Question route, testing purposes.
+    """
+    item = get_question_db().get_question(question_id=id)
+    if item is None:
+        raise NotFoundError("Question (%s) not found" % id)
+    return item
+
+
+@app.route(
+    "/question/batch",
+    methods=["POST"],
+    authorizer=authorizers,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def post_question_batch():
+    try:
+        incoming_json = app.current_request.json_body
+        # Check for all required fields
+        if "panelId" not in incoming_json:
+            raise BadRequestError("Key 'panelId' not found in incoming request")
+        if "questions" not in incoming_json:
+            raise BadRequestError("Key 'questions' not found in incoming request")
+        if type(incoming_json["questions"]) is list:
+            raise BadRequestError("Key 'questions' should be a list")
+
+        user_id = app.current_request.context["authorizer"]["principalId"]
+
+        # Validate if panel still acepts questions!!
+
+        raw_questions = incoming_json["questions"]
+
+        new_questions = []
+        for question in raw_questions:
+            # Build Question object for database
+            new_question = {
+                "QuestionID": str(uuid4()),
+                "UserID": user_id,
+                "PanelID": incoming_json["panelId"],
+                "QuestionText": question,
+                "CreatedAt": datetime.now().isoformat(timespec="seconds"),
+                "DislikedBy": [],
+                "LikedBy": [],
+                "NeutralizedBy": [],
+                "DislikeScore": -1,
+                "FinalScore": -1,
+                "LikeScore": -1,
+                "NeutralScore": -1,
+                "PresentationBonusScore": -1,
+                "VotingStageBonusScore": -1,
+            }
+
+            new_questions.append(new_question)
+
+        get_question_db().add_questions_batch(new_questions)
+        # Returns the result of put_item, kind of metadata and stuff
+        return {
+            "message": "Questions successfully inserted in the DB",
         }
 
     except Exception as e:

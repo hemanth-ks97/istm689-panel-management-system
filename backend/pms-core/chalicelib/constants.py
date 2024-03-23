@@ -13,7 +13,7 @@ ADMIN_ROLE = "admin"
 STUDENT_ROLE = "student"
 PANELIST_ROLE = "panelist"
 
-STUDENT_ROLE_AUTHORIZE_ROUTES = ["/panel", "/panel/*", "/question"]
+STUDENT_ROLE_AUTHORIZE_ROUTES = ["/panel", "/panel/*", "/question/batch"]
 
 
 ADMIN_ROLE_AUTHORIZE_ROUTES = [
