@@ -12,9 +12,9 @@
       "lambda_arn": "arn:aws:lambda:us-east-1:767397884806:function:pms-core-dev"
     },
     {
-      "name": "token_authorizer",
+      "name": "authorizers",
       "resource_type": "lambda_function",
-      "lambda_arn": "arn:aws:lambda:us-east-1:767397884806:function:pms-core-dev-token_authorizer"
+      "lambda_arn": "arn:aws:lambda:us-east-1:767397884806:function:pms-core-dev-authorizers"
     },
     {
       "name": "rest_api",
