@@ -243,7 +243,7 @@ def post_login_google():
         )
 
         # Register last login
-        user["LastLogin"] = datetime.now().isoformat(timespec="seconds")
+        user["LastLogin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
         get_user_db().update_user(user)
     except Exception:
         # Not always true but this is a Chalice Exception
@@ -328,7 +328,7 @@ def post_login_panel():
     )
 
     # Register last login
-    user["LastLogin"] = datetime.now().isoformat(timespec="seconds")
+    user["LastLogin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     get_user_db().update_user(user)
 
     return response
@@ -379,8 +379,12 @@ def post_process_howdy_file():
                 new_user["LName"] = record["LName"]
                 new_user["UIN"] = record["UIN"]
                 new_user["Role"] = STUDENT_ROLE
-                new_user["CreatedAt"] = datetime.now().isoformat(timespec="seconds")
-                new_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
+                new_user["CreatedAt"] = datetime.now(timezone.utc).isoformat(
+                    timespec="seconds"
+                )
+                new_user["UpdatedAt"] = datetime.now(timezone.utc).isoformat(
+                    timespec="seconds"
+                )
                 get_user_db().add_user(new_user)
             else:
                 # The user already exists, should update some fields only
@@ -388,7 +392,9 @@ def post_process_howdy_file():
                 updated_user["EmailID"] = record["EmailID"]
                 updated_user["FName"] = record["FName"]
                 updated_user["LName"] = record["LName"]
-                updated_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
+                updated_user["UpdatedAt"] = datetime.now(timezone.utc).isoformat(
+                    timespec="seconds"
+                )
                 get_user_db().update_user(updated_user)
         return Response(
             body={
@@ -442,15 +448,21 @@ def post_process_canvas_file():
                 new_user["Role"] = STUDENT_ROLE
                 new_user["Section"] = record["Section"]
                 new_user["CanvasID"] = int(record["CanvasID"])
-                new_user["CreatedAt"] = datetime.now().isoformat(timespec="seconds")
-                new_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
+                new_user["CreatedAt"] = datetime.now(timezone.utc).isoformat(
+                    timespec="seconds"
+                )
+                new_user["UpdatedAt"] = datetime.now(timezone.utc).isoformat(
+                    timespec="seconds"
+                )
                 get_user_db().add_user(new_user)
             else:
                 # The user already exists, should update some fields only
                 updated_user = user_exists[0]
                 updated_user["Section"] = record["Section"]
                 updated_user["CanvasID"] = int(record["CanvasID"])
-                updated_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
+                updated_user["UpdatedAt"] = datetime.now(timezone.utc).isoformat(
+                    timespec="seconds"
+                )
                 get_user_db().update_user(updated_user)
         return Response(
             body={
@@ -506,7 +518,7 @@ def post_user():
         # Build User object for database
         new_user = {
             "UserID": str(uuid4()),
-            "CreatedAt": datetime.now().isoformat(timespec="seconds"),
+            "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "Name": incoming_json["name"],
             "LastName": incoming_json["lastname"],
             "Email": incoming_json["email"],
@@ -616,7 +628,7 @@ def post_question():
             "UserID": user_id,
             "PanelID": incoming_json["panelId"],
             "QuestionText": incoming_json["question"],
-            "CreatedAt": datetime.now().isoformat(timespec="seconds"),
+            "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "DislikedBy": [],
             "LikedBy": [],
             "NeutralizedBy": [],
@@ -671,8 +683,23 @@ def post_question_batch():
             raise BadRequestError("Key 'questions' should be a list")
 
         user_id = app.current_request.context["authorizer"]["principalId"]
+        panel_id = incoming_json["panelId"]
 
         # Validate if panel still acepts questions!!
+
+        panel = get_panel_db().get_panel(panel_id)
+        if panel is None:
+            raise NotFoundError("Panel (%s) not found" % panel_id)
+
+        # Validate if panel still acepts questions!!
+        present = datetime.now(timezone.utc)
+        questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
+
+        print(present)
+        print(questions_deadline)
+
+        if present > questions_deadline:
+            raise BadRequestError("Not anymore")
 
         raw_questions = incoming_json["questions"]
 
@@ -684,7 +711,7 @@ def post_question_batch():
                 "UserID": user_id,
                 "PanelID": incoming_json["panelId"],
                 "QuestionText": question,
-                "CreatedAt": datetime.now().isoformat(timespec="seconds"),
+                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 "DislikedBy": [],
                 "LikedBy": [],
                 "NeutralizedBy": [],
@@ -757,7 +784,7 @@ def post_panel():
             "PanelDesc": incoming_json["panelDesc"],
             "PanelStartDate": incoming_json["panelStartDate"],
             "Visibility": incoming_json["visibility"],
-            "CreatedAt": datetime.now().isoformat(timespec="seconds"),
+            "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         }
         get_panel_db().add_panel(new_panel)
 
