@@ -667,7 +667,7 @@ def post_question_batch():
             raise BadRequestError("Key 'panelId' not found in incoming request")
         if "questions" not in incoming_json:
             raise BadRequestError("Key 'questions' not found in incoming request")
-        if type(incoming_json["questions"]) is list:
+        if type(incoming_json["questions"]) is not list:
             raise BadRequestError("Key 'questions' should be a list")
 
         user_id = app.current_request.context["authorizer"]["principalId"]
