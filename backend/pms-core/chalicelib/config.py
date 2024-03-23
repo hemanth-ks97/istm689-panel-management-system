@@ -3,6 +3,7 @@
 from os import environ
 from .constants import AUTH_BEARER_TYPE, AUTH_BASIC_TYPE
 
+
 # Fetches form enviroment variables or sets default local development values
 ENV = environ.get("ENV", "local")
 GOOGLE_AUTH_CLIENT_ID = environ.get(

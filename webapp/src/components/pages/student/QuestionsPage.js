@@ -48,25 +48,23 @@ const QuestionsPage = () => {
   };
 
   const handleOnSubmit = () => {
-    questions.forEach((question, index) => {
-      httpClient
-        .post(
-          `/question`,
-          {
-            panelId,
-            question,
-          },
-          { headers }
-        )
-        .then((response) => {
-          enqueueSnackbar(response?.data?.message, { variant: "success" });
-        })
-        .catch((error) => {
-          enqueueSnackbar(error.message, { variant: "error" });
+    let data = {
+      panelId,
+      questions,
+    };
+    httpClient
+      .post("/question/batch", data, { headers })
+      .then((response) => {
+        enqueueSnackbar(response?.data?.message || "Some error", {
+          variant: "success",
         });
-    });
-    // Reset questions after submitting
-    setQuestions(Array(noOfQuestions).fill(""));
+        // Reset questions after submitting
+        setQuestions(Array(noOfQuestions).fill(""));
+      })
+      .catch((error) => {
+        console.log(error);
+        enqueueSnackbar(error.message, { variant: "error" });
+      });
   };
 
   let items;
@@ -81,33 +79,38 @@ const QuestionsPage = () => {
 
   if (pathname.endsWith("question")) {
     items = (
-      <Box flex={1} id={'Box'}>
+      <Box flex={1} id={"Box"}>
         <Typography
-        variant="h5"
-        mt={3}
-        textAlign="center"
-        sx={{ fontFamily: "monospace", fontWeight:"bold"}}>
+          variant="h5"
+          mt={3}
+          textAlign="center"
+          sx={{ fontFamily: "monospace", fontWeight: "bold" }}
+        >
           Submit your Questions
         </Typography>
         {questions.map((q, index) => (
-          
           <div>
-          <TextField
-            key={index}
-            id={`question${index}`}
-            label={`Question ${index + 1}`}
-            placeholder="Please write your question"
-            multiline
-            variant="filled"
-            value={q}
-            onChange={(e) => handleQuestionChange(index, e.target.value)}
-            fullWidth 
-            sx={{ flex:1, m: 2, width: '95%'}}
-            margin="normal"
-          />
+            <TextField
+              key={index}
+              id={`question${index}`}
+              label={`Question ${index + 1}`}
+              placeholder="Please write your question"
+              multiline
+              variant="filled"
+              value={q}
+              onChange={(e) => handleQuestionChange(index, e.target.value)}
+              fullWidth
+              sx={{ flex: 1, m: 2, width: "95%" }}
+              margin="normal"
+            />
           </div>
         ))}
-        <Button sx={{flex:1, m:2, marginRight:'10%'}}  variant="contained" color="primary" onClick={handleOnSubmit}>
+        <Button
+          sx={{ flex: 1, m: 2, marginRight: "10%" }}
+          variant="contained"
+          color="primary"
+          onClick={handleOnSubmit}
+        >
           Submit
         </Button>{" "}
       </Box>

@@ -243,7 +243,7 @@ def post_login_google():
         )
 
         # Register last login
-        user["LastLogin"] = datetime.now().isoformat(timespec="seconds")
+        user["LastLogin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
         get_user_db().update_user(user)
     except Exception:
         # Not always true but this is a Chalice Exception
@@ -328,7 +328,7 @@ def post_login_panel():
     )
 
     # Register last login
-    user["LastLogin"] = datetime.now().isoformat(timespec="seconds")
+    user["LastLogin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     get_user_db().update_user(user)
 
     return response
@@ -379,8 +379,12 @@ def post_process_howdy_file():
                 new_user["LName"] = record["LName"]
                 new_user["UIN"] = record["UIN"]
                 new_user["Role"] = STUDENT_ROLE
-                new_user["CreatedAt"] = datetime.now().isoformat(timespec="seconds")
-                new_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
+                new_user["CreatedAt"] = datetime.now(timezone.utc).isoformat(
+                    timespec="seconds"
+                )
+                new_user["UpdatedAt"] = datetime.now(timezone.utc).isoformat(
+                    timespec="seconds"
+                )
                 get_user_db().add_user(new_user)
             else:
                 # The user already exists, should update some fields only
@@ -388,7 +392,9 @@ def post_process_howdy_file():
                 updated_user["EmailID"] = record["EmailID"]
                 updated_user["FName"] = record["FName"]
                 updated_user["LName"] = record["LName"]
-                updated_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
+                updated_user["UpdatedAt"] = datetime.now(timezone.utc).isoformat(
+                    timespec="seconds"
+                )
                 get_user_db().update_user(updated_user)
         return Response(
             body={
@@ -442,15 +448,21 @@ def post_process_canvas_file():
                 new_user["Role"] = STUDENT_ROLE
                 new_user["Section"] = record["Section"]
                 new_user["CanvasID"] = int(record["CanvasID"])
-                new_user["CreatedAt"] = datetime.now().isoformat(timespec="seconds")
-                new_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
+                new_user["CreatedAt"] = datetime.now(timezone.utc).isoformat(
+                    timespec="seconds"
+                )
+                new_user["UpdatedAt"] = datetime.now(timezone.utc).isoformat(
+                    timespec="seconds"
+                )
                 get_user_db().add_user(new_user)
             else:
                 # The user already exists, should update some fields only
                 updated_user = user_exists[0]
                 updated_user["Section"] = record["Section"]
                 updated_user["CanvasID"] = int(record["CanvasID"])
-                updated_user["UpdatedAt"] = datetime.now().isoformat(timespec="seconds")
+                updated_user["UpdatedAt"] = datetime.now(timezone.utc).isoformat(
+                    timespec="seconds"
+                )
                 get_user_db().update_user(updated_user)
         return Response(
             body={
@@ -506,7 +518,7 @@ def post_user():
         # Build User object for database
         new_user = {
             "UserID": str(uuid4()),
-            "CreatedAt": datetime.now().isoformat(timespec="seconds"),
+            "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "Name": incoming_json["name"],
             "LastName": incoming_json["lastname"],
             "Email": incoming_json["email"],
@@ -590,21 +602,6 @@ def get_questions():
 
 
 @app.route(
-    "/question/{id}",
-    methods=["GET"],
-    authorizer=authorizers,
-)
-def get_question(id):
-    """
-    Question route, testing purposes.
-    """
-    item = get_question_db().get_question(question_id=id)
-    if item is None:
-        raise NotFoundError("Question (%s) not found" % id)
-    return item
-
-
-@app.route(
     "/question",
     methods=["POST"],
     authorizer=authorizers,
@@ -631,13 +628,107 @@ def post_question():
             "UserID": user_id,
             "PanelID": incoming_json["panelId"],
             "QuestionText": incoming_json["question"],
-            "CreatedAt": datetime.now().isoformat(timespec="seconds"),
+            "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "DislikedBy": [],
+            "LikedBy": [],
+            "NeutralizedBy": [],
+            "DislikeScore": -1,
+            "FinalScore": -1,
+            "LikeScore": -1,
+            "NeutralScore": -1,
+            "PresentationBonusScore": -1,
+            "VotingStageBonusScore": -1,
         }
         get_question_db().add_question(new_question)
         # Returns the result of put_item, kind of metadata and stuff
         return {
             "message": "Question successfully inserted in the DB",
             "QuestionID": new_question["QuestionID"],
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.route(
+    "/question/{id}",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_question(id):
+    """
+    Question route, testing purposes.
+    """
+    item = get_question_db().get_question(question_id=id)
+    if item is None:
+        raise NotFoundError("Question (%s) not found" % id)
+    return item
+
+
+@app.route(
+    "/question/batch",
+    methods=["POST"],
+    authorizer=authorizers,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def post_question_batch():
+    try:
+        incoming_json = app.current_request.json_body
+        # Check for all required fields
+        if "panelId" not in incoming_json:
+            raise BadRequestError("Key 'panelId' not found in incoming request")
+        if "questions" not in incoming_json:
+            raise BadRequestError("Key 'questions' not found in incoming request")
+        if type(incoming_json["questions"]) is not list:
+            raise BadRequestError("Key 'questions' should be a list")
+
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        panel_id = incoming_json["panelId"]
+
+        # Validate if panel still acepts questions!!
+
+        panel = get_panel_db().get_panel(panel_id)
+        if panel is None:
+            raise NotFoundError("Panel (%s) not found" % panel_id)
+
+        # Validate if panel still acepts questions!!
+        present = datetime.now(timezone.utc)
+        questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
+
+        print(present)
+        print(questions_deadline)
+
+        if present > questions_deadline:
+            raise BadRequestError("Not anymore")
+
+        raw_questions = incoming_json["questions"]
+
+        new_questions = []
+        for question in raw_questions:
+            # Build Question object for database
+            new_question = {
+                "QuestionID": str(uuid4()),
+                "UserID": user_id,
+                "PanelID": incoming_json["panelId"],
+                "QuestionText": question,
+                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "DislikedBy": [],
+                "LikedBy": [],
+                "NeutralizedBy": [],
+                "DislikeScore": -1,
+                "FinalScore": -1,
+                "LikeScore": -1,
+                "NeutralScore": -1,
+                "PresentationBonusScore": -1,
+                "VotingStageBonusScore": -1,
+            }
+
+            new_questions.append(new_question)
+
+        get_question_db().add_questions_batch(new_questions)
+        # Returns the result of put_item, kind of metadata and stuff
+        return {
+            "message": "Questions successfully inserted in the DB",
         }
 
     except Exception as e:
@@ -693,7 +784,7 @@ def post_panel():
             "PanelDesc": incoming_json["panelDesc"],
             "PanelStartDate": incoming_json["panelStartDate"],
             "Visibility": incoming_json["visibility"],
-            "CreatedAt": datetime.now().isoformat(timespec="seconds"),
+            "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         }
         get_panel_db().add_panel(new_panel)
 

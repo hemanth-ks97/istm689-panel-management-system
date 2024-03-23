@@ -41,6 +41,11 @@ class DynamoQuestionDB(QuestionDB):
     def add_question(self, question):
         self._table.put_item(Item=question)
 
+    def add_questions_batch(self, questions):
+        with self._table.batch_writer() as batch:
+            for question in questions:
+                batch.put_item(Item=question)
+
     def get_question(self, question_id):
         response = self._table.get_item(
             Key={
