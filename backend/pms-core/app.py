@@ -7,7 +7,7 @@ import requests
 import boto3
 from uuid import uuid4
 import pandas as pd
-import random
+from random import shuffle
 
 from io import StringIO
 
@@ -39,6 +39,9 @@ from chalicelib.constants import (
     ADMIN_ROLE,
     STUDENT_ROLE,
     PANELIST_ROLE,
+    ADMIN_ROLE_AUTHORIZE_ROUTES,
+    STUDENT_ROLE_AUTHORIZE_ROUTES,
+    PANELIST_ROLE_AUTHORIZE_ROUTES,
 )
 from chalicelib import db
 from chalicelib.utils import (
@@ -170,11 +173,18 @@ def authorizers(auth_request):
         if decoded_token is None:
             raise ValueError("Invalid or Expired Token")
 
+        principal_id = get_token_subject(token)
+        user_role = get_user_db().get_user_role(principal_id)
+
+        if user_role == ADMIN_ROLE:
+            allowed_routes = ADMIN_ROLE_AUTHORIZE_ROUTES
+        elif user_role == STUDENT_ROLE:
+            allowed_routes = STUDENT_ROLE_AUTHORIZE_ROUTES
+        elif user_role == PANELIST_ROLE:
+            allowed_routes = PANELIST_ROLE_AUTHORIZE_ROUTES
+
         # At this point the token is valid and verified
         # Proceed to fetch user roles and match allowed routes
-
-        allowed_routes.append("*")
-        principal_id = get_token_subject(token)
 
     except exceptions.GoogleAuthError as e:
         # Token is invalid
@@ -337,12 +347,6 @@ def post_login_panel():
 )
 def post_process_howdy_file():
     try:
-        user_id = app.current_request.context["authorizer"]["principalId"]
-        user_role = get_user_db().get_user_role(user_id)
-
-        if user_role != ADMIN_ROLE:
-            raise BadRequestError("Only admin can perform this action")
-
         # Access the CSV file from the request body
         csv_data = app.current_request.raw_body.decode("utf-8")
 
@@ -405,12 +409,6 @@ def post_process_howdy_file():
 )
 def post_process_canvas_file():
     try:
-        user_id = app.current_request.context["authorizer"]["principalId"]
-        user_role = get_user_db().get_user_role(user_id)
-
-        if user_role != ADMIN_ROLE:
-            raise BadRequestError("Only admin can perform this action")
-
         # Access the CSV file from the request body
         csv_data = app.current_request.raw_body.decode("utf-8")
 
@@ -479,12 +477,6 @@ def get_users():
     """
 
     try:
-        user_id = app.current_request.context["authorizer"]["principalId"]
-        user_role = get_user_db().get_user_role(user_id)
-
-        if user_role != ADMIN_ROLE:
-            raise BadRequestError("Only admin can perform this action")
-
         users = get_user_db().list_users()
     except Exception as e:
         return {"error": str(e)}
@@ -499,12 +491,6 @@ def get_users():
 )
 def post_user():
     try:
-        user_id = app.current_request.context["authorizer"]["principalId"]
-        user_role = get_user_db().get_user_role(user_id)
-
-        if user_role != ADMIN_ROLE:
-            raise BadRequestError("Only admin can perform this action")
-
         incoming_json = app.current_request.json_body
 
         # Check for all required fields
@@ -514,6 +500,8 @@ def post_user():
             raise BadRequestError("Key 'lastname' not found in incoming request")
         if "email" not in incoming_json:
             raise BadRequestError("Key 'email' not found in incoming request")
+        if "role" not in incoming_json:
+            raise BadRequestError("Key 'role' not found in incoming request")
 
         # Build User object for database
         new_user = {
@@ -522,6 +510,7 @@ def post_user():
             "Name": incoming_json["name"],
             "LastName": incoming_json["lastname"],
             "Email": incoming_json["email"],
+            "Role": incoming_json["role"],
         }
 
         get_user_db().add_user(new_user)
@@ -529,6 +518,21 @@ def post_user():
 
     except Exception as e:
         return {"error": str(e)}
+
+
+@app.route(
+    "/user/me",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_my_user():
+
+    try:
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        user = get_user_db().get_user(user_id=user_id)
+    except Exception as e:
+        return {"error": str(e)}
+    return user
 
 
 @app.route(
@@ -579,13 +583,6 @@ def get_questions():
     """
 
     try:
-        user_id = app.current_request.context["authorizer"]["principalId"]
-
-        user_role = get_user_db().get_user_role(user_id)
-
-        if user_role != ADMIN_ROLE:
-            raise BadRequestError("Only admin can perform this action")
-
         questions = get_question_db().list_questions()
     except Exception as e:
         return {"error": str(e)}
@@ -681,12 +678,6 @@ def get_panels():
 )
 def post_panel():
     try:
-        user_id = app.current_request.context["authorizer"]["principalId"]
-        user_role = get_user_db().get_user_role(user_id)
-
-        if user_role != ADMIN_ROLE:
-            raise BadRequestError("Only admin can perform this action")
-
         incoming_json = app.current_request.json_body
 
         new_panel = {
@@ -745,7 +736,7 @@ def get_panel(id):
 def get_panel_distribute(id):
     try:
         # Get list of all questions for that panel from the usersDB
-        questions = get_questions_by_panel(id)
+        questions = get_question_db().get_questions_by_panel(id)
 
         # Creating map to store questionID and corresponding userID
         question_id_user_id_map = {}
@@ -791,7 +782,7 @@ def get_panel_distribute(id):
             distributed_question_id_slots.extend(top_questions)
 
         # Shuffle the question slots to randomize the order
-        random.shuffle(distributed_question_id_slots)
+        shuffle(distributed_question_id_slots)
 
         # Create a collection to store questionSubLists
         student_id_question_ids_map = {}
