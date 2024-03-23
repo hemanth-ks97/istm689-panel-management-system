@@ -4,6 +4,8 @@ from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
+from .constants import GOOGLE_ISSUER
+
 from .config import (
     JWT_SECRET,
     GOOGLE_AUTH_CLIENT_ID,
@@ -45,7 +47,7 @@ def verify_token(token):
     match token_issuer:
         case s if s == JWT_ISSUER:
             decoded_token = decode_and_validate_custom_token(token)
-        case "https://accounts.google.com":
+        case s if s == GOOGLE_ISSUER:
             # Decode Google Token
             decoded_token = decode_and_validate_google_token(token)
         case _:
