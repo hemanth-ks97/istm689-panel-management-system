@@ -978,6 +978,18 @@ def get_panel_metrics(id):
 
     return metrics
 
+# DFS helper function
+def dfs(node, visited, adj_list):
+    if node in visited:
+        return (False, None)
+
+    visited.add(node)
+    cluster = [node]
+    for neighbor in adj_list[node]:
+        if neighbor not in visited:
+            cluster.extend(dfs(neighbor, visited, adj_list)[1])
+
+    return (True, cluster)
 
 @app.route(
     "/panel/{id}/questions/group_similar",
@@ -994,24 +1006,11 @@ def get_panel_(id):
             if "SimilarTo" in question_obj:
                 adj_list[question_obj["QuestionID"]] = question_obj["SimilarTo"]
 
-        # DFS helper function
-        def dfs(node, visited):
-            if node in visited:
-                return (False, None)
-
-            visited.add(node)
-            cluster = [node]
-            for neighbor in adj_list[node]:
-                if neighbor not in visited:
-                    cluster.extend(dfs(neighbor, visited)[1])
-
-            return (True, cluster)
-
         # Iterate through all questions and perform DFS
         similar_culsters = []
         visited = set()
         for question in questions:
-            is_new, cluster = dfs(question["QuestionID"], visited)
+            is_new, cluster = dfs(question["QuestionID"], visited, adj_list)
             if is_new:
                 similar_culsters.append(cluster)
 
