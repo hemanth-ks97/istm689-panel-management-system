@@ -125,3 +125,17 @@ def create_token(user_id, email_id, name, picture, role):
     )
 
     return token
+
+
+# DFS helper function for grouping similar questions
+def dfs(node, visited, adj_list):
+    if node in visited:
+        return (False, None)
+
+    visited.add(node)
+    cluster = [node]
+    for neighbor in adj_list[node]:
+        if neighbor not in visited:
+            cluster.extend(dfs(neighbor, visited, adj_list)[1])
+
+    return (True, cluster)

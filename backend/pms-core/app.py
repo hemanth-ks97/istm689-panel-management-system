@@ -1,7 +1,7 @@
 """Main application file for the PMS Core API."""
 
 from itertools import chain
-from collections import Counter
+from collections import Counter, defaultdict
 
 import requests
 import boto3
@@ -48,6 +48,7 @@ from chalicelib.utils import (
     verify_token,
     get_token_subject,
     create_token,
+    dfs,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -735,6 +736,39 @@ def post_question_batch():
         return {"error": str(e)}
 
 
+@app.route(
+    "/question/mark_similar",
+    methods=["POST"],
+    authorizer=authorizers,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def post_question_mark_similar():
+    # Request Format {"similar":["<id_1>", "<id_2>",..., "<id_n>"]}
+    # for every question_id in the list, append to its "similar-to" lsit in the database with every other question_id
+    try:
+        request = app.current_request.json_body
+        similar_list = request["similar"]
+        similar_set = set(similar_list)
+
+        for id in similar_set:
+            question_obj = get_question_db().get_question(id)
+            if not question_obj:
+                raise BadRequestError("Invalid question_id", id)
+            other_ids = similar_set.copy()
+            other_ids.remove(id)
+            if "SimilarTo" in question_obj:
+                question_obj["SimilarTo"].extend(
+                    id for id in other_ids if id not in question_obj["SimilarTo"]
+                )
+            else:
+                question_obj["SimilarTo"] = list(other_ids)
+            get_question_db().add_question(question_obj)
+
+        return f"{len(similar_list)} questions marked as similar"
+    except Exception as e:
+        return {"error": str(e)}
+
+
 """PANEL ENDPOINTS"""
 
 
@@ -944,6 +978,37 @@ def get_panel_metrics(id):
         return {"error": str(e)}
 
     return metrics
+
+
+@app.route(
+    "/panel/{id}/questions/group_similar",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_panel_(id):
+    try:
+        questions = get_question_db().get_questions_by_panel(id)
+
+        # Build adjacency list {<q_id> : [q_id1, q_id2, ..., q_idn]} for every q_id present in panel_id
+        adj_list = defaultdict(list)
+        for question_obj in questions:
+            if "SimilarTo" in question_obj:
+                adj_list[question_obj["QuestionID"]] = question_obj["SimilarTo"]
+
+        # Iterate through all questions and perform DFS
+        similar_culsters = []
+        visited = set()
+        for question in questions:
+            is_new, cluster = dfs(question["QuestionID"], visited, adj_list)
+            if is_new:
+                similar_culsters.append(cluster)
+
+        # TODO - Store similar_culsters "somewhere"
+
+        return similar_culsters
+
+    except Exception as e:
+        return {"error": str(e)}
 
 
 """METRIC ENDPOINTS"""
