@@ -48,6 +48,7 @@ from chalicelib.utils import (
     verify_token,
     get_token_subject,
     create_token,
+    dfs,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -978,18 +979,6 @@ def get_panel_metrics(id):
 
     return metrics
 
-# DFS helper function
-def dfs(node, visited, adj_list):
-    if node in visited:
-        return (False, None)
-
-    visited.add(node)
-    cluster = [node]
-    for neighbor in adj_list[node]:
-        if neighbor not in visited:
-            cluster.extend(dfs(neighbor, visited, adj_list)[1])
-
-    return (True, cluster)
 
 @app.route(
     "/panel/{id}/questions/group_similar",
