@@ -737,6 +737,66 @@ def post_question_batch():
 
 
 @app.route(
+    "/question/like",
+    methods=["POST"],
+    authorizer=authorizers,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def like_question():
+    user_id = app.current_request.context["authorizer"]["principalId"]
+    try:
+        request =  app.current_request.json_body
+        liked_list = request["liked"]
+        
+        questions = []
+        for q_id in liked_list:
+            questions.append(get_question_db().get_question(q_id))
+        
+        for question in questions:
+            if "LikedBy" in question and user_id not in question["LikedBy"]:
+                    question["LikedBy"].extend(user_id)
+                    get_question_db().add_question(question)
+            else:
+                question["LikedBy"] = [user_id]
+                get_question_db().add_question(question)
+        
+        return f"{len(liked_list)} questions liked!"
+
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.route(
+    "/question/flag",
+    methods=["POST"],
+    authorizer=authorizers,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def flag_question():
+    user_id = app.current_request.context["authorizer"]["principalId"]
+    try:
+        request =  app.current_request.json_body
+        liked_list = request["flagged"]
+        
+        questions = []
+        for q_id in liked_list:
+            questions.append(get_question_db().get_question(q_id))
+        
+        for question in questions:
+            if "FlaggedBy" in question and user_id not in question["FlaggedBy"]:
+                    question["FlaggedBy"].extend(user_id)
+                    get_question_db().add_question(question)
+            else:
+                question["FlaggedBy"] = [user_id]
+                get_question_db().add_question(question)
+        
+        return f"{len(liked_list)} questions flagged as inappropriate!"
+
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.route(
     "/question/mark_similar",
     methods=["POST"],
     authorizer=authorizers,
@@ -744,7 +804,7 @@ def post_question_batch():
 )
 def post_question_mark_similar():
     # Request Format {"similar":["<id_1>", "<id_2>",..., "<id_n>"]}
-    # for every question_id in the list, append to its "similar-to" lsit in the database with every other question_id
+    # for every question_id in the list, append to its "similar-to" list in the database with every other question_id
     try:
         request = app.current_request.json_body
         similar_list = request["similar"]
@@ -985,7 +1045,7 @@ def get_panel_metrics(id):
     methods=["GET"],
     authorizer=authorizers,
 )
-def get_panel_(id):
+def get_panel_group_similar_questions(id):
     try:
         questions = get_question_db().get_questions_by_panel(id)
 
