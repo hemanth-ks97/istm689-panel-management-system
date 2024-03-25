@@ -737,15 +737,20 @@ def post_question_batch():
 
 
 @app.route(
-    "/question/like",
+    "/question/like/batch",
     methods=["POST"],
     authorizer=authorizers,
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def like_question():
-    user_id = app.current_request.context["authorizer"]["principalId"]
     try:
+        user_id = app.current_request.context["authorizer"]["principalId"]
         request =  app.current_request.json_body
+        if "liked" not in request:
+            raise BadRequestError("Key 'liked' not found in incoming request")
+        if type(request["liked"]) is not list:
+            raise BadRequestError("Key 'liked' should be a list")
+        
         liked_list = request["liked"]
         
         questions = []
@@ -754,7 +759,10 @@ def like_question():
         
         for question in questions:
             if "LikedBy" in question and user_id not in question["LikedBy"]:
-                    question["LikedBy"].extend(user_id)
+                    if len(question["LikedBy"]) > 0:
+                        question["LikedBy"].extend(user_id)
+                    else:
+                        question["LikedBy"].append(user_id)
                     get_question_db().add_question(question)
             else:
                 question["LikedBy"] = [user_id]
@@ -767,15 +775,20 @@ def like_question():
 
 
 @app.route(
-    "/question/flag",
+    "/question/flag/batch",
     methods=["POST"],
     authorizer=authorizers,
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def flag_question():
-    user_id = app.current_request.context["authorizer"]["principalId"]
     try:
+        user_id = app.current_request.context["authorizer"]["principalId"]
         request =  app.current_request.json_body
+        if "flagged" not in request:
+            raise BadRequestError("Key 'flagged' not found in incoming request")
+        if type(request["flagged"]) is not list:
+            raise BadRequestError("Key 'flagged' should be a list")
+        
         liked_list = request["flagged"]
         
         questions = []
@@ -784,7 +797,10 @@ def flag_question():
         
         for question in questions:
             if "FlaggedBy" in question and user_id not in question["FlaggedBy"]:
-                    question["FlaggedBy"].extend(user_id)
+                    if len(question["FlaggedBy"]) > 0:
+                        question["FlaggedBy"].extend(user_id)
+                    else:
+                        question["FlaggedBy"].append(user_id)
                     get_question_db().add_question(question)
             else:
                 question["FlaggedBy"] = [user_id]

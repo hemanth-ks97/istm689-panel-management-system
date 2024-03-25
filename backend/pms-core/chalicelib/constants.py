@@ -15,7 +15,7 @@ PANELIST_ROLE = "panelist"
 
 GOOGLE_ISSUER = "https://accounts.google.com"
 
-STUDENT_ROLE_AUTHORIZE_ROUTES = ["/panel", "/panel/*", "/question/batch", "/question/mark_similar", "/question/like", "/question/flag"]
+STUDENT_ROLE_AUTHORIZE_ROUTES = ["/panel", "/panel/*", "/question/batch", "/question/mark_similar", "/question/like/batch", "/question/flag/batch"]
 
 
 ADMIN_ROLE_AUTHORIZE_ROUTES = [
