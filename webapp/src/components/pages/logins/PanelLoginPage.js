@@ -45,7 +45,6 @@ const PanelLogin = () => {
 
   const handleVerify = (token) => {
     setReCaptchaToken(token);
-    console.log("Verify token", token);
   };
 
   const handleSubmit = () => {
@@ -80,6 +79,7 @@ const PanelLogin = () => {
       })
       .finally(() => {
         // Always send a success message, only users with panelist role will receieve the email
+        // Need to create the code here!
         enqueueSnackbar("An email will be sent ", { variant: "success" });
       });
   };
