@@ -14,7 +14,11 @@ import {
 } from "@mui/material";
 import { useDispatch } from "react-redux";
 
-import { GoogleReCaptcha } from "react-google-recaptcha-v3";
+// import { GoogleReCaptcha } from "react-google-recaptcha-v3";
+import ReCAPTCHA from "react-google-recaptcha";
+
+import { GOOGLE_RECAPTCHA_KEY } from "../../../config";
+
 import { useSnackbar } from "notistack";
 
 import { httpClient } from "../../../client";
@@ -42,6 +46,7 @@ const PanelLogin = () => {
 
   const handleVerify = (token) => {
     setReCaptchaToken(token);
+    console.log("Verify token", token);
   };
 
   const handleSubmit = () => {
@@ -116,6 +121,7 @@ const PanelLogin = () => {
               );
             })}
           </FormControl>
+          <ReCAPTCHA sitekey={GOOGLE_RECAPTCHA_KEY} onChange={handleVerify} />
         </CardContent>
         <CardActionArea>
           <Button
@@ -127,7 +133,6 @@ const PanelLogin = () => {
           </Button>
         </CardActionArea>
       </Card>
-      <GoogleReCaptcha onVerify={handleVerify} />
     </>
   );
 };
