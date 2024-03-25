@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { useDispatch } from "react-redux";
 
-// import { GoogleReCaptcha } from "react-google-recaptcha-v3";
 import ReCAPTCHA from "react-google-recaptcha";
 
 import { GOOGLE_RECAPTCHA_KEY } from "../../../config";
