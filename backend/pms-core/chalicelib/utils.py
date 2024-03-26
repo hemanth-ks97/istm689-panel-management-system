@@ -7,7 +7,7 @@ from google.auth.transport import requests
 import boto3
 
 
-from json import dumps
+from json import dumps, loads
 
 from .constants import GOOGLE_ISSUER, BOTO3_S3_TYPE
 
@@ -149,7 +149,7 @@ def dfs(node, visited, adj_list):
 
 def upload_objects(bucket_name, panel_id, students_map):
     """Upload objects to the bucket"""
-    print("Start uploading objects to students bucket")
+    print("Start uploading objects to panels bucket")
     # The key for the object
     object_name = f"{panel_id}/questions.json"
 
@@ -158,7 +158,25 @@ def upload_objects(bucket_name, panel_id, students_map):
 
     # Upload the object
     try:
-        s3_client.put_object(bucket_name, object_name, json_content)
+        s3_client.put_object(Bucket=bucket_name, Key=object_name, Body=json_content)
         print(f"Uploaded {object_name} successfully")
     except Exception as e:
         print(f"Error uploading {object_name}:", e)
+
+def get_s3_objects(bucket_name, object_key):
+    """Get Objects from the bucket"""
+    print("Start getting objects from panels bucket")
+
+    try:
+        s3_object = s3_client.get_object(Bucket=bucket_name, Key=object_key)
+        object_data = loads(s3_object['Body'].read().decode('utf-8'))
+        return object_data, None
+    except s3_client.exceptions.NoSuchKey as e:
+        print(f"No such {object_key} key found: {e}")
+        return None, e
+    except s3_client.exceptions.NoSuchBucket as e:
+        print(f"No such {bucket_name} bucket: {e}")
+        return None, e
+    except Exception as e:
+        print(f"Error getting {object_key}: {e}")
+        return None, e
