@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Typography } from "@mui/material";
 
 import { httpClient } from "../../../client";
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
 
 import LoadingSpinner from "../../widgets/LoadingSpinner";
-import ListDisplay from "../../widgets/ListDisplay";
+
+import MaterialTable from "../../widgets/MaterialTable";
 const AdminUsersPage = () => {
   const { user } = useSelector((state) => state.user);
   const [users, setUsers] = useState([]);
@@ -38,7 +38,23 @@ const AdminUsersPage = () => {
     return <LoadingSpinner />;
   }
 
-  return <ListDisplay data={users} idAttributeName="UserID" isAdmin={true} />;
+  const columns = [
+    {
+      accessorKey: "UserID",
+      header: "ID",
+      size: 200,
+    },
+    { accessorKey: "EmailID", header: "Email", size: 200 },
+    { accessorKey: "FName", header: "First Name", size: 200 },
+    { accessorKey: "LName", header: "Last Name", size: 200 },
+    { accessorKey: "UIN", header: "UIN", size: 200 },
+    { accessorKey: "Role", header: "Role", size: 200 },
+    { accessorKey: "CanvasID", header: "Canvas ID", size: 200 },
+    { accessorKey: "Section", header: "Section", size: 200 },
+    { accessorKey: "CreatedAt", header: "CreatedAt", size: 200 },
+  ];
+
+  return <MaterialTable data={users} columns={columns} />;
 };
 
 export default AdminUsersPage;

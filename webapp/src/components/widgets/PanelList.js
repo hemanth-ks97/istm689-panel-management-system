@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-// MUI
 import { httpClient } from "../../client";
-
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
-import ListDisplay from "./ListDisplay";
+import { DATABASE_ATTRIBUTE_MAPPING } from "../../config/constants";
+import MaterialTable from "./MaterialTable";
 import LoadingSpinner from "./LoadingSpinner";
 
 const PanelList = () => {
@@ -12,7 +11,6 @@ const PanelList = () => {
   const [panels, setPanels] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
   const [isLoading, setIsLoading] = useState(true);
-
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${user?.token}`,
@@ -40,7 +38,15 @@ const PanelList = () => {
     return <LoadingSpinner />;
   }
 
-  return <ListDisplay data={panels} isAdmin={true} idAttributeName="PanelID" />;
+  const columns = Object.keys(DATABASE_ATTRIBUTE_MAPPING.Panel).map((key) => {
+    return {
+      accessorKey: key,
+      header: DATABASE_ATTRIBUTE_MAPPING.Panel[key].displayName,
+      size: 200,
+    };
+  });
+
+  return <MaterialTable data={panels} columns={columns} />;
 };
 
 export default PanelList;
