@@ -48,6 +48,7 @@ from chalicelib.utils import (
     create_token,
     dfs,
     upload_objects,
+    get_s3_objects
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -1026,3 +1027,36 @@ def get_all_metrics_():
         return {"error": str(e)}
 
     return metrics
+
+@app.route(
+        '/panel/{id}/questions/tagging', 
+        methods=['GET'], 
+        authorizer=authorizers,
+        )
+def get_questions_per_student(id):
+    panel_id = id
+    user_question = None
+    # Fetch user id
+    user_id = app.current_request.context["authorizer"]["principalId"]    
+
+    if not panel_id or not user_id:
+        return Response(
+            body={'error': 'Missing panelId or userId'}, 
+            status_code=400)
+
+    object_key = f'{panel_id}/questions.json'
+
+    print(f"Getting questions for User ID: {user_id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}")
+    questions_data, error = get_s3_objects(PANELS_BUCKET_NAME, object_key)
+    
+    if error:
+        app.log.error(f"Error fetching from S3: {error}")
+        return Response(body={'error': 'Unable to fetch question data'}, status_code=500)
+    
+    if questions_data:
+        user_question = questions_data.get(user_id)
+
+    if user_question:
+        return {'question': user_question}
+    else:
+        return Response(body={'error': 'Question not found for user'}, status_code=404)
