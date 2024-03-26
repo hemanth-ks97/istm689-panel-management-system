@@ -106,11 +106,11 @@ const createDynamoDBQuestionObject = (question) => {
     QuestionID: { S: question.QuestionID },
     DislikedBy: { L: [] }, // Should be an array of valid user IDs
     LikedBy: { L: [] }, // Should be an array of valid user IDs
-    NeutralizedBy: { L: [] }, // Should be an array of valid user IDs
+    FlaggedBy: { L: [] }, // Should be an array of valid user IDs
+    SimilarTo: { L: [] }, // Should be an array of valid questions IDs
     DislikeScore: { N: question.DislikeScore.toString() },
     FinalScore: { N: question.FinalScore.toString() },
     LikeScore: { N: question.LikeScore.toString() },
-    NeutralScore: { N: question.NeutralScore.toString() },
     PanelID: { S: question.PanelID },
     PresentationBonusScore: { N: question.PresentationBonusScore.toString() },
     QuestionText: { S: question.QuestionText },
@@ -285,14 +285,14 @@ const createRandomQuestion = (panelID, userID) => {
     DislikeScore: faker.number.int({ min: 1, max: 100 }),
     FinalScore: faker.number.int({ min: 1, max: 100 }),
     LikeScore: faker.number.int({ min: 1, max: 100 }),
-    NeutralScore: faker.number.int({ min: 1, max: 100 }),
     PresentationBonusScore: faker.number.int({ min: 1, max: 100 }),
     VotingStageBonusScore: faker.number.int({ min: 1, max: 100 }),
     QuestionText: faker.lorem.paragraph(),
     UserID: userID,
     LikedBy: [userID], // Should be an array of multiple valid user IDs
     DislikedBy: [userID], // Should be an array of multiple valid user IDs
-    NeutralizedBy: [userID], // Should be an array of multiple valid user IDs
+    FlaggedBy: [userID], // Should be an array of multiple valid user IDs
+    SimilarTo: [],
   };
   return question;
 };
