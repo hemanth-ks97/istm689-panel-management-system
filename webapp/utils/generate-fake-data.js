@@ -18,7 +18,7 @@ const client = new DynamoDBClient({});
 
 const teamMembers = [
   {
-    UserID: faker.string.uuid(),
+    UserID: `u-${faker.string.uuid()}`,
     CanvasID: 1111,
     UIN: 11111111,
     EmailID: "joaquin.gimenez@tamu.edu",
@@ -28,7 +28,7 @@ const teamMembers = [
     Section: "ISTM-622-601",
   },
   {
-    UserID: faker.string.uuid(),
+    UserID: `u-${faker.string.uuid()}`,
     CanvasID: 2222,
     UIN: 22222222,
     EmailID: "anshita.gupta@tamu.edu",
@@ -38,7 +38,7 @@ const teamMembers = [
     Section: "ISTM-622-601",
   },
   {
-    UserID: faker.string.uuid(),
+    UserID: `u-${faker.string.uuid()}`,
     CanvasID: 3333,
     UIN: 33333333,
     EmailID: "anujakumthekar@tamu.edu",
@@ -48,7 +48,7 @@ const teamMembers = [
     Section: "ISTM-622-601",
   },
   {
-    UserID: faker.string.uuid(),
+    UserID: `u-${faker.string.uuid()}`,
     CanvasID: 4444,
     UIN: 44444444,
     EmailID: "helencrawford@tamu.edu",
@@ -58,7 +58,7 @@ const teamMembers = [
     Section: "ISTM-622-601",
   },
   {
-    UserID: faker.string.uuid(),
+    UserID: `u-${faker.string.uuid()}`,
     CanvasID: 5555,
     EmailID: "aditya.naik@tamu.edu",
     FName: "Aditya",
@@ -68,7 +68,7 @@ const teamMembers = [
     UIN: 55555555,
   },
   {
-    UserID: faker.string.uuid(),
+    UserID: `u-${faker.string.uuid()}`,
     CanvasID: 6666,
     EmailID: "pawan.terdal@tamu.edu",
     FName: "Pawan",
@@ -78,7 +78,7 @@ const teamMembers = [
     UIN: 66666666,
   },
   {
-    UserID: faker.string.uuid(),
+    UserID: `u-${faker.string.uuid()}`,
     CanvasID: 7777,
     EmailID: "hemanth@tamu.edu",
     FName: "Hemanth",
@@ -88,7 +88,7 @@ const teamMembers = [
     UIN: 77777777,
   },
   {
-    UserID: faker.string.uuid(),
+    UserID: `u-${faker.string.uuid()}`,
     CanvasID: 8888,
     EmailID: "davidgomilliontest@gmail.com",
     FName: "Test",
@@ -180,7 +180,7 @@ const createDynamoDBUserObject = (user) => {
 
 const createRandomUser = ({ role = "student" }) => {
   return {
-    UserID: faker.string.uuid(),
+    UserID: `u-${faker.string.uuid()}`,
     CanvasID: faker.number.int({ min: 100, max: 500 }),
     EmailID: faker.internet.email(),
     FName: faker.person.firstName(),
@@ -263,7 +263,7 @@ const createRandomPanel = () => {
   });
 
   return {
-    PanelID: faker.string.uuid(),
+    PanelID: `p-${faker.string.uuid()}`,
     NumberOfQuestions: faker.number.int({ min: 3, max: 10 }),
     PanelDesc: faker.lorem.paragraph(),
     Panelist: faker.person.fullName(),
@@ -280,7 +280,7 @@ const createRandomPanel = () => {
 
 const createRandomQuestion = (panelID, userID) => {
   const question = {
-    QuestionID: faker.string.uuid(),
+    QuestionID: `q-${faker.string.uuid()}`,
     PanelID: panelID,
     DislikeScore: faker.number.int({ min: 1, max: 100 }),
     FinalScore: faker.number.int({ min: 1, max: 100 }),
