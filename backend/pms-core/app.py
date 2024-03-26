@@ -59,8 +59,6 @@ _QUESTION_DB = None
 _PANEL_DB = None
 _METRIC_DB = None
 
-s3_client = boto3.client("s3")
-
 
 def get_user_db():
     global _USER_DB
