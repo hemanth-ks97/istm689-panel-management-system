@@ -7,7 +7,7 @@ import {
 
 import FormDialog from "../forms/FormDialog";
 
-const MaterialTable = ({ data, columns }) => {
+const MaterialTable = ({ data, columns, type }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
 
@@ -34,6 +34,7 @@ const MaterialTable = ({ data, columns }) => {
           isOpen={isDialogOpen}
           setIsOpen={() => setIsDialogOpen(!isDialogOpen)}
           selectedData={selectedData}
+          type={type}
         />
       )}
     </>

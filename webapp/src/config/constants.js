@@ -2,83 +2,62 @@ export const ADMIN = "admin";
 export const STUDENT = "student";
 export const PANELIST = "panelist";
 
-{
-  /* <input type="button">
-<input type="checkbox">
-<input type="color">
-<input type="date">
-<input type="datetime-local">
-<input type="email">
-<input type="file">
-<input type="hidden">
-<input type="image">
-<input type="month">
-<input type="number">
-<input type="password">
-<input type="radio">
-<input type="range">
-<input type="reset">
-<input type="search">
-<input type="submit">
-<input type="tel">
-<input type="text">
-<input type="time">
-<input type="url">
-<input type="week"></input> */
-}
-
 export const DATABASE_ATTRIBUTE_MAPPING = {
   // PANEL DABATASE OBJECT
   Panel: {
-    PanelID: { displayName: "ID" },
-    PanelName: { displayName: "Name" },
-    PanelDesc: { displayName: "Description" },
-    Panelist: { displayName: "Panelist" },
-    PanelStartDate: { displayName: "Start Date" },
+    PanelID: { displayName: "ID", type: "text" },
+    PanelName: { displayName: "Name", type: "text" },
+    PanelDesc: { displayName: "Description", type: "text" },
+    Panelist: { displayName: "Panelist", type: "text" },
+    PanelStartDate: { displayName: "Start Date", type: "text" },
     QuestionStageDeadline: {
       displayName: "Questions Deadline",
+      type: "text",
     },
-    TagStageDeadline: { displayName: "Tag Deadline" },
-    VoteStageDeadline: { displayName: "Vote Deadline" },
+    TagStageDeadline: { displayName: "Tag Deadline", type: "text" },
+    VoteStageDeadline: { displayName: "Vote Deadline", type: "text" },
     PanelPresentationDate: {
       displayName: "Presentation Date",
+      type: "text",
     },
-    NumberOfQuestions: { displayName: "# of Questions" },
-    PanelVideoLink: { displayName: "Video Link" },
-    Visibility: { displayName: "Visibility" },
-    CreatedAt: { displayName: "Created At" },
+    NumberOfQuestions: { displayName: "# of Questions", type: "number" },
+    PanelVideoLink: { displayName: "Video Link", type: "url" },
+    Visibility: { displayName: "Visibility", type: "text" },
+    CreatedAt: { displayName: "Created At", type: "text" },
   },
   //   METRIC DATABASE OBJECT
   Metric: {
-    PanelID: { header: "ID" },
-    UserID: { header: "User ID" },
-    QuestionStageScore: { header: "Questions Score" },
-    TagStageScore: { header: "Tag Score" },
-    VoteStageScore: { header: "Vote Score" },
-    FinalTotalScore: { header: "Final Score" },
+    PanelID: { displayName: "Panel ID", type: "text" },
+    UserID: { displayName: "User ID", type: "text" },
+    QuestionStageScore: { displayName: "Questions Score", type: "number" },
+    TagStageScore: { displayName: "Tag Score", type: "number" },
+    VoteStageScore: { displayName: "Vote Score", type: "number" },
+    FinalTotalScore: { displayName: "Final Score", type: "number" },
     EnteredQuestionsTotalScore: {
-      header: "Entered Questions Score",
+      displayName: "Entered Questions Score",
+      type: "number",
     },
-    TagStageInTime: { header: "Tag In Time" },
-    TagStageOutTime: { header: "Tag Out Time" },
-    TagStageSD: { header: "Tag Standard Deviation" },
+    TagStageInTime: { displayName: "Tag In Time", type: "text" },
+    TagStageOutTime: { displayName: "Tag Out Time", type: "text" },
+    TagStageSD: { displayName: "Tag Standard Deviation", type: "number" },
     VoteStageSD: {
-      header: "Vote Standard Deviation",
+      displayName: "Vote Standard Deviation",
+      type: "number",
     },
-    VoteStageInTime: { header: "Vote In Time" },
-    VoteStageOutTime: { header: "Vote Out Time" },
-    CreatedAt: {},
+    VoteStageInTime: { displayName: "Vote In Time", type: "text" },
+    VoteStageOutTime: { displayName: "Vote Out Time", type: "text" },
+    CreatedAt: { displayName: "Created At", type: "text" },
   },
   User: {
-    EmailID: {},
-    UserID: {},
-    Role: {},
-    FName: {},
-    CanvasID: {},
-    UIN: {},
-    Section: {},
-    LName: {},
-    CreatedAt: {},
+    UserID: { displayName: "ID", type: "text" },
+    EmailID: { displayName: "Email", type: "email" },
+    FName: { displayName: "First Name", type: "text" },
+    LName: { displayName: "Last Name", type: "text" },
+    UIN: { displayName: "UIN", type: "text" },
+    Role: { displayName: "Role", type: "text" },
+    CanvasID: { displayName: "Canvas ID", type: "text" },
+    Section: { displayName: "Section", type: "text" },
+    CreatedAt: { displayName: "CreatedAt", type: "text" },
   },
   Question: {},
 };

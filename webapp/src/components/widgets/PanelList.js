@@ -46,7 +46,7 @@ const PanelList = () => {
     };
   });
 
-  return <MaterialTable data={panels} columns={columns} />;
+  return <MaterialTable data={panels} columns={columns} type={"Panel"} />;
 };
 
 export default PanelList;

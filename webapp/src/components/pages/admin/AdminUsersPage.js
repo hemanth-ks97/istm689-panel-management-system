@@ -7,6 +7,9 @@ import { useSnackbar } from "notistack";
 import LoadingSpinner from "../../widgets/LoadingSpinner";
 
 import MaterialTable from "../../widgets/MaterialTable";
+
+import { DATABASE_ATTRIBUTE_MAPPING } from "../../../config/constants";
+
 const AdminUsersPage = () => {
   const { user } = useSelector((state) => state.user);
   const [users, setUsers] = useState([]);
@@ -38,23 +41,15 @@ const AdminUsersPage = () => {
     return <LoadingSpinner />;
   }
 
-  const columns = [
-    {
-      accessorKey: "UserID",
-      header: "ID",
+  const columns = Object.keys(DATABASE_ATTRIBUTE_MAPPING.User).map((key) => {
+    return {
+      accessorKey: key,
+      header: DATABASE_ATTRIBUTE_MAPPING.User[key].displayName,
       size: 200,
-    },
-    { accessorKey: "EmailID", header: "Email", size: 200 },
-    { accessorKey: "FName", header: "First Name", size: 200 },
-    { accessorKey: "LName", header: "Last Name", size: 200 },
-    { accessorKey: "UIN", header: "UIN", size: 200 },
-    { accessorKey: "Role", header: "Role", size: 200 },
-    { accessorKey: "CanvasID", header: "Canvas ID", size: 200 },
-    { accessorKey: "Section", header: "Section", size: 200 },
-    { accessorKey: "CreatedAt", header: "CreatedAt", size: 200 },
-  ];
+    };
+  });
 
-  return <MaterialTable data={users} columns={columns} />;
+  return <MaterialTable data={users} columns={columns} type={"User"} />;
 };
 
 export default AdminUsersPage;

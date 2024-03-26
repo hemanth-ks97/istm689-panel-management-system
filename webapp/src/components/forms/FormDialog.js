@@ -11,18 +11,29 @@ import {
   DialogTitle,
 } from "@mui/material";
 
-const FormDialog = ({ isOpen, setIsOpen, selectedData }) => {
+import { DATABASE_ATTRIBUTE_MAPPING } from "../../config/constants";
+
+const FormDialog = ({ isOpen, setIsOpen, selectedData, type }) => {
   const handleClose = () => {
     setIsOpen();
   };
 
-  const entries = Object.keys(selectedData);
+  const recordAttributes = Object.keys(DATABASE_ATTRIBUTE_MAPPING[type]);
+  console.log(recordAttributes);
+  console.log(type);
 
-  const hello = entries.map((entry) => {
+  const formFields = recordAttributes.map((entry, idx) => {
     return (
-      <div>
-        {entry}: {selectedData[entry]}
-      </div>
+      <TextField
+        margin="dense"
+        id={idx}
+        name={entry}
+        label={DATABASE_ATTRIBUTE_MAPPING[type]?.[entry]?.displayName}
+        type={DATABASE_ATTRIBUTE_MAPPING[type]?.[entry]?.type}
+        fullWidth
+        value={selectedData[entry]}
+        variant="standard"
+      />
     );
   });
 
@@ -46,18 +57,7 @@ const FormDialog = ({ isOpen, setIsOpen, selectedData }) => {
         <DialogTitle>Edit Record</DialogTitle>
         <DialogContent>
           <DialogContentText>Change the data you need</DialogContentText>
-          {/* <TextField
-            autoFocus
-            required
-            margin="dense"
-            id="name"
-            name="email"
-            label="Email Address"
-            type="email"
-            fullWidth
-            variant="standard"
-          /> */}
-          {hello}
+          {formFields}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
