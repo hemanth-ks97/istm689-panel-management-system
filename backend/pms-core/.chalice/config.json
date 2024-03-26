@@ -14,6 +14,7 @@
         "DYNAMODB_QUESTION_TABLE_NAME": "production-question",
         "DYNAMODB_PANEL_TABLE_NAME": "production-panel",
         "DYNAMODB_METRIC_TABLE_NAME": "production-metric",
+        "S3_PANELS_BUCKET_NAME": "production-istm689-panels-students-data",
         "JWT_TOKEN_EXPIRATION_DAYS": "1",
         "JWT_SECRET": "dnPrEMmwZzk5qetcZ9Lycm0ct8h137NNww66RSiqj2I9Ve2eFo"
       }
@@ -30,6 +31,7 @@
         "DYNAMODB_QUESTION_TABLE_NAME": "dev-question",
         "DYNAMODB_PANEL_TABLE_NAME": "dev-panel",
         "DYNAMODB_METRIC_TABLE_NAME": "dev-metric",
+        "S3_PANELS_BUCKET_NAME": "dev-istm689-panels-students-data",
         "JWT_SECRET": "6CLIbiKyCDUKG97qpb5UEjYvD0hfgNnwVO8DvqmEdpDHxv9bEe",
         "JWT_TOKEN_EXPIRATION_DAYS": "3"
       }
@@ -46,6 +48,7 @@
         "DYNAMODB_QUESTION_TABLE_NAME": "local-question",
         "DYNAMODB_PANEL_TABLE_NAME": "local-panel",
         "DYNAMODB_METRIC_TABLE_NAME": "local-metric",
+        "S3_PANELS_BUCKET_NAME": "local-istm689-panels-students-data",
         "JWT_SECRET": "I4a9BZImiw6l2Z8Pa2SrfPqFGnJNLa23rI7RTz2ycaQqztvLQz",
         "JWT_TOKEN_EXPIRATION_DAYS": "7"
       }

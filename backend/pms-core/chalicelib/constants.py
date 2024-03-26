@@ -6,6 +6,7 @@ AUTH_BASIC_TYPE = "Basic"
 # BOTO3 Resource Types
 BOTO3_DYNAMODB_TYPE = "dynamodb"
 BOTO3_SES_TYPE = "ses"
+BOTO3_S3_TYPE = "s3"
 # Request Content Types
 REQUEST_CONTENT_TYPE_JSON = "application/json"
 
