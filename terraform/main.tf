@@ -339,3 +339,25 @@ resource "aws_dynamodb_table" "local-metric-table" {
 resource "aws_sesv2_email_identity" "ses-email-identity" {
   email_identity = var.aws_ses_identity_email[terraform.workspace]
 }
+
+##########################
+# S3
+##########################
+
+resource "aws_s3_bucket" "local-bucket-panels-student-data" {
+  bucket = "local-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
+
+  tags = {
+    Name        = "Panels Bucket"
+    Environment = "local"
+  }
+}
+
+resource "aws_s3_bucket" "bucket-panels-students-questions-data" {
+  bucket = "${terraform.workspace}-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
+
+  tags = {
+    Name        = "Panels Bucket"
+    Environment = "${terraform.workspace}"
+  }
+}

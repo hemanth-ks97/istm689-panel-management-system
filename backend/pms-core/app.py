@@ -1,16 +1,13 @@
 """Main application file for the PMS Core API."""
 
-from itertools import chain
-from collections import Counter, defaultdict
+from collections import defaultdict
 
 import requests
 import boto3
 from uuid import uuid4
 import pandas as pd
 from random import shuffle
-
 from io import StringIO
-
 from urllib.parse import quote
 
 from chalice import (
@@ -30,6 +27,7 @@ from chalicelib.config import (
     QUESTION_TABLE_NAME,
     PANEL_TABLE_NAME,
     METRIC_TABLE_NAME,
+    PANELS_BUCKET_NAME,
     GOOGLE_RECAPTCHA_SECRET_KEY,
 )
 from chalicelib.constants import (
@@ -49,6 +47,7 @@ from chalicelib.utils import (
     get_token_subject,
     create_token,
     dfs,
+    upload_objects,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -127,8 +126,8 @@ def dummy():
     dummy_ses.send_email()
     # S3
     dummy_s3 = boto3.client("s3")
-    dummy_s3.get_object()
     dummy_s3.put_object()
+    # dummy_s3.get_object()
     # dummy_s3.download_file()
     # dummy_s3.list_objects_v2()
     # dummy_s3.get_bucket_location()
@@ -160,14 +159,6 @@ def authorizers(auth_request):
 
         # Extract the token from the authorization header
         token = auth_header[1]
-
-        # We can check the token issuer for more security
-        # token_issuer = get_token_issuer(token)
-        # base_url = "http://localhost:8000"
-
-        # # Only accepts own token. Not Google's token
-        # if token_issuer != base_url:
-        #     raise ValueError("Invalid Token Issuer")
 
         decoded_token = verify_token(token)
 
@@ -854,30 +845,36 @@ def get_panel(id):
     methods=["GET"],
     authorizer=authorizers,
 )
-def get_panel_distribute(id):
+def distribute_tag_questions(id):
     try:
         # Get list of all questions for that panel from the usersDB
         questions = get_question_db().get_questions_by_panel(id)
 
         # Creating map to store questionID and corresponding userID
-        question_id_user_id_map = {}
+        question_map = {}
 
         # Get all questionIDs and corresponding UserID from questions
         for question in questions:
-            question_id_user_id_map[question.get("QuestionID")] = question.get("UserID")
+            question_id = question.get("QuestionID")
+            user_id = question.get("UserID")
+            question_text = question.get("QuestionText")
+            question_map[question_id] = {
+                "UserID": user_id,
+                "QuestionText": question_text,
+            }
 
         # Store all questionIDs from Map
-        question_ids = list(question_id_user_id_map.keys())
+        question_ids = list(question_map.keys())
 
         # Get total students from the usersDB
         student_ids = list(get_user_db().get_student_user_ids())
-        number_of_questions_per_student = (
-            get_panel_db().get_number_of_questions_by_panel_id(id)[0]
-        )
+        number_of_questions_per_student = 10
         number_of_questions = len(question_ids)
         number_of_students = len(student_ids)
         number_of_question_slots = number_of_questions_per_student * number_of_students
-        min_repetition_of_questions = number_of_question_slots // number_of_questions
+        number_of_repetition_of_questions = (
+            number_of_question_slots // number_of_questions
+        )
         number_of_extra_question_slots = number_of_question_slots % number_of_questions
 
         # Print variable values
@@ -885,7 +882,6 @@ def get_panel_distribute(id):
         print("Total number of questions: ", number_of_questions)
         print("Total number of students: ", number_of_students)
         print("Total number of question slots: ", number_of_question_slots)
-        print("Minimum repetition of questions: ", min_repetition_of_questions)
         print("Number of extra question slots: ", number_of_extra_question_slots)
 
         # Distribute questions to slots
@@ -894,7 +890,7 @@ def get_panel_distribute(id):
         # Append each question id to the list with repetitions
         for question_id in question_ids:
             distributed_question_id_slots.extend(
-                [question_id] * min_repetition_of_questions
+                [question_id] * number_of_repetition_of_questions
             )
 
         # Fill remaining slots with top question ids and append to the list
@@ -906,42 +902,50 @@ def get_panel_distribute(id):
         shuffle(distributed_question_id_slots)
 
         # Create a collection to store questionSubLists
-        student_id_question_ids_map = {}
+        student_id_questions_map = {}
 
         for _ in range(number_of_students):
             student_id = student_ids.pop(0)
 
             # Create a sublist for each iteration
-            question_id_sublist = []
+            question_id_text_map = {}
 
-            # Pop questions from the questions slot list to put in the sublist
+            # Pop questions from the questions slot list to put in the map
             for _ in range(number_of_questions_per_student):
                 question_id = distributed_question_id_slots.pop(0)
 
-                # Check uniqueness in the sublist and check if question was entered by user
-                while (question_id in question_id_sublist) or (
-                    student_id == question_id_user_id_map.get(question_id)
+                # Initialize counter to avoid edge case
+                counter = 0
+                # Check if question exists in the map keys and check if question was entered by user
+                while (question_id in question_id_text_map.keys()) or (
+                    student_id == question_map[question_id]["UserID"]
                 ):
-
                     # Append it to the end of the master list and fetch the next question
                     distributed_question_id_slots.append(question_id)
 
-                    # Get next question from the questions list
+                    # Increment counter
+                    counter += 1
+                    if counter >= 50:
+                        # Call function again to randomize shuffling
+                        distribute_tag_questions(id)
+                        break
+
+                    # Get next question from the questionID slot list
                     question_id = distributed_question_id_slots.pop(0)
 
-                # Add question to sublist
-                question_id_sublist.append(question_id)
+                # Add question to map
+                question_id_text_map[question_id] = question_map[question_id][
+                    "QuestionText"
+                ]
 
             # Assign the sublist to the next available student ID
-            student_id_question_ids_map[student_id] = question_id_sublist
+            student_id_questions_map[student_id] = question_id_text_map
 
-        question_id_repetition_count_map = Counter(
-            chain.from_iterable(student_id_question_ids_map.values())
-        )
+        # Add the student_question_map to an S3 bucket
 
-        # TODO - Add the student_question_map to an S3 bucket
+        upload_objects(PANELS_BUCKET_NAME, id, student_id_questions_map)
 
-        return question_id_repetition_count_map, student_id_question_ids_map
+        return student_id_questions_map
     except Exception as e:
         return {"error": str(e)}
 

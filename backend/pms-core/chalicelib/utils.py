@@ -4,7 +4,12 @@ from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-from .constants import GOOGLE_ISSUER
+import boto3
+
+
+from json import dumps
+
+from .constants import GOOGLE_ISSUER, BOTO3_S3_TYPE
 
 from .config import (
     JWT_SECRET,
@@ -13,6 +18,8 @@ from .config import (
     JWT_ISSUER,
     JWT_TOKEN_EXPIRATION_DAYS,
 )
+
+s3_client = boto3.client(BOTO3_S3_TYPE)
 
 
 def decode_and_validate_google_token(token):
@@ -138,3 +145,20 @@ def dfs(node, visited, adj_list):
             cluster.extend(dfs(neighbor, visited, adj_list)[1])
 
     return (True, cluster)
+
+
+def upload_objects(bucket_name, panel_id, students_map):
+    """Upload objects to the bucket"""
+    print("Start uploading objects to students bucket")
+    # The key for the object
+    object_name = f"{panel_id}/questions.json"
+
+    # Convert the list to JSON format
+    json_content = dumps(students_map)
+
+    # Upload the object
+    try:
+        s3_client.put_object(bucket_name, object_name, json_content)
+        print(f"Uploaded {object_name} successfully")
+    except Exception as e:
+        print(f"Error uploading {object_name}:", e)
