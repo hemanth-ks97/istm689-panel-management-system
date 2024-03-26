@@ -4,10 +4,11 @@ from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
+from .constants import GOOGLE_ISSUER
+
 from .config import (
     JWT_SECRET,
     GOOGLE_AUTH_CLIENT_ID,
-    ENV,
     JWT_AUDIENCE,
     JWT_ISSUER,
     JWT_TOKEN_EXPIRATION_DAYS,
@@ -44,15 +45,13 @@ def verify_token(token):
 
     # We need these to check if we want to decode our own token or google token
     match token_issuer:
-        # TODO, make this more secure
-        case s if s.endswith("pms-core"):
-            # Decode our own token
+        case s if s == JWT_ISSUER:
             decoded_token = decode_and_validate_custom_token(token)
-        case "https://accounts.google.com":
+        case s if s == GOOGLE_ISSUER:
             # Decode Google Token
             decoded_token = decode_and_validate_google_token(token)
         case _:
-            # Unknown issuer
+            # Unknown or unauthorized issuer
             pass
 
     return decoded_token
@@ -125,3 +124,17 @@ def create_token(user_id, email_id, name, picture, role):
     )
 
     return token
+
+
+# DFS helper function for grouping similar questions
+def dfs(node, visited, adj_list):
+    if node in visited:
+        return (False, None)
+
+    visited.add(node)
+    cluster = [node]
+    for neighbor in adj_list[node]:
+        if neighbor not in visited:
+            cluster.extend(dfs(neighbor, visited, adj_list)[1])
+
+    return (True, cluster)

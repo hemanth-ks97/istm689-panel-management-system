@@ -13,4 +13,23 @@ ADMIN_ROLE = "admin"
 STUDENT_ROLE = "student"
 PANELIST_ROLE = "panelist"
 
+GOOGLE_ISSUER = "https://accounts.google.com"
+
+STUDENT_ROLE_AUTHORIZE_ROUTES = ["/panel", "/panel/*", "/question/batch"]
+
+
+ADMIN_ROLE_AUTHORIZE_ROUTES = [
+    "/file",
+    "/file/*",
+    "/user",
+    "/user/*",
+    "/question",
+    "/question/*",
+    "/panel",
+    "/panel/*",
+    "/metric",
+    "/metric/*",
+]
+PANELIST_ROLE_AUTHORIZE_ROUTES = ["/panelist", "/panelist/*"]
+
 GOOGLE_RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"

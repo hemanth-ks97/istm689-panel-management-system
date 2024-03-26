@@ -160,14 +160,14 @@ variable "amplify_branch_environment_variables_REACT_APP_GOOGLE_CLIENT_ID" {
 }
 # amplify_branch_environment_variables_REACT_APP_GOOGLE_RECAPTCHA_KEY
 variable "amplify_branch_environment_variables_REACT_APP_GOOGLE_RECAPTCHA_KEY" {
-  description = "Site Key for Google reCaptcha v3"
+  description = "Site Key for Google reCaptcha v2 - Checkbox based"
   type = object({
     dev        = string
     production = string
   })
   default = {
-    dev        = "6LdJk4cpAAAAAMElljbKeYwljNSFD63BEJmt804E"
-    production = "6LfnmocpAAAAACDze9K30nkB472UV0qnYVJPBbBu"
+    dev        = "6LdWRKQpAAAAAK7tQCFO5GyxYIyME5dut2zXRZS7"
+    production = "6LdWRKQpAAAAAPuDnSRQfd0vKQhseGsgDhWTiukt"
   }
 }
 

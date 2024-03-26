@@ -14,7 +14,10 @@ import {
 } from "@mui/material";
 import { useDispatch } from "react-redux";
 
-import { GoogleReCaptcha } from "react-google-recaptcha-v3";
+import ReCAPTCHA from "react-google-recaptcha";
+
+import { GOOGLE_RECAPTCHA_KEY } from "../../../config";
+
 import { useSnackbar } from "notistack";
 
 import { httpClient } from "../../../client";
@@ -63,7 +66,7 @@ const PanelLogin = () => {
     }
 
     httpClient
-      .post("login/panel", {
+      .post("/login/panel", {
         token: reCaptchaToken,
         email,
         callerUrl: window?.location?.href,
@@ -76,6 +79,7 @@ const PanelLogin = () => {
       })
       .finally(() => {
         // Always send a success message, only users with panelist role will receieve the email
+        // Need to create the code here!
         enqueueSnackbar("An email will be sent ", { variant: "success" });
       });
   };
@@ -116,6 +120,7 @@ const PanelLogin = () => {
               );
             })}
           </FormControl>
+          <ReCAPTCHA sitekey={GOOGLE_RECAPTCHA_KEY} onChange={handleVerify} />
         </CardContent>
         <CardActionArea>
           <Button
@@ -127,7 +132,6 @@ const PanelLogin = () => {
           </Button>
         </CardActionArea>
       </Card>
-      <GoogleReCaptcha onVerify={handleVerify} />
     </>
   );
 };

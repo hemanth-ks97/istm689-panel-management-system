@@ -34,7 +34,7 @@ const LoginCard = () => {
     setIsLoading(true);
 
     httpClient
-      .post("/token/create", data)
+      .post("/login/google", data)
       .then((response) => {
         // Store Google Picture from the initial token
         // Probably need to add to the custom token!
