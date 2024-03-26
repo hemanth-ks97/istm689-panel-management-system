@@ -180,6 +180,34 @@ const MetricForm = ({ metric }) => {
         <TextField
           style={{ margin: "5px" }}
           fullWidth
+          id="TagStageSD"
+          name="TagStageSD"
+          label="Tag Stage Standard Deviaton"
+          type="number"
+          value={formik.values.TagStageSD}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.TagStageSD && Boolean(formik.errors.TagStageSD)}
+          helperText={formik.touched.TagStageSD && formik.errors.TagStageSD}
+        />
+        <TextField
+          style={{ margin: "5px" }}
+          fullWidth
+          id="VoteStageSD"
+          name="VoteStageSD"
+          label="Vote Stage Standard Deviaton"
+          type="number"
+          value={formik.values.VoteStageSD}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={
+            formik.touched.VoteStageSD && Boolean(formik.errors.VoteStageSD)
+          }
+          helperText={formik.touched.VoteStageSD && formik.errors.VoteStageSD}
+        />
+        <TextField
+          style={{ margin: "5px" }}
+          fullWidth
           id="TagStageInTime"
           name="TagStageInTime"
           label="Tag Stage In Time"
@@ -211,34 +239,7 @@ const MetricForm = ({ metric }) => {
             formik.touched.TagStageOutTime && formik.errors.TagStageOutTime
           }
         />
-        <TextField
-          style={{ margin: "5px" }}
-          fullWidth
-          id="TagStageSD"
-          name="TagStageSD"
-          label="Tag Stage Standar Deviaton"
-          type="number"
-          value={formik.values.TagStageSD}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={formik.touched.TagStageSD && Boolean(formik.errors.TagStageSD)}
-          helperText={formik.touched.TagStageSD && formik.errors.TagStageSD}
-        />
-        <TextField
-          style={{ margin: "5px" }}
-          fullWidth
-          id="VoteStageSD"
-          name="VoteStageSD"
-          label="Vote Stage Standar Deviaton"
-          type="number"
-          value={formik.values.VoteStageSD}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={
-            formik.touched.VoteStageSD && Boolean(formik.errors.VoteStageSD)
-          }
-          helperText={formik.touched.VoteStageSD && formik.errors.VoteStageSD}
-        />
+
         <TextField
           style={{ margin: "5px" }}
           fullWidth
