@@ -843,7 +843,7 @@ def get_panel(id):
 @app.route(
     "/panel/{id}/distribute",
     methods=["GET"],
-    # authorizer=authorizers,
+    authorizer=authorizers,
 )
 def distribute_tag_questions(id):
     try:
