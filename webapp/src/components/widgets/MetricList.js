@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { httpClient } from "../../client";
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
-import { DATABASE_ATTRIBUTE_MAPPING } from "../../config/constants";
 import MaterialTable from "./MaterialTable";
 import LoadingSpinner from "./LoadingSpinner";
 
-const PanelList = () => {
+import { DATABASE_ATTRIBUTE_MAPPING } from "../../config/constants";
+
+const MetricList = ({ panelId }) => {
   const { user } = useSelector((state) => state.user);
-  const [panels, setPanels] = useState([]);
+  const [metrics, setMetrics] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
   const [isLoading, setIsLoading] = useState(true);
   const headers = {
@@ -16,15 +17,15 @@ const PanelList = () => {
     Authorization: `Bearer ${user?.token}`,
   };
 
-  // fetch the panels everytime this component is rendered
+  // fetch the metrics everytime this component is rendered
   useEffect(() => {
     setIsLoading(true);
     httpClient
-      .get("/panel", {
+      .get(`/panel/${panelId}/metrics`, {
         headers: headers,
       })
       .then((response) => {
-        setPanels(response.data);
+        setMetrics(response.data);
       })
       .catch((error) =>
         enqueueSnackbar(error.message, {
@@ -38,15 +39,15 @@ const PanelList = () => {
     return <LoadingSpinner />;
   }
 
-  const columns = Object.keys(DATABASE_ATTRIBUTE_MAPPING.Panel).map((key) => {
+  const columns = Object.keys(DATABASE_ATTRIBUTE_MAPPING.Metric).map((key) => {
     return {
       accessorKey: key,
-      header: DATABASE_ATTRIBUTE_MAPPING.Panel[key].displayName,
+      header: DATABASE_ATTRIBUTE_MAPPING.Metric[key].displayName,
       size: 200,
     };
   });
 
-  return <MaterialTable data={panels} columns={columns} type={"Panel"} />;
+  return <MaterialTable data={metrics} columns={columns} type={"Metric"} />;
 };
 
-export default PanelList;
+export default MetricList;

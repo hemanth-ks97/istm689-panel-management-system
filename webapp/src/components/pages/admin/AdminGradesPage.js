@@ -1,31 +1,28 @@
 import React, { useState, useEffect } from "react";
 
-import { Select, MenuItem, Typography, List } from "@mui/material";
+import { Select, MenuItem, Typography } from "@mui/material";
 
 import { httpClient } from "../../../client";
 import { useSelector } from "react-redux";
-import { DataGrid } from "@mui/x-data-grid";
 
-import ListDisplay from "../../widgets/ListDisplay";
 import LoadingSpinner from "../../widgets/LoadingSpinner";
+
+import MetricList from "../../widgets/MetricList";
 
 const AdminGradesPage = () => {
   const { user } = useSelector((state) => state.user);
+  const [isLoading, setIsLoading] = useState(false);
   const [panelFilter, setPanelFilter] = useState("");
-  const [metrics, setMetrics] = useState([]);
-  // const [userFilter, setUserFilter] = useState("");
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${user?.token}`,
   };
-
   const [panelFilterOptions, setPanelFilterOptions] = useState([
     { name: "None", value: "None" },
   ]);
 
   useEffect(() => {
-    // all users
-
+    setIsLoading(true);
     httpClient
       .get("/panel", { headers })
       .then((response) => {
@@ -43,46 +40,17 @@ const AdminGradesPage = () => {
       })
       .catch((error) => {
         setPanelFilterOptions(["None"]);
-      });
-
-    // Append or replcae?
-  }, []);
-
-  useEffect(() => {
-    // Prevent calling the API with empty ID
-    if (panelFilter === "None") return;
-
-    httpClient
-      .get(`/panel/${panelFilter}/metrics`, { headers })
-      .then((response) => {
-        setMetrics(response.data);
       })
-      .catch((error) => {
-        setMetrics([]);
-      });
-  }, [panelFilter]);
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const handlePanelFilterChange = (e) => {
     setPanelFilter(e.target.value);
   };
 
-  const prepareList = () => {
-    const dataKeys = Object.keys(metrics[0]);
-    dataKeys.sort();
-
-    // Render all columns...
-    const columns = dataKeys.map((column) => {
-      return { field: column, headerName: column, width: 200 };
-    });
-
-    return (
-      <DataGrid
-        rows={metrics}
-        columns={columns}
-        getRowId={(row) => `${row.PanelID}-${row.UserID}`}
-      />
-    );
-  };
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <>
@@ -105,8 +73,7 @@ const AdminGradesPage = () => {
       </Select>
 
       <Typography>Metrics</Typography>
-      {metrics.length === 0 && <Typography>No metrics fetched</Typography>}
-      {metrics.length > 0 && prepareList()}
+      {panelFilter && <MetricList panelId={panelFilter} />}
     </>
   );
 };

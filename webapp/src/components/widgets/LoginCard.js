@@ -36,10 +36,6 @@ const LoginCard = () => {
     httpClient
       .post("/login/google", data)
       .then((response) => {
-        // Store Google Picture from the initial token
-        // Probably need to add to the custom token!
-        // Store the pms issued token
-
         dispatch(setUser(response?.data?.token));
 
         navigate("/");

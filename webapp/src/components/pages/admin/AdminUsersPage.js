@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Typography } from "@mui/material";
 
 import { httpClient } from "../../../client";
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
 
 import LoadingSpinner from "../../widgets/LoadingSpinner";
-import ListDisplay from "../../widgets/ListDisplay";
+
+import MaterialTable from "../../widgets/MaterialTable";
+
+import { DATABASE_ATTRIBUTE_MAPPING } from "../../../config/constants";
+
 const AdminUsersPage = () => {
   const { user } = useSelector((state) => state.user);
   const [users, setUsers] = useState([]);
@@ -38,7 +41,15 @@ const AdminUsersPage = () => {
     return <LoadingSpinner />;
   }
 
-  return <ListDisplay data={users} idAttributeName="UserID" isAdmin={true} />;
+  const columns = Object.keys(DATABASE_ATTRIBUTE_MAPPING.User).map((key) => {
+    return {
+      accessorKey: key,
+      header: DATABASE_ATTRIBUTE_MAPPING.User[key].displayName,
+      size: 200,
+    };
+  });
+
+  return <MaterialTable data={users} columns={columns} type={"User"} />;
 };
 
 export default AdminUsersPage;
