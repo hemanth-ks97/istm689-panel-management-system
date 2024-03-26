@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Typography, ButtonGroup, Button } from "@mui/material";
 
-import PanelForm from "../../forms/PanelForm";
+import NewPanelForm from "../../forms/NewPanelForm";
 import PanelList from "../../widgets/PanelList";
 
 const AdminPanelsPage = () => {
@@ -21,7 +21,7 @@ const AdminPanelsPage = () => {
       {selectedAction === "create" && (
         <>
           <Typography>Add a new panel</Typography>
-          <PanelForm />
+          <NewPanelForm />
         </>
       )}
       {selectedAction === "list" && (
