@@ -732,7 +732,6 @@ def post_question_batch():
 )
 def post_question_tagging(id):
     # Request Format {"liked":["<id_1>", "<id_2>",..., "<id_n>"], "disliked":["<id_1>", "<id_2>",..., "<id_n>"], "flagged":["<id_1>", "<id_2>",..., "<id_n>"]}
-    # for every question_id in the list, append to its "similar-to" lsit in the database with every other question_id
     try:
         panel = get_panel_db().get_panel(id)
         if panel is None:
