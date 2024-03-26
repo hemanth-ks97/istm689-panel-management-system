@@ -353,7 +353,7 @@ resource "aws_s3_bucket" "local-bucket-panels-student-data" {
   }
 }
 
-resource "aws_s3_bucket" "dev-bucket-panels-students-questions-data" {
+resource "aws_s3_bucket" "bucket-panels-students-questions-data" {
   bucket = "${terraform.workspace}-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
 
   tags = {
