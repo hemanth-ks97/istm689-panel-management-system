@@ -11,7 +11,7 @@ GOOGLE_AUTH_CLIENT_ID = environ.get(
     "370940936724-4qh7n4qh6vrgli6bsf3je6kbe2lsotef.apps.googleusercontent.com",
 )
 GOOGLE_RECAPTCHA_SECRET_KEY = environ.get(
-    "GOOGLE_RECAPTCHA_SECRET_KEY", "6Lf3lIcpAAAAACFT-wrtXeX2Z3NMAQLT3pXHIENL"
+    "GOOGLE_RECAPTCHA_SECRET_KEY", "6Lc9QaQpAAAAACzBOfcpse-XaJra-0tD9W1uvwzB"
 )
 
 ALLOW_ORIGIN = environ.get("ALLOW_ORIGIN", "http://localhost:3000")

@@ -82,7 +82,7 @@ const StudentDashboardPage = ({ user }) => {
         sx={{ flexGrow: 1 }}
       >
         <DemoPaper square={false}>
-          <Typography variant="h6">Assignments</Typography>
+          <Typography variant="h6">Upcoming Assignments</Typography>
           <TableContainer component={Paper}>
             <Table sx={{ minWidth: 280 }} aria-label="simple table">
               <TableHead>
