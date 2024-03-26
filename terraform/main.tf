@@ -344,20 +344,20 @@ resource "aws_sesv2_email_identity" "ses-email-identity" {
 # S3
 ##########################
 
-# resource "aws_s3_bucket" "local-bucket-panels-student-data" {
-#   bucket = "local-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
+resource "aws_s3_bucket" "local-bucket-panels-student-data" {
+  bucket = "local-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
 
-#   tags = {
-#     Name        = "Panels Bucket"
-#     Environment = "local"
-#   }
-# }
+  tags = {
+    Name        = "Panels Bucket"
+    Environment = "local"
+  }
+}
 
-# resource "aws_s3_bucket" "bucket-panels-students-questions-data" {
-#   bucket = "${terraform.workspace}-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
+resource "aws_s3_bucket" "bucket-panels-students-questions-data" {
+  bucket = "${terraform.workspace}-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
 
-#   tags = {
-#     Name        = "Panels Bucket"
-#     Environment = "${terraform.workspace}"
-#   }
-# }
+  tags = {
+    Name        = "Panels Bucket"
+    Environment = "${terraform.workspace}"
+  }
+}
