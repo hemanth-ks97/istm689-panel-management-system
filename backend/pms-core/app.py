@@ -1,16 +1,13 @@
 """Main application file for the PMS Core API."""
 
-from itertools import chain
-from collections import Counter, defaultdict
+from collections import defaultdict
 
 import requests
 import boto3
 from uuid import uuid4
 import pandas as pd
 from random import shuffle
-import json
 from io import StringIO
-from botocore.exceptions import ClientError
 from urllib.parse import quote
 
 from chalice import (
@@ -30,6 +27,7 @@ from chalicelib.config import (
     QUESTION_TABLE_NAME,
     PANEL_TABLE_NAME,
     METRIC_TABLE_NAME,
+    PANELS_BUCKET_NAME,
     GOOGLE_RECAPTCHA_SECRET_KEY,
 )
 from chalicelib.constants import (
@@ -49,6 +47,7 @@ from chalicelib.utils import (
     get_token_subject,
     create_token,
     dfs,
+    upload_objects,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -60,7 +59,8 @@ _QUESTION_DB = None
 _PANEL_DB = None
 _METRIC_DB = None
 
-s3_client = boto3.client('s3')
+s3_client = boto3.client("s3")
+
 
 def get_user_db():
     global _USER_DB
@@ -129,10 +129,10 @@ def dummy():
     # S3
     dummy_s3 = boto3.client("s3")
     dummy_s3.put_object()
-    dummy_s3.download_file()
-    dummy_s3.get_object()
-    dummy_s3.list_objects_v2()
-    dummy_s3.get_bucket_location()
+    # dummy_s3.get_object()
+    # dummy_s3.download_file()
+    # dummy_s3.list_objects_v2()
+    # dummy_s3.get_bucket_location()
 
 
 app.api.cors = CORSConfig(
@@ -161,14 +161,6 @@ def authorizers(auth_request):
 
         # Extract the token from the authorization header
         token = auth_header[1]
-
-        # We can check the token issuer for more security
-        # token_issuer = get_token_issuer(token)
-        # base_url = "http://localhost:8000"
-
-        # # Only accepts own token. Not Google's token
-        # if token_issuer != base_url:
-        #     raise ValueError("Invalid Token Issuer")
 
         decoded_token = verify_token(token)
 
@@ -853,7 +845,7 @@ def get_panel(id):
 @app.route(
     "/panel/{id}/distribute",
     methods=["GET"],
-    authorizer=authorizers,
+    # authorizer=authorizers,
 )
 def distribute_tag_questions(id):
     try:
@@ -868,7 +860,10 @@ def distribute_tag_questions(id):
             question_id = question.get("QuestionID")
             user_id = question.get("UserID")
             question_text = question.get("QuestionText")
-            question_map[question_id] = {"UserID": user_id, "QuestionText": question_text}
+            question_map[question_id] = {
+                "UserID": user_id,
+                "QuestionText": question_text,
+            }
 
         # Store all questionIDs from Map
         question_ids = list(question_map.keys())
@@ -879,7 +874,9 @@ def distribute_tag_questions(id):
         number_of_questions = len(question_ids)
         number_of_students = len(student_ids)
         number_of_question_slots = number_of_questions_per_student * number_of_students
-        number_of_repetition_of_questions = number_of_question_slots // number_of_questions
+        number_of_repetition_of_questions = (
+            number_of_question_slots // number_of_questions
+        )
         number_of_extra_question_slots = number_of_question_slots % number_of_questions
 
         # Print variable values
@@ -923,7 +920,7 @@ def distribute_tag_questions(id):
                 counter = 0
                 # Check if question exists in the map keys and check if question was entered by user
                 while (question_id in question_id_text_map.keys()) or (
-                        student_id == question_map[question_id]["UserID"]
+                    student_id == question_map[question_id]["UserID"]
                 ):
                     # Append it to the end of the master list and fetch the next question
                     distributed_question_id_slots.append(question_id)
@@ -939,67 +936,20 @@ def distribute_tag_questions(id):
                     question_id = distributed_question_id_slots.pop(0)
 
                 # Add question to map
-                question_id_text_map[question_id] = question_map[question_id]["QuestionText"]
+                question_id_text_map[question_id] = question_map[question_id][
+                    "QuestionText"
+                ]
 
             # Assign the sublist to the next available student ID
             student_id_questions_map[student_id] = question_id_text_map
 
         # Add the student_question_map to an S3 bucket
-        bucket_name = 'istm-pms-students1'
-        create_bucket(bucket_name)
-        upload_objects(bucket_name, id, student_id_questions_map)
+
+        upload_objects(PANELS_BUCKET_NAME, id, student_id_questions_map)
 
         return student_id_questions_map
     except Exception as e:
         return {"error": str(e)}
-
-def bucket_exists(bucket_name):
-    """Check if an S3 bucket exists."""
-    try:
-        s3_client.head_bucket(bucket_name)
-        return True
-    except ClientError as e:
-        # If a client error is thrown, check if it was a 404 error.
-        # If it was a 404 error, it means the bucket does not exist.
-        error_code = e.response['Error']['Code']
-        if error_code == 'NoSuchBucket':
-            return False
-        elif error_code == '404':
-            # A 403 error indicates the bucket does not exist or
-            # you don't have permissions to check its existence.
-            print("Bucket does not exist.")
-            return False
-        else:
-            # Re-raise the exception if it was a different error
-            raise
-
-def create_bucket(bucket_name):
-    """Create an S3 bucket in a specified region if it does not already exist."""
-    print("Start creating students bucket")
-    try:
-        if not bucket_exists(bucket_name):
-            response = s3_client.create_bucket(bucket_name)
-            print("Bucket created successfully:", response)
-        else:
-            print("Bucket already exists.")
-    except Exception as e:
-        print("Error:", e)
-
-def upload_objects(bucket_name, panel_id, students_map):
-    """Upload objects to the bucket"""
-    print("Start uploading objects to students bucket")
-    # The key for the object
-    object_name = f"{panel_id}/questions.json"
-
-    # Convert the list to JSON format
-    json_content = json.dumps(students_map)
-
-    # Upload the object
-    try:
-        s3_client.put_object(bucket_name,object_name,json_content)
-        print(f"Uploaded {object_name} successfully")
-    except Exception as e:
-        print(f"Error uploading {object_name}:", e)
 
 
 @app.route(
