@@ -724,28 +724,114 @@ def post_question_batch():
 
 
 @app.route(
-    "/question/mark_similar",
+    "/panel/{id}/tagging",
     methods=["POST"],
     authorizer=authorizers,
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
-def post_question_mark_similar():
+def post_question_tagging(id):
+    # Request Format {"liked":["<id_1>", "<id_2>",..., "<id_n>"], "disliked":["<id_1>", "<id_2>",..., "<id_n>"], "flagged":["<id_1>", "<id_2>",..., "<id_n>"]}
+    # for every question_id in the list, append to its "similar-to" lsit in the database with every other question_id
+    try:
+        panel = get_panel_db().get_panel(id)
+        if panel is None:
+            raise BadRequestError("The panel id does not exist")
+        if datetime.now(timezone.utc).isoformat(timespec="seconds") > panel["TagStageDeadline"]:
+            raise BadRequestError("The deadline for this task has passed")
+        
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        request =  app.current_request.json_body
+        
+        if "liked" not in request:
+            raise BadRequestError("Key 'liked' not found in incoming request")
+        if type(request["liked"]) is not list:
+            raise BadRequestError("Key 'liked' should be a list")
+        if "disliked" not in request:
+            raise BadRequestError("Key 'disliked' not found in incoming request")
+        if type(request["disliked"]) is not list:
+            raise BadRequestError("Key 'disliked' should be a list")
+        if "flagged" not in request:
+            raise BadRequestError("Key 'flagged' not found in incoming request")
+        if type(request["flagged"]) is not list:
+            raise BadRequestError("Key 'flagged' should be a list")
+        
+        liked_list, disliked_list, flagged_list = request["liked"], request["disliked"], request["flagged"]
+        batch_update_request = {}
+
+        for q_id in liked_list:
+            question = get_question_db().get_question(q_id)
+            if "LikedBy" in question:
+                if user_id not in question["LikedBy"]:
+                    if len(question["LikedBy"]) > 0:
+                        question["LikedBy"].extend(user_id)
+                    else:
+                        question["LikedBy"].append(user_id)
+            else:
+                question["LikedBy"] = [user_id]
+            batch_update_request[q_id] = question
+        
+        for q_id in disliked_list:
+            question = get_question_db().get_question(q_id) if q_id not in batch_update_request else batch_update_request[q_id]  
+            if "DislikedBy" in question:
+                if user_id not in question["DislikedBy"]:
+                    if len(question["DislikedBy"]) > 0:
+                        question["DislikedBy"].extend(user_id)
+                    else:
+                        question["DislikedBy"].append(user_id)
+            else:
+                question["DislikedBy"] = [user_id]
+            batch_update_request[q_id] = question
+
+
+        for q_id in flagged_list:
+            question = get_question_db().get_question(q_id) if q_id not in batch_update_request else batch_update_request[q_id] 
+            if "FlaggedBy" in question:
+                if user_id not in question["FlaggedBy"]:
+                    if len(question["FlaggedBy"]) > 0:
+                        question["FlaggedBy"].extend(user_id)
+                    else:
+                        question["FlaggedBy"].append(user_id)
+            else:
+                question["FlaggedBy"] = [user_id]
+            batch_update_request[q_id] = question
+
+
+        get_question_db().add_questions_batch(batch_update_request.values())
+
+        return f"{len(liked_list)} questions liked\n{len(disliked_list)} questions disliked\n{len(flagged_list)} questions flagged !"
+    except Exception as e:
+        return {"error": str(e)}
+    
+
+@app.route(
+    "/panel/{id}/mark_similar",
+    methods=["POST"],
+    authorizer=authorizers,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def post_question_mark_similar(id):
     # Request Format {"similar":["<id_1>", "<id_2>",..., "<id_n>"]}
     # for every question_id in the list, append to its "similar-to" lsit in the database with every other question_id
     try:
+        panel = get_panel_db().get_panel(id)
+        if panel is None:
+            raise BadRequestError("The panel id does not exist")
+        if datetime.now(timezone.utc).isoformat(timespec="seconds") > panel["TagStageDeadline"]:
+            raise BadRequestError("The deadline for this task has passed")
+        
         request = app.current_request.json_body
         similar_list = request["similar"]
         similar_set = set(similar_list)
 
-        for id in similar_set:
-            question_obj = get_question_db().get_question(id)
+        for q_id in similar_set:
+            question_obj = get_question_db().get_question(q_id)
             if not question_obj:
-                raise BadRequestError("Invalid question_id", id)
+                raise BadRequestError("Invalid question_id", q_id)
             other_ids = similar_set.copy()
-            other_ids.remove(id)
+            other_ids.remove(q_id)
             if "SimilarTo" in question_obj:
                 question_obj["SimilarTo"].extend(
-                    id for id in other_ids if id not in question_obj["SimilarTo"]
+                    uuid for uuid in other_ids if uuid not in question_obj["SimilarTo"]
                 )
             else:
                 question_obj["SimilarTo"] = list(other_ids)
