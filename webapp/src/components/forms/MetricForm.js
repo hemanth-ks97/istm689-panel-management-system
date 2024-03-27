@@ -67,6 +67,7 @@ const MetricForm = ({ metric }) => {
           id="PanelID"
           name="PanelID"
           label="Panel ID"
+          disabled={true}
           value={formik.values.PanelID}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
@@ -80,6 +81,7 @@ const MetricForm = ({ metric }) => {
           id="UserID"
           name="UserID"
           label="User ID"
+          disabled={true}
           value={formik.values.UserID}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}

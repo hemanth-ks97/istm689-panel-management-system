@@ -48,7 +48,7 @@ from chalicelib.utils import (
     create_token,
     dfs,
     upload_objects,
-    get_s3_objects
+    get_s3_objects,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -552,6 +552,24 @@ def get_user(id):
 
 
 @app.route(
+    "/user/{id}",
+    methods=["PATCH"],
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+    authorizer=authorizers,
+)
+def patch_user(id):
+    item = get_user_db().get_user(user_id=id)
+
+    if item is None:
+        raise NotFoundError(f"User {id} not found")
+
+    updated_user = app.current_request.json_body
+
+    response = get_user_db().update_user(updated_user)
+    return response
+
+
+@app.route(
     "/user/{id}/metrics",
     methods=["GET"],
     authorizer=authorizers,
@@ -736,12 +754,15 @@ def post_question_tagging(id):
         panel = get_panel_db().get_panel(id)
         if panel is None:
             raise BadRequestError("The panel id does not exist")
-        if datetime.now(timezone.utc).isoformat(timespec="seconds") > panel["TagStageDeadline"]:
+        if (
+            datetime.now(timezone.utc).isoformat(timespec="seconds")
+            > panel["TagStageDeadline"]
+        ):
             raise BadRequestError("The deadline for this task has passed")
-        
+
         user_id = app.current_request.context["authorizer"]["principalId"]
-        request =  app.current_request.json_body
-        
+        request = app.current_request.json_body
+
         if "liked" not in request:
             raise BadRequestError("Key 'liked' not found in incoming request")
         if type(request["liked"]) is not list:
@@ -754,8 +775,12 @@ def post_question_tagging(id):
             raise BadRequestError("Key 'flagged' not found in incoming request")
         if type(request["flagged"]) is not list:
             raise BadRequestError("Key 'flagged' should be a list")
-        
-        liked_list, disliked_list, flagged_list = request["liked"], request["disliked"], request["flagged"]
+
+        liked_list, disliked_list, flagged_list = (
+            request["liked"],
+            request["disliked"],
+            request["flagged"],
+        )
         batch_update_request = {}
 
         for q_id in liked_list:
@@ -769,9 +794,13 @@ def post_question_tagging(id):
             else:
                 question["LikedBy"] = [user_id]
             batch_update_request[q_id] = question
-        
+
         for q_id in disliked_list:
-            question = get_question_db().get_question(q_id) if q_id not in batch_update_request else batch_update_request[q_id]  
+            question = (
+                get_question_db().get_question(q_id)
+                if q_id not in batch_update_request
+                else batch_update_request[q_id]
+            )
             if "DislikedBy" in question:
                 if user_id not in question["DislikedBy"]:
                     if len(question["DislikedBy"]) > 0:
@@ -782,9 +811,12 @@ def post_question_tagging(id):
                 question["DislikedBy"] = [user_id]
             batch_update_request[q_id] = question
 
-
         for q_id in flagged_list:
-            question = get_question_db().get_question(q_id) if q_id not in batch_update_request else batch_update_request[q_id] 
+            question = (
+                get_question_db().get_question(q_id)
+                if q_id not in batch_update_request
+                else batch_update_request[q_id]
+            )
             if "FlaggedBy" in question:
                 if user_id not in question["FlaggedBy"]:
                     if len(question["FlaggedBy"]) > 0:
@@ -795,13 +827,12 @@ def post_question_tagging(id):
                 question["FlaggedBy"] = [user_id]
             batch_update_request[q_id] = question
 
-
         get_question_db().add_questions_batch(batch_update_request.values())
 
         return f"{len(liked_list)} questions liked\n{len(disliked_list)} questions disliked\n{len(flagged_list)} questions flagged !"
     except Exception as e:
         return {"error": str(e)}
-    
+
 
 @app.route(
     "/panel/{id}/mark_similar",
@@ -816,9 +847,12 @@ def post_question_mark_similar(id):
         panel = get_panel_db().get_panel(id)
         if panel is None:
             raise BadRequestError("The panel id does not exist")
-        if datetime.now(timezone.utc).isoformat(timespec="seconds") > panel["TagStageDeadline"]:
+        if (
+            datetime.now(timezone.utc).isoformat(timespec="seconds")
+            > panel["TagStageDeadline"]
+        ):
             raise BadRequestError("The deadline for this task has passed")
-        
+
         request = app.current_request.json_body
         similar_list = request["similar"]
         similar_set = set(similar_list)
@@ -924,6 +958,25 @@ def get_panel(id):
 
     except Exception as e:
         return {"error": str(e)}
+
+
+@app.route(
+    "/panel/{id}",
+    methods=["PATCH"],
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+    authorizer=authorizers,
+)
+def patch_panel(id):
+
+    item = get_panel_db().get_panel(panel_id=id)
+
+    if item is None:
+        raise NotFoundError(f"Panel {id} not found")
+
+    updated_panel = app.current_request.json_body
+
+    response = get_user_db().update_user(updated_panel)
+    return response
 
 
 @app.route(
@@ -1067,6 +1120,26 @@ def get_panel_metrics(id):
 
 
 @app.route(
+    "/panel/{id}/metric",
+    methods=["PATCH"],
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+    authorizer=authorizers,
+)
+def patch_metric(id):
+    user_id = app.current_request.context["authorizer"]["principalId"]
+
+    item = get_metric_db().get_metric(user_id=user_id, panel_id=id)
+
+    if item is None:
+        raise NotFoundError(f"Metric for Panel: {id} and User: {user_id} not found")
+
+    updated_metric = app.current_request.json_body
+
+    response = get_metric_db().update_metric(updated_metric)
+    return response
+
+
+@app.route(
     "/panel/{id}/questions/group_similar",
     methods=["GET"],
     authorizer=authorizers,
@@ -1113,35 +1186,38 @@ def get_all_metrics_():
 
     return metrics
 
+
 @app.route(
-        '/panel/{id}/questions/tagging', 
-        methods=['GET'], 
-        authorizer=authorizers,
-        )
+    "/panel/{id}/questions/tagging",
+    methods=["GET"],
+    authorizer=authorizers,
+)
 def get_questions_per_student(id):
     panel_id = id
     user_question = None
     # Fetch user id
-    user_id = app.current_request.context["authorizer"]["principalId"]    
+    user_id = app.current_request.context["authorizer"]["principalId"]
 
     if not panel_id or not user_id:
-        return Response(
-            body={'error': 'Missing panelId or userId'}, 
-            status_code=400)
+        return Response(body={"error": "Missing panelId or userId"}, status_code=400)
 
-    object_key = f'{panel_id}/questions.json'
+    object_key = f"{panel_id}/questions.json"
 
-    print(f"Getting questions for User ID: {user_id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}")
+    print(
+        f"Getting questions for User ID: {user_id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}"
+    )
     questions_data, error = get_s3_objects(PANELS_BUCKET_NAME, object_key)
-    
+
     if error:
         app.log.error(f"Error fetching from S3: {error}")
-        return Response(body={'error': 'Unable to fetch question data'}, status_code=500)
-    
+        return Response(
+            body={"error": "Unable to fetch question data"}, status_code=500
+        )
+
     if questions_data:
         user_question = questions_data.get(user_id)
 
     if user_question:
-        return {'question': user_question}
+        return {"question": user_question}
     else:
-        return Response(body={'error': 'Question not found for user'}, status_code=404)
+        return Response(body={"error": "Question not found for user"}, status_code=404)

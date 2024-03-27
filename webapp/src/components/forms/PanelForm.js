@@ -64,6 +64,7 @@ const PanelForm = ({ panel }) => {
         <TextField
           style={{ margin: "5px" }}
           fullWidth
+          disabled={true}
           id="PanelID"
           name="PanelID"
           label="Panel ID"

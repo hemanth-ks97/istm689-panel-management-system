@@ -5,6 +5,8 @@ import { useFormik } from "formik";
 // MUI
 import { Button, TextField, Typography } from "@mui/material";
 
+import { httpClient } from "../../client";
+
 const validationSchema = yup.object({
   UserID: yup.string("Enter UserID").required("UserID is required"),
   EmailID: yup
@@ -36,6 +38,12 @@ const UserForm = ({ user }) => {
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
+      httpClient.patch(`/user/${user?.UserID}`, values, {
+        headers: {
+          Authorization: `Bearer adsfadsf`,
+          "Content-Type": "application/json",
+        },
+      });
       alert(JSON.stringify(values, null, 2));
     },
   });
@@ -53,6 +61,7 @@ const UserForm = ({ user }) => {
           id="UserID"
           name="UserID"
           label="User ID"
+          disabled={true}
           value={formik.values.UserID}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
