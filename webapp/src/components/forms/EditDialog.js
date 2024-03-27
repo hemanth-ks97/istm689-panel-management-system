@@ -20,7 +20,7 @@ const EditDialog = ({ isOpen, setIsOpen, selectedData, type }) => {
   let form = <></>;
 
   if (type === "User") {
-    form = <UserForm user={selectedData} />;
+    form = <UserForm currentUser={selectedData} />;
   }
 
   if (type === "Panel") {
