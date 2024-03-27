@@ -226,7 +226,7 @@ const PanelForm = ({ panel }) => {
           fullWidth
           id="TagStageDeadline"
           name="TagStageDeadline"
-          label="Canvas ID"
+          label="Tag Stage Deadline"
           value={formik.values.TagStageDeadline}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
