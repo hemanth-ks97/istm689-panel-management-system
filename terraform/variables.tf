@@ -31,7 +31,7 @@ variable "dynamodb_table_read_capacity" {
     production = number
   })
   default = {
-    dev        = 1
+    dev        = 2
     production = 1
   }
 }
@@ -43,7 +43,7 @@ variable "dynamodb_table_write_capacity" {
     production = number
   })
   default = {
-    dev        = 1
+    dev        = 2
     production = 1
   }
 }
