@@ -4,6 +4,7 @@ import * as yup from "yup";
 import { useFormik } from "formik";
 // MUI
 import { Button, TextField, Typography } from "@mui/material";
+import { useSelector } from "react-redux";
 
 import { httpClient } from "../../client";
 
@@ -24,27 +25,29 @@ const validationSchema = yup.object({
   Section: yup.string("Enter Section").required("Section is required"),
 });
 
-const UserForm = ({ user }) => {
+const UserForm = ({ currentUser }) => {
+  const { user } = useSelector((state) => state.user);
   const formik = useFormik({
     initialValues: {
-      UserID: user?.UserID,
-      EmailID: user?.EmailID,
-      FName: user?.FName,
-      LName: user?.LName,
-      UIN: user?.UIN,
-      Role: user?.Role,
-      CanvasID: user?.CanvasID,
-      Section: user?.Section,
+      UserID: currentUser?.UserID,
+      EmailID: currentUser?.EmailID,
+      FName: currentUser?.FName,
+      LName: currentUser?.LName,
+      UIN: currentUser?.UIN,
+      Role: currentUser?.Role,
+      CanvasID: currentUser?.CanvasID,
+      Section: currentUser?.Section,
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      httpClient.patch(`/user/${user?.UserID}`, values, {
+      httpClient.patch(`/user/${currentUser?.UserID}`, values, {
         headers: {
-          Authorization: `Bearer adsfadsf`,
+          Authorization: `Bearer ${user?.token}`,
+
           "Content-Type": "application/json",
         },
       });
-      alert(JSON.stringify(values, null, 2));
+      // alert(JSON.stringify(values, null, 2));
     },
   });
 

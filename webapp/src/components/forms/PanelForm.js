@@ -2,6 +2,7 @@ import React from "react";
 
 import * as yup from "yup";
 import { useFormik } from "formik";
+import { useSelector } from "react-redux";
 // MUI
 import { Button, TextField, Typography } from "@mui/material";
 
@@ -33,6 +34,7 @@ const validationSchema = yup.object({
 });
 
 const PanelForm = ({ panel }) => {
+  const { user } = useSelector((state) => state.user);
   const formik = useFormik({
     initialValues: {
       PanelID: panel?.PanelID,
