@@ -144,53 +144,51 @@ const NewPanelForm = () => {
           onChange={handleInputChange}
           sx={{ my: 1 }}
         />
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            name="panelStartDate"
-            label="Panel Start Date"
-            value={formValues.panelStartDate}
-            onChange={(newValue) =>
-              handleDateChange("panelStartDate", newValue)
-            }
-            sx={{ my: 1 }}
-          />
-          <DatePicker
-            name="questionStageDeadline"
-            label="Question stage deadline"
-            value={formValues.questionStageDeadline}
-            onChange={(newValue) =>
-              handleDateChange("questionStageDeadline", newValue)
-            }
-            sx={{ my: 1 }}
-          />
-          <DatePicker
-            name="voteStageDeadline"
-            label="Vote stage deadline"
-            value={formValues.voteStageDeadline}
-            onChange={(newValue) =>
-              handleDateChange("voteStageDeadline", newValue)
-            }
-            sx={{ my: 1 }}
-          />
-          <DatePicker
-            name="tagStageDeadline"
-            label="Tag stage deadline"
-            value={formValues.tagStageDeadline}
-            onChange={(newValue) =>
-              handleDateChange("tagStageDeadline", newValue)
-            }
-            sx={{ my: 1 }}
-          />
-          <DatePicker
-            name="panelPresentationDate"
-            label="Panel Presentation Date"
-            value={formValues.panelPresentationDate}
-            onChange={(newValue) =>
-              handleDateChange("panelPresentationDate", newValue)
-            }
-            sx={{ my: 1 }}
-          />
-        </LocalizationProvider>
+
+        <DatePicker
+          name="panelStartDate"
+          label="Panel Start Date"
+          value={formValues.panelStartDate}
+          onChange={(newValue) => handleDateChange("panelStartDate", newValue)}
+          sx={{ my: 1 }}
+        />
+        <DatePicker
+          name="questionStageDeadline"
+          label="Question stage deadline"
+          value={formValues.questionStageDeadline}
+          onChange={(newValue) =>
+            handleDateChange("questionStageDeadline", newValue)
+          }
+          sx={{ my: 1 }}
+        />
+        <DatePicker
+          name="voteStageDeadline"
+          label="Vote stage deadline"
+          value={formValues.voteStageDeadline}
+          onChange={(newValue) =>
+            handleDateChange("voteStageDeadline", newValue)
+          }
+          sx={{ my: 1 }}
+        />
+        <DatePicker
+          name="tagStageDeadline"
+          label="Tag stage deadline"
+          value={formValues.tagStageDeadline}
+          onChange={(newValue) =>
+            handleDateChange("tagStageDeadline", newValue)
+          }
+          sx={{ my: 1 }}
+        />
+        <DatePicker
+          name="panelPresentationDate"
+          label="Panel Presentation Date"
+          value={formValues.panelPresentationDate}
+          onChange={(newValue) =>
+            handleDateChange("panelPresentationDate", newValue)
+          }
+          sx={{ my: 1 }}
+        />
+
         <TextField
           id="visibility"
           label="Set Visibility"

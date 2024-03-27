@@ -18,6 +18,9 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 // Enviroment variables
 import { GOOGLE_CLIENT_ID } from "./config";
 
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+
 import { Provider } from "react-redux";
 import store from "./store";
 
@@ -29,12 +32,14 @@ root.render(
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <SnackbarProvider>
-          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-            <ThemeProvider theme={tamuTheme}>
-              <CssBaseline enableColorScheme />
-              <App />
-            </ThemeProvider>
-          </GoogleOAuthProvider>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+              <ThemeProvider theme={tamuTheme}>
+                <CssBaseline enableColorScheme />
+                <App />
+              </ThemeProvider>
+            </GoogleOAuthProvider>
+          </LocalizationProvider>
         </SnackbarProvider>
       </PersistGate>
     </Provider>
