@@ -1,5 +1,12 @@
 """Main application file for the PMS Core API."""
 
+<<<<<<< HEAD
+=======
+from decimal import Decimal
+from itertools import chain
+from collections import Counter, defaultdict
+
+>>>>>>> 7fb2ec6 (Added logic for submit questions grading)
 import requests
 import boto3
 import pandas as pd
@@ -65,6 +72,83 @@ from chalicelib.database.db_provider import (
 
 
 app = Chalice(app_name=f"{ENV}-pms-core")
+<<<<<<< HEAD
+=======
+_USER_DB = None
+_QUESTION_DB = None
+_PANEL_DB = None
+_METRIC_DB = None
+
+#Score for only submitting questions
+submit_score = 10 
+#Points if question is between +1 and -1 std deviation of likes
+std_question_score = 10
+#Points if question is above +1 std deviation of likes
+above_std_score = 5
+#Points for overall engagement during tagging
+engagement_score_tag = 10
+#Points for overall engagement during voting
+engagement_score_vote = 10
+#Points for tagging all questions
+tagging_score = 30  
+#Points for voting all questions
+voting_score = 30
+#Points for question if it is in voting stage
+extra_voting_score = 5
+#Points if question is selected in top 10 of voting
+top_questions_score = 10
+
+total_score = 0
+#Grade = (Questions *0.2) + (Tagging * .3) + (Voting * .3) + (Engagement * .2)
+
+
+def get_user_db():
+    global _USER_DB
+    try:
+        if _USER_DB is None:
+            _USER_DB = db.DynamoUserDB(
+                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(USER_TABLE_NAME)
+            )
+    except Exception as e:
+        return {"error": str(e)}
+    return _USER_DB
+
+
+def get_question_db():
+    global _QUESTION_DB
+    try:
+        if _QUESTION_DB is None:
+            _QUESTION_DB = db.DynamoQuestionDB(
+                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(QUESTION_TABLE_NAME)
+            )
+    except Exception as e:
+        return {"error": str(e)}
+    return _QUESTION_DB
+
+
+def get_panel_db():
+    global _PANEL_DB
+    try:
+        if _PANEL_DB is None:
+            _PANEL_DB = db.DynamoPanelDB(
+                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(PANEL_TABLE_NAME)
+            )
+    except Exception as e:
+        return {"error": str(e)}
+    return _PANEL_DB
+
+
+def get_metric_db():
+    global _METRIC_DB
+    try:
+        if _METRIC_DB is None:
+            _METRIC_DB = db.DynamoMetricDB(
+                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(METRIC_TABLE_NAME)
+            )
+    except Exception as e:
+        return {"error": str(e)}
+    return _METRIC_DB
+>>>>>>> 7fb2ec6 (Added logic for submit questions grading)
 
 
 def dummy():
@@ -656,8 +740,10 @@ def post_question_batch():
         raw_questions = incoming_json["questions"]
 
         new_questions = []
+
         for question in raw_questions:
             # Build Question object for database
+<<<<<<< HEAD
             new_question = {
                 "QuestionID": generate_question_id(),
                 "UserID": user_id,
@@ -674,10 +760,30 @@ def post_question_batch():
                 "PresentationBonusScore": -1,
                 "VotingStageBonusScore": -1,
             }
+=======
+            if question != "":
+                new_question = {
+                    "QuestionID": str(uuid4()),
+                    "UserID": user_id,
+                    "PanelID": panel_id,
+                    "QuestionText": question,
+                    "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                    "DislikedBy": [],
+                    "LikedBy": [],
+                    "NeutralizedBy": [],
+                    "DislikeScore": -1,
+                    "FinalScore": -1,
+                    "LikeScore": -1,
+                    "NeutralScore": -1,
+                    "PresentationBonusScore": -1,
+                    "VotingStageBonusScore": -1,
+                }
+>>>>>>> 7fb2ec6 (Added logic for submit questions grading)
 
-            new_questions.append(new_question)
+                new_questions.append(new_question)
 
         get_question_db().add_questions_batch(new_questions)
+<<<<<<< HEAD
 
         pretty_time = datetime.now(timezone.utc).strftime("%m/%d/%Y at %H:%M:%S UTC")
 
@@ -701,6 +807,28 @@ def post_question_batch():
         html_body += "<p>Best regards,<br/>"
         html_body += "PMS team</p>"
 
+=======
+        # #Check if all questions have been submitted
+        no_of_questions = get_panel_db().get_number_of_questions_by_panel_id(panel_id)
+        #Add score to metrics
+        if no_of_questions == len(new_questions):
+            metric_for_submit ={
+                "UserID": user_id,
+                "PanelID": panel_id,
+                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "EnteredQuestionsTotalScore": Decimal(submit_score)
+            }
+        else:
+            sub_score_for_questions = round((len(new_questions)/no_of_questions[0])*submit_score)
+            metric_for_submit ={
+                "UserID": user_id,
+                "PanelID": panel_id,
+                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "EnteredQuestionsTotalScore": Decimal(sub_score_for_questions)
+            }
+        get_metric_db().add_metric(metric_for_submit)
+        
+>>>>>>> 7fb2ec6 (Added logic for submit questions grading)
         # Returns the result of put_item, kind of metadata and stuff
         send_email(
             destination_addresses=["davidgomilliontest@gmail.com"],
