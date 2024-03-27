@@ -122,6 +122,7 @@ def dummy():
     dummy_db.update_item()
     dummy_db.scan()
     dummy_db.query()
+    dummy_db.batch_write_item()
     # SES
     dummy_ses = boto3.client("ses")
     dummy_ses.send_email()
