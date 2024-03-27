@@ -1,54 +1,84 @@
+// QuestionCard.js
 import React from "react";
-// MUI
+import { useSnackbar } from "notistack";
 import {
-  Typography,
   Card,
   CardActions,
   CardContent,
   Tooltip,
   IconButton,
+  Typography,
 } from "@mui/material";
-
 import {
   ThumbUp as ThumbUpIcon,
   ThumbDown as ThumbDownIcon,
   Flag as FlagIcon,
 } from "@mui/icons-material";
 
-import { useSnackbar } from "notistack";
-
-const QuestionCard = ({ questionText, questionID, questionNumber }) => {
+const QuestionCard = ({
+  text,
+  id,
+  questionNumber,
+  isLiked,
+  isDisliked,
+  isFlagged,
+  onUpdate,
+}) => {
   const { enqueueSnackbar } = useSnackbar();
-  const handleDislike = () =>
-    enqueueSnackbar(`Question disliked`, { variant: "error" });
-  const handleLike = () =>
-    enqueueSnackbar(`Question liked`, { variant: "success" });
-  const handleFlag = () =>
-    enqueueSnackbar(`Question flagged`, { variant: "warning" });
+
+  const handleDislike = () => {
+    onUpdate(id, "isDisliked");
+    if (!isDisliked) {
+      enqueueSnackbar(`Question disliked`, { variant: "error" });
+    }
+  };
+
+  const handleLike = () => {
+    onUpdate(id, "isLiked");
+    if (!isLiked) {
+      enqueueSnackbar(`Question liked`, { variant: "success" });
+    }
+  };
+
+  const handleFlag = () => {
+    onUpdate(id, "isFlagged");
+    if (!isFlagged) {
+      enqueueSnackbar(`Question flagged`, { variant: "warning" });
+    }
+  };
 
   return (
-    <Card sx={{ minWidth: 275, maxWidth: 400 }}>
+    <Card sx={{ minWidth: 275, maxWidth: 400, mb: 2 }}>
       <CardContent>
-        <Typography sx={{ fontSize: 14 }} color={"primary"} gutterBottom>
+        <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
           Question {questionNumber}
         </Typography>
-        <Typography variant="h5" component="div">
-          {questionText}
-        </Typography>
+        <Typography variant="h5">{text}</Typography>
       </CardContent>
       <CardActions>
         <Tooltip title="Like this question">
-          <IconButton onClick={handleLike}>
+          <IconButton
+            onClick={handleLike}
+            color={isLiked ? "primary" : "default"}
+          >
             <ThumbUpIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Dislike this question">
-          <IconButton onClick={handleDislike}>
+          <IconButton
+            onClick={handleDislike}
+            color={isDisliked ? "secondary" : "default"}
+          >
             <ThumbDownIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Flag as inappropriate">
-          <IconButton onClick={handleFlag}>
+          <IconButton
+            onClick={handleFlag}
+            sx={{
+              color: isFlagged ? "red" : "default",
+            }}
+          >
             <FlagIcon />
           </IconButton>
         </Tooltip>
