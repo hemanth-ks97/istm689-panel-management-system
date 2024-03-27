@@ -975,7 +975,7 @@ def patch_panel(id):
 
     updated_panel = app.current_request.json_body
 
-    response = get_user_db().update_user(updated_panel)
+    response = get_panel_db().update_panel(updated_panel)
     return response
 
 
