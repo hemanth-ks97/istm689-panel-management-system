@@ -1017,6 +1017,7 @@ def distribute_tag_questions(id):
         number_of_extra_question_slots = number_of_question_slots % number_of_questions
 
         # Print variable values
+        print("Panel ID: ", id)
         print("Number of questions per student: ", number_of_questions_per_student)
         print("Total number of questions: ", number_of_questions)
         print("Total number of students: ", number_of_students)
@@ -1053,21 +1054,12 @@ def distribute_tag_questions(id):
             for _ in range(number_of_questions_per_student):
                 question_id = distributed_question_id_slots.pop(0)
 
-                # Initialize counter to avoid edge case
-                counter = 0
                 # Check if question exists in the map keys and check if question was entered by user
                 while (question_id in question_id_text_map.keys()) or (
                     student_id == question_map[question_id]["UserID"]
                 ):
                     # Append it to the end of the master list and fetch the next question
                     distributed_question_id_slots.append(question_id)
-
-                    # Increment counter
-                    counter += 1
-                    if counter >= 50:
-                        # Call function again to randomize shuffling
-                        distribute_tag_questions(id)
-                        break
 
                     # Get next question from the questionID slot list
                     question_id = distributed_question_id_slots.pop(0)
