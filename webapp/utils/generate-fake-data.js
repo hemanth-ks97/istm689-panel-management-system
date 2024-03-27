@@ -18,7 +18,7 @@ const CHUNK_SIZE = 25; // No more than 25 because the SDK doesn't allow it
 
 const client = new DynamoDBClient({});
 
-const delay = (time) => {
+const delay = (time = 3000) => {
   return new Promise((resolve) => setTimeout(resolve, time));
 };
 
@@ -443,7 +443,7 @@ const main = async () => {
         console.log("USERS -- Error:", error.message);
       }
       console.log(`USERS -- Waiting`);
-      await delay(3000);
+      await delay();
     }
   }
   if (panels.length > 0) {
@@ -462,7 +462,7 @@ const main = async () => {
         console.log("PANELS -- Error:", error.message);
       }
       console.log(`PANELS -- Waiting`);
-      await delay(3000);
+      await delay();
     }
   }
 
@@ -482,7 +482,7 @@ const main = async () => {
         console.log("QUESTIONS -- Error:", error.message);
       }
       console.log(`QUESTIONS -- Waiting`);
-      await delay(3000);
+      await delay();
     }
   }
 
@@ -502,7 +502,7 @@ const main = async () => {
         console.log("METRICS -- Error:", error.message);
       }
       console.log(`METRICS -- Waiting`);
-      await delay(3000);
+      await delay();
     }
   }
 };
