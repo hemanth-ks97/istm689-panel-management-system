@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 
 import * as yup from "yup";
 import { useFormik } from "formik";
 // MUI
 import { Button, TextField, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
+import { useSnackbar } from "notistack";
+
+import LoadingSpinner from "../widgets/LoadingSpinner";
 
 import { httpClient } from "../../client";
 
@@ -26,6 +29,8 @@ const validationSchema = yup.object({
 });
 
 const UserForm = ({ currentUser }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
   const { user } = useSelector((state) => state.user);
   const formik = useFormik({
     initialValues: {
@@ -40,14 +45,23 @@ const UserForm = ({ currentUser }) => {
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      httpClient.patch(`/user/${currentUser?.UserID}`, values, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-
-          "Content-Type": "application/json",
-        },
-      });
-      // alert(JSON.stringify(values, null, 2));
+      setIsLoading(true);
+      httpClient
+        .patch(`/user/${currentUser?.UserID}`, values, {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+            "Content-Type": "application/json",
+          },
+        })
+        .then((response) => {
+          enqueueSnackbar("User updated", { variant: "success" });
+        })
+        .catch((error) => {
+          enqueueSnackbar("Updated failed", { variant: "error" });
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     },
   });
 
@@ -162,9 +176,10 @@ const UserForm = ({ currentUser }) => {
           style={{ margin: "5px" }}
           variant="contained"
           fullWidth
+          disabled={isLoading}
           type="submit"
         >
-          Save
+          {isLoading ? <LoadingSpinner /> : "Save"}
         </Button>
       </form>
     </>

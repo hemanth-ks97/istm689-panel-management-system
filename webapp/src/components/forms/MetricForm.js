@@ -1,7 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 
 import * as yup from "yup";
 import { useFormik } from "formik";
+
+import { useSelector } from "react-redux";
+import { useSnackbar } from "notistack";
+
+import { httpClient } from "../../client";
+import LoadingSpinner from "../widgets/LoadingSpinner";
 // MUI
 import { Button, TextField, Typography } from "@mui/material";
 
@@ -32,6 +38,9 @@ const validationSchema = yup.object({
 });
 
 const MetricForm = ({ metric }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
+  const { user } = useSelector((state) => state.user);
   const formik = useFormik({
     initialValues: {
       PanelID: metric?.PanelID,
@@ -50,7 +59,23 @@ const MetricForm = ({ metric }) => {
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      alert(JSON.stringify(values, null, 2));
+      setIsLoading(true);
+      httpClient
+        .patch(`/metric`, values, {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+            "Content-Type": "application/json",
+          },
+        })
+        .then((response) => {
+          enqueueSnackbar("Panel updated", { variant: "success" });
+        })
+        .catch((error) => {
+          enqueueSnackbar("Update failed", { variant: "error" });
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     },
   });
 
@@ -281,9 +306,10 @@ const MetricForm = ({ metric }) => {
           style={{ margin: "5px" }}
           variant="contained"
           fullWidth
+          disabled={isLoading}
           type="submit"
         >
-          Save
+          {isLoading ? <LoadingSpinner /> : "Save"}
         </Button>
       </form>
     </>

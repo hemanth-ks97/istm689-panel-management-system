@@ -975,7 +975,7 @@ def patch_panel(id):
 
     updated_panel = app.current_request.json_body
 
-    response = get_user_db().update_user(updated_panel)
+    response = get_panel_db().update_panel(updated_panel)
     return response
 
 
@@ -1120,20 +1120,28 @@ def get_panel_metrics(id):
 
 
 @app.route(
-    "/panel/{id}/metric",
+    "/metric",
     methods=["PATCH"],
     content_types=[REQUEST_CONTENT_TYPE_JSON],
     authorizer=authorizers,
 )
-def patch_metric(id):
-    user_id = app.current_request.context["authorizer"]["principalId"]
+def patch_metric():
+    updated_metric = app.current_request.json_body
 
-    item = get_metric_db().get_metric(user_id=user_id, panel_id=id)
+    # Check for all required fields
+    if "PanelID" not in updated_metric:
+        raise BadRequestError("Key 'PanelID' not found in incoming request")
+    if "UserID" not in updated_metric:
+        raise BadRequestError("Key 'UserID' not found in incoming request")
+
+    item = get_metric_db().get_metric(
+        user_id=updated_metric["UserID"], panel_id=updated_metric["PanelID"]
+    )
 
     if item is None:
-        raise NotFoundError(f"Metric for Panel: {id} and User: {user_id} not found")
-
-    updated_metric = app.current_request.json_body
+        raise NotFoundError(
+            f"Metric for Panel {updated_metric['PanelID']} and User {updated_metric['UserID']}: not found"
+        )
 
     response = get_metric_db().update_metric(updated_metric)
     return response

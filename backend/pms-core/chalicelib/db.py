@@ -90,6 +90,9 @@ class PanelDB(object):
     def get_panel(self, panel_id):
         pass
 
+    def update_panel(self, panel):
+        pass
+
     def get_all_panels(self):
         pass
 
@@ -102,6 +105,9 @@ class DynamoPanelDB(PanelDB):
         self._table = table_resource
 
     def add_panel(self, panel):
+        return self._table.put_item(Item=panel)
+
+    def update_panel(self, panel):
         return self._table.put_item(Item=panel)
 
     def get_all_panels(self):
