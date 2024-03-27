@@ -15,14 +15,36 @@ const validationSchema = yup.object({
   PanelName: yup.string().required("Panel Name is required"),
   PanelDesc: yup.string().required("Panel Description is required"),
   Panelist: yup.string().required("Panelist is required"),
-  PanelStartDate: yup.string().required("PanelStart Date is required"),
+  PanelStartDate: yup.date().required("Panel Start Date is required"),
   QuestionStageDeadline: yup
-    .string()
+    .date()
+    .min(
+      yup.ref("PanelStartDate"),
+      "Question Stage Deadline can't be before Panel Start Date"
+    )
     .required("Question Stage Deadline is required"),
-  TagStageDeadline: yup.string().required("Tag Stage Deadline is required"),
-  VoteStageDeadline: yup.string().required("Vote Stage Deadline is required"),
+  TagStageDeadline: yup
+    .date()
+    .min(
+      yup.ref(
+        "QuestionStageDeadline",
+        "Tag Stage Deadline can't be before Question Stage Deadline"
+      )
+    )
+    .required("Tag Stage Deadline is required"),
+  VoteStageDeadline: yup
+    .date()
+    .min(
+      yup.ref("TagStageDeadline"),
+      "Vote Stage Deadline can't be before Tag Stage Deadline"
+    )
+    .required("Vote Stage Deadline is required"),
   PanelPresentationDate: yup
-    .string()
+    .date()
+    .min(
+      yup.ref("VoteStageDeadline"),
+      "Panel Presentation Date can't be before Vote Stage Deadline"
+    )
     .required("Panel Presentation Date is required"),
   NumberOfQuestions: yup
     .number()
