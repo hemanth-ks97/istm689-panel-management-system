@@ -3,6 +3,8 @@ from jwt import decode, get_unverified_header, encode
 from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from uuid import uuid4
+
 
 import boto3
 
@@ -20,6 +22,26 @@ from .config import (
 )
 
 s3_client = boto3.client(BOTO3_S3_TYPE)
+
+
+def _generate_id():
+    """Generate a unique id."""
+    return str(uuid4())
+
+
+def generate_user_id():
+    """Generate a unique user id."""
+    return f"u-{_generate_id()}"
+
+
+def generate_question_id():
+    """Generate a unique metric id."""
+    return f"q-{_generate_id()}"
+
+
+def generate_panel_id():
+    """Generate a unique panel id."""
+    return f"p-{_generate_id()}"
 
 
 def decode_and_validate_google_token(token):
@@ -154,7 +176,7 @@ def upload_objects(bucket_name, panel_id, students_map):
     object_name = f"{panel_id}/questions.json"
 
     # Convert the list to JSON format
-    json_content = dumps(students_map)
+    json_content = dumps(students_map, indent=2)
 
     # Upload the object
     try:
@@ -163,13 +185,14 @@ def upload_objects(bucket_name, panel_id, students_map):
     except Exception as e:
         print(f"Error uploading {object_name}:", e)
 
+
 def get_s3_objects(bucket_name, object_key):
     """Get Objects from the bucket"""
     print("Start getting objects from panels bucket")
 
     try:
         s3_object = s3_client.get_object(Bucket=bucket_name, Key=object_key)
-        object_data = loads(s3_object['Body'].read().decode('utf-8'))
+        object_data = loads(s3_object["Body"].read().decode("utf-8"))
         return object_data, None
     except s3_client.exceptions.NoSuchKey as e:
         print(f"No such {object_key} key found: {e}")

@@ -4,7 +4,6 @@ from collections import defaultdict
 
 import requests
 import boto3
-from uuid import uuid4
 import pandas as pd
 from random import shuffle
 from io import StringIO
@@ -49,6 +48,9 @@ from chalicelib.utils import (
     dfs,
     upload_objects,
     get_s3_objects,
+    generate_panel_id,
+    generate_question_id,
+    generate_user_id,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -363,7 +365,7 @@ def post_process_howdy_file():
             if not user_exists:
                 # If the user does not exists, create a new one from scratch
                 new_user = dict()
-                new_user["UserID"] = f"u-{str(uuid4())}"
+                new_user["UserID"] = generate_user_id()
                 new_user["EmailID"] = record["EmailID"]
                 new_user["FName"] = record["FName"]
                 new_user["LName"] = record["LName"]
@@ -433,7 +435,7 @@ def post_process_canvas_file():
             if not user_exists:
                 # If the user does not exists, create a new one from scratch
                 new_user = dict()
-                new_user["UserID"] = f"u-{str(uuid4())}"
+                new_user["UserID"] = generate_user_id()
                 new_user["UIN"] = int(record["UIN"])
                 new_user["Role"] = STUDENT_ROLE
                 new_user["Section"] = record["Section"]
@@ -507,7 +509,7 @@ def post_user():
 
         # Build User object for database
         new_user = {
-            "UserID": f"u-{str(uuid4())}",
+            "UserID": generate_user_id(),
             "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "Name": incoming_json["name"],
             "LastName": incoming_json["lastname"],
@@ -632,7 +634,7 @@ def post_question():
 
         # Build Question object for database
         new_question = {
-            "QuestionID": f"q-{str(uuid4())}",
+            "QuestionID": generate_question_id(),
             "UserID": user_id,
             "PanelID": incoming_json["panelId"],
             "QuestionText": incoming_json["question"],
@@ -715,7 +717,7 @@ def post_question_batch():
         for question in raw_questions:
             # Build Question object for database
             new_question = {
-                "QuestionID": f"q-{str(uuid4())}",
+                "QuestionID": generate_question_id(),
                 "UserID": user_id,
                 "PanelID": incoming_json["panelId"],
                 "QuestionText": question,
@@ -914,7 +916,7 @@ def post_panel():
         incoming_json = app.current_request.json_body
 
         new_panel = {
-            "PanelID": f"p-{str(uuid4())}",
+            "PanelID": generate_panel_id(),
             "NumberOfQuestions": incoming_json["numberOfQuestions"],
             "PanelName": incoming_json["panelName"],
             "Panelist": incoming_json["panelist"],
