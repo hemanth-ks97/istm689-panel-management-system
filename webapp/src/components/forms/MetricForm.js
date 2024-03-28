@@ -14,6 +14,12 @@ import { Button, TextField, Typography } from "@mui/material";
 const validationSchema = yup.object({
   PanelID: yup.string("Enter PanelID").required("PanelID is required"),
   UserID: yup.string("Enter UserID").required("UserID is required"),
+  UserFName: yup
+    .string("Enter User First Name")
+    .required("User First Name is required"),
+  UserLName: yup
+    .string("Enter User Last Name")
+    .required("User Last Name is required"),
   QuestionStageScore: yup
     .number("Enter QuestionStageScore")
     .required("QuestionStageScore is required"),
@@ -45,6 +51,8 @@ const MetricForm = ({ metric }) => {
     initialValues: {
       PanelID: metric?.PanelID,
       UserID: metric?.UserID,
+      UserFName: metric?.UserFName,
+      UserLName: metric?.UserLName,
       QuestionStageScore: metric?.QuestionStageScore,
       TagStageScore: metric?.TagStageScore,
       VoteStageScore: metric?.VoteStageScore,
@@ -56,6 +64,7 @@ const MetricForm = ({ metric }) => {
       VoteStageSD: metric?.VoteStageSD,
       VoteStageInTime: metric?.VoteStageInTime,
       VoteStageOutTime: metric?.VoteStageOutTime,
+      CreatedAt: metric?.CreatedAt,
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
@@ -99,7 +108,6 @@ const MetricForm = ({ metric }) => {
           error={formik.touched.PanelID && Boolean(formik.errors.PanelID)}
           helperText={formik.touched.PanelID && formik.errors.PanelID}
         />
-        <br />
         <TextField
           style={{ margin: "5px" }}
           fullWidth
@@ -112,6 +120,32 @@ const MetricForm = ({ metric }) => {
           onBlur={formik.handleBlur}
           error={formik.touched.UserID && Boolean(formik.errors.UserID)}
           helperText={formik.touched.UserID && formik.errors.UserID}
+        />
+        <TextField
+          style={{ margin: "5px" }}
+          fullWidth
+          id="UserFName"
+          name="UserFName"
+          label="User First Name"
+          disabled={true}
+          value={formik.values.UserFName}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.UserFName && Boolean(formik.errors.UserFName)}
+          helperText={formik.touched.UserFName && formik.errors.UserFName}
+        />
+        <TextField
+          style={{ margin: "5px" }}
+          fullWidth
+          id="UserLName"
+          name="UserLName"
+          label="User Last Name"
+          disabled={true}
+          value={formik.values.UserLName}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.UserLName && Boolean(formik.errors.UserLName)}
+          helperText={formik.touched.UserLName && formik.errors.UserLName}
         />
         <TextField
           style={{ margin: "5px" }}

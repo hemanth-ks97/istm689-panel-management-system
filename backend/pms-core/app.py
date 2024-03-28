@@ -363,7 +363,7 @@ def post_process_howdy_file():
             if not user_exists:
                 # If the user does not exists, create a new one from scratch
                 new_user = dict()
-                new_user["UserID"] = str(uuid4())
+                new_user["UserID"] = f"u-{str(uuid4())}"
                 new_user["EmailID"] = record["EmailID"]
                 new_user["FName"] = record["FName"]
                 new_user["LName"] = record["LName"]
@@ -433,7 +433,7 @@ def post_process_canvas_file():
             if not user_exists:
                 # If the user does not exists, create a new one from scratch
                 new_user = dict()
-                new_user["UserID"] = str(uuid4())
+                new_user["UserID"] = f"u-{str(uuid4())}"
                 new_user["UIN"] = int(record["UIN"])
                 new_user["Role"] = STUDENT_ROLE
                 new_user["Section"] = record["Section"]
@@ -507,7 +507,7 @@ def post_user():
 
         # Build User object for database
         new_user = {
-            "UserID": str(uuid4()),
+            "UserID": f"u-{str(uuid4())}",
             "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "Name": incoming_json["name"],
             "LastName": incoming_json["lastname"],
@@ -632,7 +632,7 @@ def post_question():
 
         # Build Question object for database
         new_question = {
-            "QuestionID": str(uuid4()),
+            "QuestionID": f"q-{str(uuid4())}",
             "UserID": user_id,
             "PanelID": incoming_json["panelId"],
             "QuestionText": incoming_json["question"],
@@ -715,7 +715,7 @@ def post_question_batch():
         for question in raw_questions:
             # Build Question object for database
             new_question = {
-                "QuestionID": str(uuid4()),
+                "QuestionID": f"q-{str(uuid4())}",
                 "UserID": user_id,
                 "PanelID": incoming_json["panelId"],
                 "QuestionText": question,
@@ -914,7 +914,7 @@ def post_panel():
         incoming_json = app.current_request.json_body
 
         new_panel = {
-            "PanelID": str(uuid4()),
+            "PanelID": f"p-{str(uuid4())}",
             "NumberOfQuestions": incoming_json["numberOfQuestions"],
             "PanelName": incoming_json["panelName"],
             "Panelist": incoming_json["panelist"],
@@ -1203,6 +1203,13 @@ def get_questions_per_student(id):
         return Response(body={"error": "Missing panelId or userId"}, status_code=400)
 
     object_key = f"{panel_id}/questions.json"
+
+    # Check cache first!
+
+    # if not cached
+    #  - get s3 object
+    #  - set cache with TTL
+    #  - return object
 
     print(
         f"Getting questions for User ID: {user_id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}"
