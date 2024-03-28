@@ -151,6 +151,8 @@ const createDynamoDBMetricObject = (metric) => {
   return {
     PanelID: { S: metric.PanelID },
     UserID: { S: metric.UserID },
+    UserFName: { S: metric.UserFName },
+    UserLName: { S: metric.UserLName },
     QuestionStageScore: { N: metric.QuestionStageScore.toString() },
     TagStageInTime: { S: metric.TagStageInTime },
     TagStageOutTime: { S: metric.TagStageOutTime },
@@ -303,10 +305,12 @@ const createRandomQuestion = (panelID, userID) => {
   return question;
 };
 
-const createRandomMetric = (panelID, userID) => {
+const createRandomMetric = ({ panelID, userID, userFName, userLName }) => {
   const metric = {
     PanelID: panelID,
     UserID: userID,
+    UserFName: userFName,
+    UserLName: userLName,
     QuestionStageScore: faker.number.int({ min: 1, max: 100 }),
     TagStageInTime: faker.date.soon(),
     TagStageOutTime: faker.date.soon(),
@@ -322,9 +326,11 @@ const createRandomMetric = (panelID, userID) => {
   return metric;
 };
 
-const generateMetrics = (panels, users) => {
+const generateMetrics = ({ panels, users }) => {
   let panelID;
   let userID;
+  let userFName;
+  let userLName;
   let newMetrics = [];
 
   // Loop through each generated panel to create questions
@@ -332,7 +338,14 @@ const generateMetrics = (panels, users) => {
     panelID = panel.PutRequest.Item.PanelID.S;
     for (let user of users) {
       userID = user.PutRequest.Item.UserID.S;
-      const metric = createRandomMetric(panelID, userID);
+      userFName = user.PutRequest.Item.FName.S;
+      userLName = user.PutRequest.Item.LName.S;
+      const metric = createRandomMetric({
+        panelID,
+        userID,
+        userFName,
+        userLName,
+      });
       newMetrics.push({
         PutRequest: { Item: createDynamoDBMetricObject(metric) },
       });
@@ -342,7 +355,7 @@ const generateMetrics = (panels, users) => {
   return newMetrics;
 };
 
-const generateQuestions = (panels, users, questionsByPanel = 20) => {
+const generateQuestions = ({ panels, users, questionsByPanel = 20 }) => {
   let panelID;
   let userID;
   let randomUserIndex;
@@ -402,7 +415,7 @@ const generateUsers = () => {
     return;
   });
 
-  const panelists = generatePanelists({ count: 17 });
+  const panelists = generatePanelists({ count: 10 });
   // Concat did not work, ugly but it works
   panelists.map((user) => {
     allUsers.push(user);
@@ -422,8 +435,8 @@ const generateUsers = () => {
 const main = async () => {
   const users = generateUsers();
   const panels = generatePanels();
-  const questions = generateQuestions(panels, users);
-  const metrics = generateMetrics(panels, users);
+  const questions = generateQuestions({ panels, users });
+  const metrics = generateMetrics({ panels, users });
 
   let batchItems = {};
 
