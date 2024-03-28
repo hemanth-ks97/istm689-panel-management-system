@@ -525,12 +525,11 @@ def post_user():
 
 
 @app.route(
-    "/user/me",
+    "/me",
     methods=["GET"],
     authorizer=authorizers,
 )
 def get_my_user():
-
     try:
         user_id = app.current_request.context["authorizer"]["principalId"]
         user = get_user_db().get_user(user_id=user_id)
