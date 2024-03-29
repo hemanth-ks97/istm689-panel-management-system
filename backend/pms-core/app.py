@@ -1164,9 +1164,54 @@ def get_panel_(id):
             if is_new:
                 similar_culsters.append(cluster)
 
-        # TODO - Store similar_culsters "somewhere"
+        # Build hash-map of retrieved questions for faster lookup
+        question_map = {}
+        for question_obj in questions:
+            question_map[question_obj["QuestionID"]] = question_obj
+        
+        # Pick representative question from each cluster of similar questions (highest likes)
+        # Exclude flagged questions
+        # Calculate total cluster likes
+        # store it in a new list
+        
+        rep_question_clusters = []
 
-        return similar_culsters
+        for cluster in similar_culsters:
+            rep_id = cluster[0]
+            rep_likes = 0
+            cluster_likes = 0
+            cluster_dislikes = 0
+            filtered_cluster = []
+
+            if len(cluster) > 1:
+                for q_id in cluster:
+                    if "FlaggedBy" not in question_map[rep_id] or len(question_map[q_id]["FlaggedBy"]) == 0:
+                        filtered_cluster.append(q_id)
+                        q_likes = len(question_map[q_id]["LikedBy"])
+                        q_dislikes = len(question_map[q_id]["DislikedBy"])
+                        if q_likes > rep_likes:
+                            rep_id = q_id
+                            rep_likes = q_likes
+                        cluster_likes += q_likes
+                        cluster_dislikes += q_dislikes
+            else:
+                if "FlaggedBy" not in question_map[rep_id] or len(question_map[rep_id]["FlaggedBy"]) == 0:
+                    filtered_cluster.append(rep_id)
+            
+            if len(filtered_cluster) > 0:
+                rep_question_clusters.append({
+                    "rep_id" : rep_id,
+                    "cluster" : filtered_cluster,
+                    "cluster_likes" : cluster_likes,
+                    "cluster_dislikes" : cluster_dislikes
+                })
+
+        # Sort by cluster likes in descending order
+        sorted_by_cluster_likes = sorted(rep_question_clusters, key=lambda x:x["cluster_likes"], reverse=True)
+
+        # TODO - Store in panel-table or S3 bucket or Both
+
+        return sorted_by_cluster_likes
 
     except Exception as e:
         return {"error": str(e)}
