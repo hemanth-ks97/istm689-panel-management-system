@@ -63,7 +63,7 @@ const QuestionsPage = () => {
       })
       .catch((error) => {
         console.log(error);
-        enqueueSnackbar(error.message, { variant: "error" });
+        enqueueSnackbar(error.response.data["Message"], { variant: "error" });
       });
   };
 

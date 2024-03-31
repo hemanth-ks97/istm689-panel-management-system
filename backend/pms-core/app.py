@@ -16,6 +16,7 @@ from chalice import (
     NotFoundError,
     BadRequestError,
     Response,
+    ForbiddenError
 )
 from chalicelib.email import send_email
 from chalicelib.config import (
@@ -52,6 +53,7 @@ from chalicelib.utils import (
     generate_question_id,
     generate_user_id,
 )
+from chalicelib.perspectiveHelper import is_question_ok
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
 
@@ -628,6 +630,9 @@ def post_question():
             raise BadRequestError("Key 'panelId' not found in incoming request")
 
         user_id = app.current_request.context["authorizer"]["principalId"]
+        
+        if not is_question_ok(incoming_json["question"]):
+            raise ForbiddenError("Question does not use appropriate language") 
 
         # Validate if panel still acepts questions!!
 
@@ -656,7 +661,7 @@ def post_question():
         }
 
     except Exception as e:
-        return {"error": str(e)}
+        raise BadRequestError(e)
 
 
 @app.route(
@@ -711,6 +716,10 @@ def post_question_batch():
             raise BadRequestError("Not anymore")
 
         raw_questions = incoming_json["questions"]
+        
+        questions_string = ' '.join(question for question in raw_questions)
+        if not is_question_ok(questions_string):
+            raise ForbiddenError("Question does not use appropriate language")
 
         new_questions = []
         for question in raw_questions:
@@ -741,7 +750,7 @@ def post_question_batch():
         }
 
     except Exception as e:
-        return {"error": str(e)}
+        raise BadRequestError(e)
 
 
 @app.route(
