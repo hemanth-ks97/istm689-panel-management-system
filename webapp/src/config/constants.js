@@ -29,6 +29,8 @@ export const DATABASE_ATTRIBUTE_MAPPING = {
   Metric: {
     PanelID: { displayName: "Panel ID", type: "text" },
     UserID: { displayName: "User ID", type: "text" },
+    UserFName: { displayName: "User First Name", type: "text" },
+    UserLName: { displayName: "User Last Name", type: "text" },
     QuestionStageScore: { displayName: "Questions Score", type: "number" },
     TagStageScore: { displayName: "Tag Score", type: "number" },
     VoteStageScore: { displayName: "Vote Score", type: "number" },

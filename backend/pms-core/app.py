@@ -4,7 +4,6 @@ from collections import defaultdict
 
 import requests
 import boto3
-from uuid import uuid4
 import pandas as pd
 from random import shuffle
 from io import StringIO
@@ -48,6 +47,10 @@ from chalicelib.utils import (
     create_token,
     dfs,
     upload_objects,
+    get_s3_objects,
+    generate_panel_id,
+    generate_question_id,
+    generate_user_id,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -121,13 +124,14 @@ def dummy():
     dummy_db.update_item()
     dummy_db.scan()
     dummy_db.query()
+    dummy_db.batch_write_item()
     # SES
     dummy_ses = boto3.client("ses")
     dummy_ses.send_email()
     # S3
     dummy_s3 = boto3.client("s3")
     dummy_s3.put_object()
-    # dummy_s3.get_object()
+    dummy_s3.get_object()
     # dummy_s3.download_file()
     # dummy_s3.list_objects_v2()
     # dummy_s3.get_bucket_location()
@@ -361,7 +365,7 @@ def post_process_howdy_file():
             if not user_exists:
                 # If the user does not exists, create a new one from scratch
                 new_user = dict()
-                new_user["UserID"] = str(uuid4())
+                new_user["UserID"] = generate_user_id()
                 new_user["EmailID"] = record["EmailID"]
                 new_user["FName"] = record["FName"]
                 new_user["LName"] = record["LName"]
@@ -431,7 +435,7 @@ def post_process_canvas_file():
             if not user_exists:
                 # If the user does not exists, create a new one from scratch
                 new_user = dict()
-                new_user["UserID"] = str(uuid4())
+                new_user["UserID"] = generate_user_id()
                 new_user["UIN"] = int(record["UIN"])
                 new_user["Role"] = STUDENT_ROLE
                 new_user["Section"] = record["Section"]
@@ -505,7 +509,7 @@ def post_user():
 
         # Build User object for database
         new_user = {
-            "UserID": str(uuid4()),
+            "UserID": generate_user_id(),
             "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "Name": incoming_json["name"],
             "LastName": incoming_json["lastname"],
@@ -521,12 +525,11 @@ def post_user():
 
 
 @app.route(
-    "/user/me",
+    "/me",
     methods=["GET"],
     authorizer=authorizers,
 )
 def get_my_user():
-
     try:
         user_id = app.current_request.context["authorizer"]["principalId"]
         user = get_user_db().get_user(user_id=user_id)
@@ -548,6 +551,24 @@ def get_user(id):
     if item is None:
         raise NotFoundError(f"User {id} not found")
     return item
+
+
+@app.route(
+    "/user/{id}",
+    methods=["PATCH"],
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+    authorizer=authorizers,
+)
+def patch_user(id):
+    item = get_user_db().get_user(user_id=id)
+
+    if item is None:
+        raise NotFoundError(f"User {id} not found")
+
+    updated_user = app.current_request.json_body
+
+    response = get_user_db().update_user(updated_user)
+    return response
 
 
 @app.route(
@@ -612,7 +633,7 @@ def post_question():
 
         # Build Question object for database
         new_question = {
-            "QuestionID": str(uuid4()),
+            "QuestionID": generate_question_id(),
             "UserID": user_id,
             "PanelID": incoming_json["panelId"],
             "QuestionText": incoming_json["question"],
@@ -695,7 +716,7 @@ def post_question_batch():
         for question in raw_questions:
             # Build Question object for database
             new_question = {
-                "QuestionID": str(uuid4()),
+                "QuestionID": generate_question_id(),
                 "UserID": user_id,
                 "PanelID": incoming_json["panelId"],
                 "QuestionText": question,
@@ -724,28 +745,129 @@ def post_question_batch():
 
 
 @app.route(
-    "/question/mark_similar",
+    "/panel/{id}/tagging",
     methods=["POST"],
     authorizer=authorizers,
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
-def post_question_mark_similar():
+def post_question_tagging(id):
+    # Request Format {"liked":["<id_1>", "<id_2>",..., "<id_n>"], "disliked":["<id_1>", "<id_2>",..., "<id_n>"], "flagged":["<id_1>", "<id_2>",..., "<id_n>"]}
+    try:
+        panel = get_panel_db().get_panel(id)
+        if panel is None:
+            raise BadRequestError("The panel id does not exist")
+        if (
+            datetime.now(timezone.utc).isoformat(timespec="seconds")
+            > panel["TagStageDeadline"]
+        ):
+            raise BadRequestError("The deadline for this task has passed")
+
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        request = app.current_request.json_body
+
+        if "liked" not in request:
+            raise BadRequestError("Key 'liked' not found in incoming request")
+        if type(request["liked"]) is not list:
+            raise BadRequestError("Key 'liked' should be a list")
+        if "disliked" not in request:
+            raise BadRequestError("Key 'disliked' not found in incoming request")
+        if type(request["disliked"]) is not list:
+            raise BadRequestError("Key 'disliked' should be a list")
+        if "flagged" not in request:
+            raise BadRequestError("Key 'flagged' not found in incoming request")
+        if type(request["flagged"]) is not list:
+            raise BadRequestError("Key 'flagged' should be a list")
+
+        liked_list, disliked_list, flagged_list = (
+            request["liked"],
+            request["disliked"],
+            request["flagged"],
+        )
+        batch_update_request = {}
+
+        for q_id in liked_list:
+            question = get_question_db().get_question(q_id)
+            if "LikedBy" in question:
+                if user_id not in question["LikedBy"]:
+                    if len(question["LikedBy"]) > 0:
+                        question["LikedBy"].extend(user_id)
+                    else:
+                        question["LikedBy"].append(user_id)
+            else:
+                question["LikedBy"] = [user_id]
+            batch_update_request[q_id] = question
+
+        for q_id in disliked_list:
+            question = (
+                get_question_db().get_question(q_id)
+                if q_id not in batch_update_request
+                else batch_update_request[q_id]
+            )
+            if "DislikedBy" in question:
+                if user_id not in question["DislikedBy"]:
+                    if len(question["DislikedBy"]) > 0:
+                        question["DislikedBy"].extend(user_id)
+                    else:
+                        question["DislikedBy"].append(user_id)
+            else:
+                question["DislikedBy"] = [user_id]
+            batch_update_request[q_id] = question
+
+        for q_id in flagged_list:
+            question = (
+                get_question_db().get_question(q_id)
+                if q_id not in batch_update_request
+                else batch_update_request[q_id]
+            )
+            if "FlaggedBy" in question:
+                if user_id not in question["FlaggedBy"]:
+                    if len(question["FlaggedBy"]) > 0:
+                        question["FlaggedBy"].extend(user_id)
+                    else:
+                        question["FlaggedBy"].append(user_id)
+            else:
+                question["FlaggedBy"] = [user_id]
+            batch_update_request[q_id] = question
+
+        get_question_db().add_questions_batch(batch_update_request.values())
+
+        return f"{len(liked_list)} questions liked\n{len(disliked_list)} questions disliked\n{len(flagged_list)} questions flagged !"
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.route(
+    "/panel/{id}/mark_similar",
+    methods=["POST"],
+    authorizer=authorizers,
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+)
+def post_question_mark_similar(id):
     # Request Format {"similar":["<id_1>", "<id_2>",..., "<id_n>"]}
     # for every question_id in the list, append to its "similar-to" lsit in the database with every other question_id
     try:
+        panel = get_panel_db().get_panel(id)
+        if panel is None:
+            raise BadRequestError("The panel id does not exist")
+        if (
+            datetime.now(timezone.utc).isoformat(timespec="seconds")
+            > panel["TagStageDeadline"]
+        ):
+            raise BadRequestError("The deadline for this task has passed")
+
         request = app.current_request.json_body
         similar_list = request["similar"]
         similar_set = set(similar_list)
 
-        for id in similar_set:
-            question_obj = get_question_db().get_question(id)
+        for q_id in similar_set:
+            question_obj = get_question_db().get_question(q_id)
             if not question_obj:
-                raise BadRequestError("Invalid question_id", id)
+                raise BadRequestError("Invalid question_id", q_id)
             other_ids = similar_set.copy()
-            other_ids.remove(id)
+            other_ids.remove(q_id)
             if "SimilarTo" in question_obj:
                 question_obj["SimilarTo"].extend(
-                    id for id in other_ids if id not in question_obj["SimilarTo"]
+                    uuid for uuid in other_ids if uuid not in question_obj["SimilarTo"]
                 )
             else:
                 question_obj["SimilarTo"] = list(other_ids)
@@ -793,7 +915,7 @@ def post_panel():
         incoming_json = app.current_request.json_body
 
         new_panel = {
-            "PanelID": str(uuid4()),
+            "PanelID": generate_panel_id(),
             "NumberOfQuestions": incoming_json["numberOfQuestions"],
             "PanelName": incoming_json["panelName"],
             "Panelist": incoming_json["panelist"],
@@ -841,6 +963,25 @@ def get_panel(id):
 
 
 @app.route(
+    "/panel/{id}",
+    methods=["PATCH"],
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+    authorizer=authorizers,
+)
+def patch_panel(id):
+
+    item = get_panel_db().get_panel(panel_id=id)
+
+    if item is None:
+        raise NotFoundError(f"Panel {id} not found")
+
+    updated_panel = app.current_request.json_body
+
+    response = get_panel_db().update_panel(updated_panel)
+    return response
+
+
+@app.route(
     "/panel/{id}/distribute",
     methods=["GET"],
     authorizer=authorizers,
@@ -878,6 +1019,7 @@ def distribute_tag_questions(id):
         number_of_extra_question_slots = number_of_question_slots % number_of_questions
 
         # Print variable values
+        print("Panel ID: ", id)
         print("Number of questions per student: ", number_of_questions_per_student)
         print("Total number of questions: ", number_of_questions)
         print("Total number of students: ", number_of_students)
@@ -914,21 +1056,12 @@ def distribute_tag_questions(id):
             for _ in range(number_of_questions_per_student):
                 question_id = distributed_question_id_slots.pop(0)
 
-                # Initialize counter to avoid edge case
-                counter = 0
                 # Check if question exists in the map keys and check if question was entered by user
                 while (question_id in question_id_text_map.keys()) or (
                     student_id == question_map[question_id]["UserID"]
                 ):
                     # Append it to the end of the master list and fetch the next question
                     distributed_question_id_slots.append(question_id)
-
-                    # Increment counter
-                    counter += 1
-                    if counter >= 50:
-                        # Call function again to randomize shuffling
-                        distribute_tag_questions(id)
-                        break
 
                     # Get next question from the questionID slot list
                     question_id = distributed_question_id_slots.pop(0)
@@ -981,6 +1114,34 @@ def get_panel_metrics(id):
 
 
 @app.route(
+    "/metric",
+    methods=["PATCH"],
+    content_types=[REQUEST_CONTENT_TYPE_JSON],
+    authorizer=authorizers,
+)
+def patch_metric():
+    updated_metric = app.current_request.json_body
+
+    # Check for all required fields
+    if "PanelID" not in updated_metric:
+        raise BadRequestError("Key 'PanelID' not found in incoming request")
+    if "UserID" not in updated_metric:
+        raise BadRequestError("Key 'UserID' not found in incoming request")
+
+    item = get_metric_db().get_metric(
+        user_id=updated_metric["UserID"], panel_id=updated_metric["PanelID"]
+    )
+
+    if item is None:
+        raise NotFoundError(
+            f"Metric for Panel {updated_metric['PanelID']} and User {updated_metric['UserID']}: not found"
+        )
+
+    response = get_metric_db().update_metric(updated_metric)
+    return response
+
+
+@app.route(
     "/panel/{id}/questions/group_similar",
     methods=["GET"],
     authorizer=authorizers,
@@ -1003,9 +1164,54 @@ def get_panel_(id):
             if is_new:
                 similar_culsters.append(cluster)
 
-        # TODO - Store similar_culsters "somewhere"
+        # Build hash-map of retrieved questions for faster lookup
+        question_map = {}
+        for question_obj in questions:
+            question_map[question_obj["QuestionID"]] = question_obj
+        
+        # Pick representative question from each cluster of similar questions (highest likes)
+        # Exclude flagged questions
+        # Calculate total cluster likes
+        # store it in a new list
+        
+        rep_question_clusters = []
 
-        return similar_culsters
+        for cluster in similar_culsters:
+            rep_id = cluster[0]
+            rep_likes = 0
+            cluster_likes = 0
+            cluster_dislikes = 0
+            filtered_cluster = []
+
+            if len(cluster) > 1:
+                for q_id in cluster:
+                    if "FlaggedBy" not in question_map[rep_id] or len(question_map[q_id]["FlaggedBy"]) == 0:
+                        filtered_cluster.append(q_id)
+                        q_likes = len(question_map[q_id]["LikedBy"])
+                        q_dislikes = len(question_map[q_id]["DislikedBy"])
+                        if q_likes > rep_likes:
+                            rep_id = q_id
+                            rep_likes = q_likes
+                        cluster_likes += q_likes
+                        cluster_dislikes += q_dislikes
+            else:
+                if "FlaggedBy" not in question_map[rep_id] or len(question_map[rep_id]["FlaggedBy"]) == 0:
+                    filtered_cluster.append(rep_id)
+            
+            if len(filtered_cluster) > 0:
+                rep_question_clusters.append({
+                    "rep_id" : rep_id,
+                    "cluster" : filtered_cluster,
+                    "cluster_likes" : cluster_likes,
+                    "cluster_dislikes" : cluster_dislikes
+                })
+
+        # Sort by cluster likes in descending order
+        sorted_by_cluster_likes = sorted(rep_question_clusters, key=lambda x:x["cluster_likes"], reverse=True)
+
+        # TODO - Store in panel-table or S3 bucket or Both
+
+        return sorted_by_cluster_likes
 
     except Exception as e:
         return {"error": str(e)}
@@ -1026,3 +1232,46 @@ def get_all_metrics_():
         return {"error": str(e)}
 
     return metrics
+
+
+@app.route(
+    "/panel/{id}/questions/tagging",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_questions_per_student(id):
+    panel_id = id
+    user_question = None
+    # Fetch user id
+    user_id = app.current_request.context["authorizer"]["principalId"]
+
+    if not panel_id or not user_id:
+        return Response(body={"error": "Missing panelId or userId"}, status_code=400)
+
+    object_key = f"{panel_id}/questions.json"
+
+    # Check cache first!
+
+    # if not cached
+    #  - get s3 object
+    #  - set cache with TTL
+    #  - return object
+
+    print(
+        f"Getting questions for User ID: {user_id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}"
+    )
+    questions_data, error = get_s3_objects(PANELS_BUCKET_NAME, object_key)
+
+    if error:
+        app.log.error(f"Error fetching from S3: {error}")
+        return Response(
+            body={"error": "Unable to fetch question data"}, status_code=500
+        )
+
+    if questions_data:
+        user_question = questions_data.get(user_id)
+
+    if user_question:
+        return {"question": user_question}
+    else:
+        return Response(body={"error": "Question not found for user"}, status_code=404)

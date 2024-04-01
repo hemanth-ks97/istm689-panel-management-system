@@ -14,7 +14,13 @@ const TABLE_NAME = {
   METRIC: `${ENV}-metric`,
 };
 
+const CHUNK_SIZE = 25; // No more than 25 because the SDK doesn't allow it
+
 const client = new DynamoDBClient({});
+
+const delay = (time = 3000) => {
+  return new Promise((resolve) => setTimeout(resolve, time));
+};
 
 const teamMembers = [
   {
@@ -145,6 +151,8 @@ const createDynamoDBMetricObject = (metric) => {
   return {
     PanelID: { S: metric.PanelID },
     UserID: { S: metric.UserID },
+    UserFName: { S: metric.UserFName },
+    UserLName: { S: metric.UserLName },
     QuestionStageScore: { N: metric.QuestionStageScore.toString() },
     TagStageInTime: { S: metric.TagStageInTime },
     TagStageOutTime: { S: metric.TagStageOutTime },
@@ -297,10 +305,12 @@ const createRandomQuestion = (panelID, userID) => {
   return question;
 };
 
-const createRandomMetric = (panelID, userID) => {
+const createRandomMetric = ({ panelID, userID, userFName, userLName }) => {
   const metric = {
     PanelID: panelID,
     UserID: userID,
+    UserFName: userFName,
+    UserLName: userLName,
     QuestionStageScore: faker.number.int({ min: 1, max: 100 }),
     TagStageInTime: faker.date.soon(),
     TagStageOutTime: faker.date.soon(),
@@ -316,19 +326,26 @@ const createRandomMetric = (panelID, userID) => {
   return metric;
 };
 
-const generateMetrics = (panels, users) => {
+const generateMetrics = ({ panels, users }) => {
   let panelID;
   let userID;
-
+  let userFName;
+  let userLName;
   let newMetrics = [];
 
   // Loop through each generated panel to create questions
-
   for (let panel of panels) {
     panelID = panel.PutRequest.Item.PanelID.S;
     for (let user of users) {
       userID = user.PutRequest.Item.UserID.S;
-      const metric = createRandomMetric(panelID, userID);
+      userFName = user.PutRequest.Item.FName.S;
+      userLName = user.PutRequest.Item.LName.S;
+      const metric = createRandomMetric({
+        panelID,
+        userID,
+        userFName,
+        userLName,
+      });
       newMetrics.push({
         PutRequest: { Item: createDynamoDBMetricObject(metric) },
       });
@@ -338,7 +355,7 @@ const generateMetrics = (panels, users) => {
   return newMetrics;
 };
 
-const generateQuestions = (panels, users, questionsByPanel = 5) => {
+const generateQuestions = ({ panels, users, questionsByPanel = 20 }) => {
   let panelID;
   let userID;
   let randomUserIndex;
@@ -391,21 +408,21 @@ const generateUsers = () => {
     return;
   });
 
-  const students = generateStudents({ count: 4 });
+  const students = generateStudents({ count: 70 });
   // Concat did not work, ugly but it works
   students.map((user) => {
     allUsers.push(user);
     return;
   });
 
-  const panelists = generatePanelists({ count: 3 });
+  const panelists = generatePanelists({ count: 10 });
   // Concat did not work, ugly but it works
   panelists.map((user) => {
     allUsers.push(user);
     return;
   });
 
-  const admins = generateAdmins({ count: 2 });
+  const admins = generateAdmins({ count: 5 });
   // Concat did not work, ugly but it works
   admins.map((user) => {
     allUsers.push(user);
@@ -418,51 +435,87 @@ const generateUsers = () => {
 const main = async () => {
   const users = generateUsers();
   const panels = generatePanels();
-  const questions = generateQuestions(panels, users);
-  const metrics = generateMetrics(panels, users);
+  const questions = generateQuestions({ panels, users });
+  const metrics = generateMetrics({ panels, users });
 
   let batchItems = {};
 
   if (users.length > 0) {
-    batchItems[TABLE_NAME.USER] = users;
+    for (let i = 0; i < users.length; i += CHUNK_SIZE) {
+      // Clean batch items
+      batchItems = {};
+      const chunk = users.slice(i, i + CHUNK_SIZE);
+      batchItems[TABLE_NAME.USER] = chunk;
+      const putUsers = new BatchWriteItemCommand({
+        RequestItems: batchItems,
+      });
+      try {
+        console.log(`USERS -- Inserting: ${i}`);
+        await client.send(putUsers);
+      } catch (error) {
+        console.log("USERS -- Error:", error.message);
+      }
+      console.log(`USERS -- Waiting`);
+      await delay();
+    }
   }
   if (panels.length > 0) {
-    batchItems[TABLE_NAME.PANEL] = panels;
+    for (let i = 0; i < panels.length; i += CHUNK_SIZE) {
+      // Clean batch items
+      batchItems = {};
+      const chunk = panels.slice(i, i + CHUNK_SIZE);
+      batchItems[TABLE_NAME.PANEL] = chunk;
+      const putPanels = new BatchWriteItemCommand({
+        RequestItems: batchItems,
+      });
+      try {
+        console.log(`PANELS -- Inserting: ${i}`);
+        await client.send(putPanels);
+      } catch (error) {
+        console.log("PANELS -- Error:", error.message);
+      }
+      console.log(`PANELS -- Waiting`);
+      await delay();
+    }
   }
-  const putItems = new BatchWriteItemCommand({
-    RequestItems: batchItems,
-  });
-  await client.send(putItems);
-  // Clean batch items
-  batchItems = {};
 
   if (questions.length > 0 && panels.length > 0 && questions.length > 0) {
-    batchItems[TABLE_NAME.QUESTION] = questions;
+    for (let i = 0; i < questions.length; i += CHUNK_SIZE) {
+      // Clean batch items
+      batchItems = {};
+      const chunk = questions.slice(i, i + CHUNK_SIZE);
+      batchItems[TABLE_NAME.QUESTION] = chunk;
+      const putQuestions = new BatchWriteItemCommand({
+        RequestItems: batchItems,
+      });
+      try {
+        console.log(`QUESTIONS -- Inserting: ${i}`);
+        await client.send(putQuestions);
+      } catch (error) {
+        console.log("QUESTIONS -- Error:", error.message);
+      }
+      console.log(`QUESTIONS -- Waiting`);
+      await delay();
+    }
   }
-  /**
-   * BatchWriteItemCommand only can handle 25 at the time
-   * Need to split for the questions
-   */
-  const putQuestions = new BatchWriteItemCommand({
-    RequestItems: batchItems,
-  });
-  await client.send(putQuestions);
 
   if (metrics.length > 0) {
-    const chunkSize = 25;
-    for (let i = 0; i < metrics.length; i += chunkSize) {
-      // Cleam batch items
+    for (let i = 0; i < metrics.length; i += CHUNK_SIZE) {
+      // Clean batch items
       batchItems = {};
-
-      const chunk = metrics.slice(i, i + chunkSize);
-
+      const chunk = metrics.slice(i, i + CHUNK_SIZE);
       batchItems[TABLE_NAME.METRIC] = chunk;
-
       const putMetrics = new BatchWriteItemCommand({
         RequestItems: batchItems,
       });
-
-      await client.send(putMetrics);
+      try {
+        console.log(`METRICS -- Inserting: ${i}`);
+        await client.send(putMetrics);
+      } catch (error) {
+        console.log("METRICS -- Error:", error.message);
+      }
+      console.log(`METRICS -- Waiting`);
+      await delay();
     }
   }
 };

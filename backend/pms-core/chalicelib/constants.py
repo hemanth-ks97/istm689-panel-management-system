@@ -16,10 +16,16 @@ PANELIST_ROLE = "panelist"
 
 GOOGLE_ISSUER = "https://accounts.google.com"
 
-STUDENT_ROLE_AUTHORIZE_ROUTES = ["/panel", "/panel/*", "/question/batch"]
+STUDENT_ROLE_AUTHORIZE_ROUTES = [
+    "/me",
+    "/panel",
+    "/panel/*",
+    "/question/batch",
+]
 
 
 ADMIN_ROLE_AUTHORIZE_ROUTES = [
+    "/me",
     "/file",
     "/file/*",
     "/user",
@@ -31,6 +37,7 @@ ADMIN_ROLE_AUTHORIZE_ROUTES = [
     "/metric",
     "/metric/*",
 ]
-PANELIST_ROLE_AUTHORIZE_ROUTES = ["/panelist", "/panelist/*"]
+# TODO
+PANELIST_ROLE_AUTHORIZE_ROUTES = ["/me", "/panelist", "/panelist/*"]
 
 GOOGLE_RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"

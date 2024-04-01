@@ -13,7 +13,7 @@ import {
 
 import { DATABASE_ATTRIBUTE_MAPPING } from "../../config/constants";
 
-const FormDialog = ({ isOpen, setIsOpen, selectedData, type }) => {
+const SomeDialog = ({ isOpen, setIsOpen, selectedData, type }) => {
   const handleClose = () => {
     setIsOpen();
   };
@@ -68,4 +68,4 @@ const FormDialog = ({ isOpen, setIsOpen, selectedData, type }) => {
   );
 };
 
-export default FormDialog;
+export default SomeDialog;

@@ -90,6 +90,9 @@ class PanelDB(object):
     def get_panel(self, panel_id):
         pass
 
+    def update_panel(self, panel):
+        pass
+
     def get_all_panels(self):
         pass
 
@@ -102,6 +105,9 @@ class DynamoPanelDB(PanelDB):
         self._table = table_resource
 
     def add_panel(self, panel):
+        return self._table.put_item(Item=panel)
+
+    def update_panel(self, panel):
         return self._table.put_item(Item=panel)
 
     def get_all_panels(self):
@@ -254,6 +260,9 @@ class MetricDB(object):
     def get_metric(self, user_id, panel_id):
         pass
 
+    def update_metric(self, metric):
+        pass
+
     def list_metrics(self):
         pass
 
@@ -282,6 +291,9 @@ class DynamoMetricDB(MetricDB):
             },
         )
         return response.get("Item")
+
+    def update_metric(self, metric):
+        return self._table.put_item(Item=metric)
 
     def list_metrics(self):
         response = self._table.scan()

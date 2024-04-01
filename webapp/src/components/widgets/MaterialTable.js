@@ -5,7 +5,7 @@ import {
   useMaterialReactTable,
 } from "material-react-table";
 
-import FormDialog from "../forms/FormDialog";
+import EditDialog from "../forms/EditDialog";
 
 const MaterialTable = ({ data, columns, type }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -30,7 +30,7 @@ const MaterialTable = ({ data, columns, type }) => {
     <>
       <MaterialReactTable table={table} />;
       {selectedData && (
-        <FormDialog
+        <EditDialog
           isOpen={isDialogOpen}
           setIsOpen={() => setIsDialogOpen(!isDialogOpen)}
           selectedData={selectedData}
