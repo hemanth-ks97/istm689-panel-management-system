@@ -1273,8 +1273,13 @@ def get_questions_per_student(id):
         return Response(body={"error": "Question not found for user"}, status_code=404)
 
 
-@app.schedule(Cron(5, 0, "*", "*", "?", "*"))
-def daily_tasks(event):
+# It will run every day at 07:00 AM UTC
+# 07:00 AM UTC -> 02:00 AM CST or 01:00 AM depeding on daylight saving time
+# @app.schedule(Cron(0, 7, "*", "*", "?", "*"))
+@app.route("/daily_tasks", methods=["GET"])
+# def daily_tasks(event):
+def daily_tasks():
+    # Example event that actually happened
     event = {
         "version": "0",
         "id": "c9d90c0e-689a-3808-846c-c171d688c726",
@@ -1289,34 +1294,88 @@ def daily_tasks(event):
         "detail": {},
     }
 
-    yesterday_date = datetime.now(timezone.utc) - timedelta(1)
-    yesterday_date_string = yesterday_date.strftime("%Y-%m-%d")
+    today = datetime.fromisoformat(event["time"])
+    today_date_string = today.strftime("%Y-%m-%d")
 
-    tasks_performend = dict()
+    html_message = f"<h1>Scheduled tasks for {today_date_string}</h1>"
 
-    # Process panels after Vote Deadline
-    # Get panels that expired the day before
+    # Tasks after PanelStartDate
+    #   - Nothing
     panels = get_panel_db().get_panels_by_deadline(
-        stage_name="TagStageDeadline", deadline_date=yesterday_date_string
+        stage_name="PanelStartDate", deadline_date=today_date_string
     )
 
+    html_message += "<h4>Panels starting today</h4>"
+    html_message += "<ul>"
     if not panels:
-        tasks_performend["Vote"] = "did not run"
-        return "No panels to process"
+        html_message += "<li>None</li>"
+    else:
+        for panel in panels:
+            html_message += f"<li>{panel['PanelName']} by {panel['Panelist']} (ID: {panel['PanelID']})</li>"
+    html_message += "</ul>"
 
-    # if  TagStageDeadline is over
-    #  run some code to grade this
-
-    # TagStageDeadline
-    # VoteStageDeadline
-
-    message = (
-        f"This is the new id generated {generate_panel_id()}. <br>Event object {event}"
+    # Tasks after QuestionStageDeadline
+    #   - Distributing questions (generates and stores s3 file)
+    panels = get_panel_db().get_panels_by_deadline(
+        stage_name="QuestionStageDeadline", deadline_date=today_date_string
     )
+
+    html_message += "<h4>Panels with Questions stage today</h4>"
+    html_message += "<ul>"
+    if not panels:
+        html_message += "<li>None</p>"
+    else:
+        for panel in panels:
+            # Run distributing questions function!!
+            # Something like this
+            # distributed = distribute_questions(panel['PanelID'])
+            html_message += f"<li>{panel['PanelName']} by {panel['Panelist']} (ID: {panel['PanelID']})</li>"  # Add if distribute question script ran succesfully
+    html_message += "</ul>"
+
+    # Tasks after TagStageDeadline
+    #   - Grouping similar questions
+    panels = get_panel_db().get_panels_by_deadline(
+        stage_name="TagStageDeadline", deadline_date=today_date_string
+    )
+
+    html_message += "<h4>Panels with Tag stage today</h4>"
+    html_message += "<ul>"
+    if not panels:
+        html_message += "<li>None</li>"
+    else:
+
+        for panel in panels:
+            # Run Grouping similar questions function!!!
+            # Something like this
+            # grouped = group_question(panel['PanelID'])
+            html_message += f"<li>{panel['PanelName']} by {panel['Panelist']} (ID: {panel['PanelID']})</li>"  # Add if distribute question script ran succesfully
+    html_message += "</ul>"
+
+    # Tasks after VoteStageDeadline
+    #   - Grading
+    panels = get_panel_db().get_panels_by_deadline(
+        stage_name="VoteStageDeadline", deadline_date=today_date_string
+    )
+
+    html_message += "<h4>Panels with Vote today:</h4>"
+    html_message += "<ul>"
+    if not panels:
+        html_message += "<li>None</li>"
+    else:
+        for panel in panels:
+            # Run grading script
+            # Something like this
+            # graded = grade_panel(panel['PanelID'])
+            html_message += f"<li>{panel['PanelName']} by {panel['Panelist']} (ID: {panel['PanelID']})</li>"  # Add if distribute question script ran succesfully
+    html_message += "</ul>"
+
+    # Tasks after PanelPresentationDate
+    #   - Nothing
+
     # send_email(
     #     ["davidgomilliontest@gmail.com"],
-    #     f"Cron job! {datetime.now(timezone.utc).isoformat(timespec='seconds')}",
-    #     html_body=message,
+    #     f"Daily tasks for {today_date_string}",
+    #     html_body=html_message,
     # )
 
-    return tasks_performend
+    return html_message
