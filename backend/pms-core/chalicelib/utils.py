@@ -169,14 +169,14 @@ def dfs(node, visited, adj_list):
     return (True, cluster)
 
 
-def upload_objects(bucket_name, panel_id, students_map):
+def upload_objects(bucket_name, panel_id, file_name, json_object):
     """Upload objects to the bucket"""
     print("Start uploading objects to panels bucket")
     # The key for the object
-    object_name = f"{panel_id}/questions.json"
+    object_name = f"{panel_id}/{file_name}"
 
     # Convert the list to JSON format
-    json_content = dumps(students_map, indent=2)
+    json_content = dumps(json_object, indent=2)
 
     # Upload the object
     try:
