@@ -1,7 +1,5 @@
 """Main application file for the PMS Core API."""
 
-from collections import defaultdict
-
 import requests
 import boto3
 import pandas as pd
@@ -53,6 +51,7 @@ from chalicelib.utils import (
     generate_user_id,
     get_current_time_utc,
     distribute_tag_questions,
+    group_similar_questions,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -1043,91 +1042,10 @@ def patch_metric():
 )
 def get_panel_(id):
     try:
-        questions = get_question_db().get_questions_by_panel(id)
-
-        # Build adjacency list {<q_id> : [q_id1, q_id2, ..., q_idn]} for every q_id present in panel_id
-        adj_list = defaultdict(list)
-        for question_obj in questions:
-            if "SimilarTo" in question_obj:
-                adj_list[question_obj["QuestionID"]] = question_obj["SimilarTo"]
-
-        # Iterate through all questions and perform DFS
-        similar_culsters = []
-        visited = set()
-        for question in questions:
-            is_new, cluster = dfs(question["QuestionID"], visited, adj_list)
-            if is_new:
-                similar_culsters.append(cluster)
-
-        # Build hash-map of retrieved questions for faster lookup
-        question_map = {}
-        for question_obj in questions:
-            question_map[question_obj["QuestionID"]] = question_obj
-
-        # Pick representative question from each cluster of similar questions (highest likes)
-        # Exclude flagged questions
-        # Calculate total cluster likes
-        # store it in a new list
-
-        rep_question_clusters = []
-
-        for cluster in similar_culsters:
-            rep_id = cluster[0]
-            rep_likes = 0
-            cluster_likes = 0
-            cluster_dislikes = 0
-            filtered_cluster = []
-
-            if len(cluster) > 1:
-                for q_id in cluster:
-                    if (
-                        "FlaggedBy" not in question_map[rep_id]
-                        or len(question_map[q_id]["FlaggedBy"]) == 0
-                    ):
-                        filtered_cluster.append(q_id)
-                        q_likes = len(question_map[q_id]["LikedBy"])
-                        q_dislikes = len(question_map[q_id]["DislikedBy"])
-                        if q_likes > rep_likes:
-                            rep_id = q_id
-                            rep_likes = q_likes
-                        cluster_likes += q_likes
-                        cluster_dislikes += q_dislikes
-            else:
-                if (
-                    "FlaggedBy" not in question_map[rep_id]
-                    or len(question_map[rep_id]["FlaggedBy"]) == 0
-                ):
-                    filtered_cluster.append(rep_id)
-
-            if len(filtered_cluster) > 0:
-                rep_question_clusters.append(
-                    {
-                        "rep_id": rep_id,
-                        "rep_question": question_map[rep_id]["QuestionText"],
-                        "cluster": filtered_cluster,
-                        "cluster_likes": cluster_likes,
-                        "cluster_dislikes": cluster_dislikes,
-                        "cluster_net_likes": cluster_likes - cluster_dislikes,
-                    }
-                )
-
-        # Sort by net cluster likes in descending order
-        sorted_by_net_cluster_likes = sorted(
-            rep_question_clusters, key=lambda x: x["cluster_net_likes"], reverse=True
-        )
-
-        # Store top 20 clusters in S3
-        upload_objects(
-            PANELS_BUCKET_NAME,
-            id,
-            "sortedCluster.json",
-            sorted_by_net_cluster_likes[:20],
-        )
-
-        return sorted_by_net_cluster_likes
-
+        response = group_similar_questions(id)
+        return response
     except Exception as e:
-        return {"error": str(e)}
+        raise BadRequestError("Error trying to group questions")
 
 
 """METRIC ENDPOINTS"""
@@ -1249,9 +1167,8 @@ def daily_tasks(event):
     else:
 
         for panel in panels:
-            # Run Grouping similar questions function!!!
-            # Something like this
-            # grouped = group_question(panel['PanelID'])
+            # Run distribute question script for each panel
+            group_similar_questions(panel["PanelID"])
             html_message += f"<li>{panel['PanelName']} by {panel['Panelist']} (ID: {panel['PanelID']})</li>"  # Add if distribute question script ran succesfully
     html_message += "</ul>"
 
