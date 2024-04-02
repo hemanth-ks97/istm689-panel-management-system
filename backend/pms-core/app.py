@@ -1061,7 +1061,7 @@ def distribute_tag_questions(id):
 
         # Add the student_question_map to an S3 bucket
 
-        upload_objects(PANELS_BUCKET_NAME, id, student_id_questions_map)
+        upload_objects(PANELS_BUCKET_NAME, id, "questions.json", student_id_questions_map)
 
         return student_id_questions_map
     except Exception as e:
@@ -1193,20 +1193,23 @@ def get_panel_(id):
                 rep_question_clusters.append(
                     {
                         "rep_id": rep_id,
+                        "rep_question": question_map[rep_id]["QuestionText"],
                         "cluster": filtered_cluster,
                         "cluster_likes": cluster_likes,
                         "cluster_dislikes": cluster_dislikes,
+                        "cluster_net_likes": cluster_likes - cluster_dislikes,
                     }
                 )
 
-        # Sort by cluster likes in descending order
-        sorted_by_cluster_likes = sorted(
-            rep_question_clusters, key=lambda x: x["cluster_likes"], reverse=True
+        # Sort by net cluster likes in descending order
+        sorted_by_net_cluster_likes = sorted(
+            rep_question_clusters, key=lambda x: x["cluster_net_likes"], reverse=True
         )
 
-        # TODO - Store in panel-table or S3 bucket or Both
+        # Store top 20 clusters in S3
+        upload_objects(PANELS_BUCKET_NAME, id, "sortedCluster.json", sorted_by_net_cluster_likes[:20])
 
-        return sorted_by_cluster_likes
+        return sorted_by_net_cluster_likes
 
     except Exception as e:
         return {"error": str(e)}
