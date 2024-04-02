@@ -1280,7 +1280,7 @@ def get_questions_per_student(id):
     if user_question:
         return {"question": user_question}
     else:
-        return Response(body={"error": "Question not found for user"}, status_code=404) 
+        return Response(body={"error": "Question not found for user"}, status_code=404)
 
 
 # It will run every day at 07:00 AM UTC
@@ -1421,9 +1421,11 @@ def get_questions_for_voting_stage(id):
         return Response(
             body={"error": "Unable to fetch question data"}, status_code=500
         )
-    
+
     if not questions_data:
-        return Response(body={"error": "Questions not found for panel"}, status_code=404)
+        return Response(
+            body={"error": "Questions not found for panel"}, status_code=404
+        )
 
     # Initialize question_map
     question_map = {}
@@ -1432,10 +1434,10 @@ def get_questions_for_voting_stage(id):
     for item in questions_data:
         rep_id = item["rep_id"]
         rep_question = item["rep_question"]
-    
+
         # Update question_map with rep_id as key and question details as value
         question_map[rep_id] = {
-        "QuestionText": rep_question,
+            "QuestionText": rep_question,
         }
 
     if question_map:
@@ -1443,4 +1445,6 @@ def get_questions_for_voting_stage(id):
         return {"question": question_map}
     else:
         # If question_map is empty after processing, it means no questions were found.
-        return Response(body={"error": "Questions not found for panel"}, status_code=404)
+        return Response(
+            body={"error": "Questions not found for panel"}, status_code=404
+        )
