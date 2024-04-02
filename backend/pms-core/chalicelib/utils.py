@@ -169,14 +169,14 @@ def dfs(node, visited, adj_list):
     return (True, cluster)
 
 
-def upload_objects(bucket_name, panel_id, students_map):
+def upload_objects(bucket_name, panel_id, file_name, json_object):
     """Upload objects to the bucket"""
     print("Start uploading objects to panels bucket")
     # The key for the object
-    object_name = f"{panel_id}/questions.json"
+    object_name = f"{panel_id}/{file_name}"
 
     # Convert the list to JSON format
-    json_content = dumps(students_map, indent=2)
+    json_content = dumps(json_object, indent=2)
 
     # Upload the object
     try:
@@ -203,3 +203,12 @@ def get_s3_objects(bucket_name, object_key):
     except Exception as e:
         print(f"Error getting {object_key}: {e}")
         return None, e
+
+
+def get_current_time_utc():
+    # Created a function to have standarize dates from the backend!
+    # Get the current time in ISO format
+    # Example: 2021-09-01T12:00:00Z
+    return (
+        datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    )
