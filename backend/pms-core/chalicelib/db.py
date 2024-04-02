@@ -93,6 +93,9 @@ class PanelDB(object):
     def update_panel(self, panel):
         pass
 
+    def get_panels_by_deadline(self, stage_name, deadline_date):
+        pass
+
     def get_all_panels(self):
         pass
 
@@ -125,6 +128,12 @@ class DynamoPanelDB(PanelDB):
             },
         )
         return response.get("Item")
+
+    def get_panels_by_deadline(self, stage_name, deadline_date):
+        response = self._table.scan(
+            FilterExpression=Attr(stage_name).begins_with(deadline_date)
+        )
+        return response["Items"]
 
     def get_number_of_questions_by_panel_id(self, panel_id):
         response = self._table.query(
@@ -160,6 +169,9 @@ class UserDB(object):
         pass
 
     def get_user_by_email(self, email):
+        pass
+
+    def get_users_by_role(self, role):
         pass
 
     def delete_user(self, user_id):
@@ -231,6 +243,10 @@ class DynamoUserDB(UserDB):
 
     def get_user_by_email(self, email):
         response = self._table.scan(FilterExpression=Attr("EmailID").eq(email))
+        return response["Items"]
+
+    def get_users_by_role(self, role):
+        response = self._table.scan(FilterExpression=Attr("Role").eq(role))
         return response["Items"]
 
     def get_user_by_uin(self, uin):
