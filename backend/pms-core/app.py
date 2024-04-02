@@ -1062,7 +1062,9 @@ def distribute_tag_questions(id):
 
         # Add the student_question_map to an S3 bucket
 
-        upload_objects(PANELS_BUCKET_NAME, id, "questions.json", student_id_questions_map)
+        upload_objects(
+            PANELS_BUCKET_NAME, id, "questions.json", student_id_questions_map
+        )
 
         return student_id_questions_map
     except Exception as e:
@@ -1208,7 +1210,12 @@ def get_panel_(id):
         )
 
         # Store top 20 clusters in S3
-        upload_objects(PANELS_BUCKET_NAME, id, "sortedCluster.json", sorted_by_net_cluster_likes[:20])
+        upload_objects(
+            PANELS_BUCKET_NAME,
+            id,
+            "sortedCluster.json",
+            sorted_by_net_cluster_likes[:20],
+        )
 
         return sorted_by_net_cluster_likes
 
