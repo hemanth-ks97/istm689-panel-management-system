@@ -1275,24 +1275,8 @@ def get_questions_per_student(id):
 
 # It will run every day at 07:00 AM UTC
 # 07:00 AM UTC -> 02:00 AM CST or 01:00 AM depeding on daylight saving time
-# @app.schedule(Cron(0, 7, "*", "*", "?", "*"))
-@app.route("/daily_tasks", methods=["GET"])
-# def daily_tasks(event):
-def daily_tasks():
-    # Example event that actually happened
-    event = {
-        "version": "0",
-        "id": "c9d90c0e-689a-3808-846c-c171d688c726",
-        "detail-type": "Scheduled Event",
-        "source": "aws.events",
-        "account": "767397884806",
-        "time": "2024-03-30T15:10:00Z",
-        "region": "us-east-1",
-        "resources": [
-            "arn:aws:events:us-east-1:767397884806:rule/pms-core-local-five_past_midnight-event"
-        ],
-        "detail": {},
-    }
+@app.schedule(Cron(0, 7, "*", "*", "?", "*"))
+def daily_tasks(event):
 
     today = datetime.fromisoformat(event["time"])
     today_date_string = today.strftime("%Y-%m-%d")
@@ -1304,6 +1288,7 @@ def daily_tasks():
 
     # Tasks after PanelStartDate
     #   - Nothing
+    #   - Notify which panels are starting
     panels = get_panel_db().get_panels_by_deadline(
         stage_name="PanelStartDate", deadline_date=today_date_string
     )
