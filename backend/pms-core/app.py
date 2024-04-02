@@ -51,6 +51,7 @@ from chalicelib.utils import (
     generate_panel_id,
     generate_question_id,
     generate_user_id,
+    get_current_time_utc,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -239,7 +240,7 @@ def post_login_google():
         )
 
         # Register last login
-        user["LastLogin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        user["LastLogin"] = get_current_time_utc()
         get_user_db().update_user(user)
     except Exception:
         # Not always true but this is a Chalice Exception
@@ -320,7 +321,7 @@ def post_login_panel():
     )
 
     # Register last login
-    user["LastLogin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    user["LastLogin"] = get_current_time_utc()
     get_user_db().update_user(user)
 
     return response
@@ -371,12 +372,9 @@ def post_process_howdy_file():
                 new_user["LName"] = record["LName"]
                 new_user["UIN"] = record["UIN"]
                 new_user["Role"] = STUDENT_ROLE
-                new_user["CreatedAt"] = datetime.now(timezone.utc).isoformat(
-                    timespec="seconds"
-                )
-                new_user["UpdatedAt"] = datetime.now(timezone.utc).isoformat(
-                    timespec="seconds"
-                )
+                new_user["CreatedAt"] = get_current_time_utc()
+                new_user["UpdatedAt"] = get_current_time_utc()
+
                 get_user_db().add_user(new_user)
             else:
                 # The user already exists, should update some fields only
@@ -384,9 +382,7 @@ def post_process_howdy_file():
                 updated_user["EmailID"] = record["EmailID"]
                 updated_user["FName"] = record["FName"]
                 updated_user["LName"] = record["LName"]
-                updated_user["UpdatedAt"] = datetime.now(timezone.utc).isoformat(
-                    timespec="seconds"
-                )
+                updated_user["UpdatedAt"] = get_current_time_utc()
                 get_user_db().update_user(updated_user)
         return Response(
             body={
@@ -440,21 +436,16 @@ def post_process_canvas_file():
                 new_user["Role"] = STUDENT_ROLE
                 new_user["Section"] = record["Section"]
                 new_user["CanvasID"] = int(record["CanvasID"])
-                new_user["CreatedAt"] = datetime.now(timezone.utc).isoformat(
-                    timespec="seconds"
-                )
-                new_user["UpdatedAt"] = datetime.now(timezone.utc).isoformat(
-                    timespec="seconds"
-                )
+                new_user["CreatedAt"] = get_current_time_utc()
+                new_user["UpdatedAt"] = get_current_time_utc()
+
                 get_user_db().add_user(new_user)
             else:
                 # The user already exists, should update some fields only
                 updated_user = user_exists[0]
                 updated_user["Section"] = record["Section"]
                 updated_user["CanvasID"] = int(record["CanvasID"])
-                updated_user["UpdatedAt"] = datetime.now(timezone.utc).isoformat(
-                    timespec="seconds"
-                )
+                updated_user["UpdatedAt"] = get_current_time_utc()
                 get_user_db().update_user(updated_user)
         return Response(
             body={
@@ -510,7 +501,7 @@ def post_user():
         # Build User object for database
         new_user = {
             "UserID": generate_user_id(),
-            "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "CreatedAt": get_current_time_utc(),
             "Name": incoming_json["name"],
             "LastName": incoming_json["lastname"],
             "Email": incoming_json["email"],
@@ -637,7 +628,7 @@ def post_question():
             "UserID": user_id,
             "PanelID": incoming_json["panelId"],
             "QuestionText": incoming_json["question"],
-            "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "CreatedAt": get_current_time_utc(),
             "DislikedBy": [],
             "LikedBy": [],
             "NeutralizedBy": [],
@@ -720,7 +711,7 @@ def post_question_batch():
                 "UserID": user_id,
                 "PanelID": incoming_json["panelId"],
                 "QuestionText": question,
-                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "CreatedAt": get_current_time_utc(),
                 "DislikedBy": [],
                 "LikedBy": [],
                 "NeutralizedBy": [],
@@ -756,10 +747,7 @@ def post_question_tagging(id):
         panel = get_panel_db().get_panel(id)
         if panel is None:
             raise BadRequestError("The panel id does not exist")
-        if (
-            datetime.now(timezone.utc).isoformat(timespec="seconds")
-            > panel["TagStageDeadline"]
-        ):
+        if get_current_time_utc() > panel["TagStageDeadline"]:
             raise BadRequestError("The deadline for this task has passed")
 
         user_id = app.current_request.context["authorizer"]["principalId"]
@@ -849,10 +837,7 @@ def post_question_mark_similar(id):
         panel = get_panel_db().get_panel(id)
         if panel is None:
             raise BadRequestError("The panel id does not exist")
-        if (
-            datetime.now(timezone.utc).isoformat(timespec="seconds")
-            > panel["TagStageDeadline"]
-        ):
+        if get_current_time_utc() > panel["TagStageDeadline"]:
             raise BadRequestError("The deadline for this task has passed")
 
         request = app.current_request.json_body
@@ -927,7 +912,7 @@ def post_panel():
             "PanelDesc": incoming_json["panelDesc"],
             "PanelStartDate": incoming_json["panelStartDate"],
             "Visibility": incoming_json["visibility"],
-            "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "CreatedAt": get_current_time_utc(),
         }
         get_panel_db().add_panel(new_panel)
 
@@ -1168,12 +1153,12 @@ def get_panel_(id):
         question_map = {}
         for question_obj in questions:
             question_map[question_obj["QuestionID"]] = question_obj
-        
+
         # Pick representative question from each cluster of similar questions (highest likes)
         # Exclude flagged questions
         # Calculate total cluster likes
         # store it in a new list
-        
+
         rep_question_clusters = []
 
         for cluster in similar_culsters:
@@ -1185,7 +1170,10 @@ def get_panel_(id):
 
             if len(cluster) > 1:
                 for q_id in cluster:
-                    if "FlaggedBy" not in question_map[rep_id] or len(question_map[q_id]["FlaggedBy"]) == 0:
+                    if (
+                        "FlaggedBy" not in question_map[rep_id]
+                        or len(question_map[q_id]["FlaggedBy"]) == 0
+                    ):
                         filtered_cluster.append(q_id)
                         q_likes = len(question_map[q_id]["LikedBy"])
                         q_dislikes = len(question_map[q_id]["DislikedBy"])
@@ -1195,19 +1183,26 @@ def get_panel_(id):
                         cluster_likes += q_likes
                         cluster_dislikes += q_dislikes
             else:
-                if "FlaggedBy" not in question_map[rep_id] or len(question_map[rep_id]["FlaggedBy"]) == 0:
+                if (
+                    "FlaggedBy" not in question_map[rep_id]
+                    or len(question_map[rep_id]["FlaggedBy"]) == 0
+                ):
                     filtered_cluster.append(rep_id)
-            
+
             if len(filtered_cluster) > 0:
-                rep_question_clusters.append({
-                    "rep_id" : rep_id,
-                    "cluster" : filtered_cluster,
-                    "cluster_likes" : cluster_likes,
-                    "cluster_dislikes" : cluster_dislikes
-                })
+                rep_question_clusters.append(
+                    {
+                        "rep_id": rep_id,
+                        "cluster": filtered_cluster,
+                        "cluster_likes": cluster_likes,
+                        "cluster_dislikes": cluster_dislikes,
+                    }
+                )
 
         # Sort by cluster likes in descending order
-        sorted_by_cluster_likes = sorted(rep_question_clusters, key=lambda x:x["cluster_likes"], reverse=True)
+        sorted_by_cluster_likes = sorted(
+            rep_question_clusters, key=lambda x: x["cluster_likes"], reverse=True
+        )
 
         # TODO - Store in panel-table or S3 bucket or Both
 

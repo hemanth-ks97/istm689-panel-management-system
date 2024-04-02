@@ -203,3 +203,12 @@ def get_s3_objects(bucket_name, object_key):
     except Exception as e:
         print(f"Error getting {object_key}: {e}")
         return None, e
+
+
+def get_current_time_utc():
+    # Created a function to have standarize dates from the backend!
+    # Get the current time in ISO format
+    # Example: 2021-09-01T12:00:00Z
+    return (
+        datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    )
