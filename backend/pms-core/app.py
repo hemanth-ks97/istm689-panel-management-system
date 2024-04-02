@@ -16,6 +16,7 @@ from chalice import (
     NotFoundError,
     BadRequestError,
     Response,
+    Cron,
 )
 from chalicelib.email import send_email
 from chalicelib.config import (
@@ -1270,3 +1271,52 @@ def get_questions_per_student(id):
         return {"question": user_question}
     else:
         return Response(body={"error": "Question not found for user"}, status_code=404)
+
+
+@app.schedule(Cron(5, 0, "*", "*", "?", "*"))
+def daily_tasks(event):
+    event = {
+        "version": "0",
+        "id": "c9d90c0e-689a-3808-846c-c171d688c726",
+        "detail-type": "Scheduled Event",
+        "source": "aws.events",
+        "account": "767397884806",
+        "time": "2024-03-30T15:10:00Z",
+        "region": "us-east-1",
+        "resources": [
+            "arn:aws:events:us-east-1:767397884806:rule/pms-core-local-five_past_midnight-event"
+        ],
+        "detail": {},
+    }
+
+    yesterday_date = datetime.now(timezone.utc) - timedelta(1)
+    yesterday_date_string = yesterday_date.strftime("%Y-%m-%d")
+
+    tasks_performend = dict()
+
+    # Process panels after Vote Deadline
+    # Get panels that expired the day before
+    panels = get_panel_db().get_panels_by_deadline(
+        stage_name="TagStageDeadline", deadline_date=yesterday_date_string
+    )
+
+    if not panels:
+        tasks_performend["Vote"] = "did not run"
+        return "No panels to process"
+
+    # if  TagStageDeadline is over
+    #  run some code to grade this
+
+    # TagStageDeadline
+    # VoteStageDeadline
+
+    message = (
+        f"This is the new id generated {generate_panel_id()}. <br>Event object {event}"
+    )
+    # send_email(
+    #     ["davidgomilliontest@gmail.com"],
+    #     f"Cron job! {datetime.now(timezone.utc).isoformat(timespec='seconds')}",
+    #     html_body=message,
+    # )
+
+    return tasks_performend

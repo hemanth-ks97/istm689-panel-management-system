@@ -93,6 +93,9 @@ class PanelDB(object):
     def update_panel(self, panel):
         pass
 
+    def get_panels_by_deadline(self, stage_name, deadline_date):
+        pass
+
     def get_all_panels(self):
         pass
 
@@ -125,6 +128,12 @@ class DynamoPanelDB(PanelDB):
             },
         )
         return response.get("Item")
+
+    def get_panels_by_deadline(self, stage_name, deadline_date):
+        response = self._table.scan(
+            FilterExpression=Attr(stage_name).begins_with(deadline_date)
+        )
+        return response["Items"]
 
     def get_number_of_questions_by_panel_id(self, panel_id):
         response = self._table.query(
