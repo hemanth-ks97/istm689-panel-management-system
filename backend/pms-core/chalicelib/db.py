@@ -171,6 +171,9 @@ class UserDB(object):
     def get_user_by_email(self, email):
         pass
 
+    def get_users_by_role(self, role):
+        pass
+
     def delete_user(self, user_id):
         pass
 
@@ -240,6 +243,10 @@ class DynamoUserDB(UserDB):
 
     def get_user_by_email(self, email):
         response = self._table.scan(FilterExpression=Attr("EmailID").eq(email))
+        return response["Items"]
+
+    def get_users_by_role(self, role):
+        response = self._table.scan(FilterExpression=Attr("Role").eq(role))
         return response["Items"]
 
     def get_user_by_uin(self, uin):

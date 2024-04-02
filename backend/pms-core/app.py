@@ -1297,7 +1297,10 @@ def daily_tasks():
     today = datetime.fromisoformat(event["time"])
     today_date_string = today.strftime("%Y-%m-%d")
 
-    html_message = f"<h1>Scheduled tasks for {today_date_string}</h1>"
+    html_message = f"<h3>Scheduled tasks for {today_date_string}</h3>"
+
+    if ENV != "production":
+        html_message += f"<h3 style='color: #FCE300'>Enviroment: {ENV}</h3>"
 
     # Tasks after PanelStartDate
     #   - Nothing
@@ -1372,9 +1375,17 @@ def daily_tasks():
     # Tasks after PanelPresentationDate
     #   - Nothing
 
+    # Query all admins and send email
+    admins = get_user_db().get_users_by_role(ADMIN_ROLE)
+
+    admin_addresses = []
+    for admin in admins:
+        admin_addresses.append(admin["EmailID"])
+
     # send_email(
-    #     ["davidgomilliontest@gmail.com"],
-    #     f"Daily tasks for {today_date_string}",
+    #     destination_addresses=["davidgomilliontest@gmail.com"],
+    #     # bcc_addresses=admin_addresses,
+    #     subject=f"Daily tasks for {today_date_string}",
     #     html_body=html_message,
     # )
 
