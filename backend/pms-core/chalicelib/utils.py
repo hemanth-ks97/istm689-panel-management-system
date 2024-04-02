@@ -276,7 +276,7 @@ def distribute_tag_questions(panel_id):
         number_of_extra_question_slots = number_of_question_slots % number_of_questions
 
         # Print variable values
-        print("Panel ID: ", id)
+        print("Panel ID: ", panel_id)
         print("Number of questions per student: ", number_of_questions_per_student)
         print("Total number of questions: ", number_of_questions)
         print("Total number of students: ", number_of_students)
@@ -334,7 +334,7 @@ def distribute_tag_questions(panel_id):
         # Add the student_question_map to an S3 bucket
 
         upload_objects(
-            PANELS_BUCKET_NAME, id, "questions.json", student_id_questions_map
+            PANELS_BUCKET_NAME, panel_id, "questions.json", student_id_questions_map
         )
 
         return student_id_questions_map
@@ -420,7 +420,7 @@ def group_similar_questions(panel_id):
         # Store top 20 clusters in S3
         upload_objects(
             PANELS_BUCKET_NAME,
-            id,
+            panel_id,
             "sortedCluster.json",
             sorted_by_net_cluster_likes[:20],
         )
