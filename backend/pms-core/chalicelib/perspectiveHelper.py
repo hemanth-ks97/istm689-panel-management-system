@@ -30,7 +30,9 @@ def get_question_sentiment(questionString):
         },
     }    
     try:
+        print("***calling api***")
         response = client.comments().analyze(body=analyze_request).execute()
+        print(json.dumps(response, indent=2))
         score = max(
         attribute['summaryScore']['value'] 
         for attribute in response['attributeScores'].values()
