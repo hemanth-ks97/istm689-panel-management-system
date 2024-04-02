@@ -1382,11 +1382,11 @@ def daily_tasks():
     for admin in admins:
         admin_addresses.append(admin["EmailID"])
 
-    # send_email(
-    #     destination_addresses=["davidgomilliontest@gmail.com"],
-    #     # bcc_addresses=admin_addresses,
-    #     subject=f"Daily tasks for {today_date_string}",
-    #     html_body=html_message,
-    # )
+    send_email(
+        destination_addresses=["davidgomilliontest@gmail.com"],
+        # bcc_addresses=admin_addresses,
+        subject=f"Daily tasks for {today_date_string}",
+        html_body=html_message,
+    )
 
     return html_message
