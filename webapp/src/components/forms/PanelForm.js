@@ -204,7 +204,7 @@ const PanelForm = ({ panel }) => {
           fullWidth
           id="TagStageDeadline"
           name="TagStageDeadline"
-          label="Canvas ID"
+          label="Tag Stage Deadline"
           value={formik.values.TagStageDeadline}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
@@ -221,7 +221,7 @@ const PanelForm = ({ panel }) => {
           fullWidth
           id="VoteStageDeadline"
           name="VoteStageDeadline"
-          label="VoteStageDeadline"
+          label="Vote Stage Deadline"
           value={formik.values.VoteStageDeadline}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
@@ -238,7 +238,7 @@ const PanelForm = ({ panel }) => {
           fullWidth
           id="PanelPresentationDate"
           name="PanelPresentationDate"
-          label="PanelPresentationDate"
+          label="Panel Presentation Date"
           value={formik.values.PanelPresentationDate}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
@@ -257,7 +257,7 @@ const PanelForm = ({ panel }) => {
           fullWidth
           id="PanelVideoLink"
           name="PanelVideoLink"
-          label="PanelVideoLink"
+          label="Video Link"
           value={formik.values.PanelVideoLink}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
