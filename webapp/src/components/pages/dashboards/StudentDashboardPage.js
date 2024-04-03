@@ -135,6 +135,8 @@ const StudentDashboardPage = ({ user }) => {
                           year: "numeric",
                           month: "long",
                           day: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
                         })}
                       </TableCell>
                     </TableRow>
@@ -151,7 +153,13 @@ const StudentDashboardPage = ({ user }) => {
                       <TableCell align="right">
                         {new Date(panel.TagStageDeadline).toLocaleDateString(
                           "en-US",
-                          { year: "numeric", month: "long", day: "numeric" }
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "numeric",
+                          }
                         )}
                       </TableCell>
                     </TableRow>
@@ -168,7 +176,13 @@ const StudentDashboardPage = ({ user }) => {
                       <TableCell align="right">
                         {new Date(panel.VoteStageDeadline).toLocaleDateString(
                           "en-US",
-                          { year: "numeric", month: "long", day: "numeric" }
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "numeric",
+                          }
                         )}
                       </TableCell>
                     </TableRow>
