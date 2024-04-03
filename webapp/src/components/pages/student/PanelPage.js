@@ -99,6 +99,8 @@ const PanelPage = () => {
           year: "numeric",
           month: "long",
           day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
         })}
       </Typography>
       <Typography
@@ -145,6 +147,8 @@ const PanelPage = () => {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
                   })}
                 </Typography>
                 <br />
