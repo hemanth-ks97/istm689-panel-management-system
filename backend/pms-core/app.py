@@ -1271,3 +1271,69 @@ def get_questions_for_voting_stage(id):
         return Response(
             body={"error": "Questions not found for panel"}, status_code=404
         )
+
+@app.route(
+    "/panel/{id}/questions/voting",
+    methods=["POST"],
+    authorizer=authorizers,
+)
+def post_submit_votes(id):
+    try:
+        # {vote_order: [<id_1>, <id_2>, <id_3>...<id_20>]}
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        panel_id = id
+        request = app.current_request.json_body
+        if "vote_order" not in request:
+            raise BadRequestError("vote_order not present in request body")
+        score = 20
+        batch_res = []
+        for q_id in request["vote_order"]:
+            q_obj = get_question_db().get_question(q_id)
+            q_obj["VoteScore"] += score if "VoteScore" in q_obj else score
+            batch_res.append(q_obj)
+            score -= 1
+        
+        get_question_db().add_questions_batch(batch_res)
+        return f"Voting recorded successfully"
+    except Exception as e:
+        return {"error": str(e)}
+    
+@app.route(
+    "/panel/{id}/questions/final",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_final_question_list(id):
+    try:
+        panel_id = id
+        object_key = f"{panel_id}/sortedCluster.json"
+
+        questions_data, error = get_s3_objects(PANELS_BUCKET_NAME, object_key)
+
+        if error:
+            app.log.error(f"Error fetching from S3: {error}")
+            return Response(
+                body={"error": "Unable to fetch question data"}, status_code=500
+            )
+
+        if not questions_data:
+            return Response(
+                body={"error": "Questions not found for panel"}, status_code=404
+            )
+
+        # Build question cache of top 20 questions
+        question_cache = []
+        for cluster_obj in questions_data:
+            question_obj = get_question_db().get_question(cluster_obj["rep_id"])
+            question_cache.append(question_obj)
+        
+        top_questions = sorted(question_cache, key=lambda x:x["VoteScore"], reverse=True)
+
+        res = []
+        for obj in top_questions[:10]:
+            res.append({"rep_id": obj["QuestionID"], "rep_question": obj["QuestionText"], "votes": obj["VoteScore"]})
+
+        return res 
+        
+    except Exception as e:
+        return {"error": str(e)}

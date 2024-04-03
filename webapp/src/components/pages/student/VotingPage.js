@@ -56,8 +56,23 @@ const VotingPage = () => {
       order: index,
     }));
 
+    const id_order = questions.map(item => item.id)
+
     console.log(orderedQuestions);
+
     // TODO Send the ordered list to a backend server
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${user?.token}`,
+    };
+    httpClient.post(`/panel/${panelId}/questions/voting`, { "vote_order":id_order }, { headers })
+    .then(response => {
+      console.log('Submission successful:', response.data);
+    })
+    .catch(error => {
+      console.error('Submission error:', error.message);
+      enqueueSnackbar(error.message, { variant: "error" });
+    });
   };
 
   if (loading) {
