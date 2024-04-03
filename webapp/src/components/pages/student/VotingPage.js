@@ -82,22 +82,25 @@ const VotingPage = () => {
               ref={provided.innerRef}
             >
               {questions.map(({ id, content }, index) => (
-                <Draggable key={id} draggableId={id} index={index}>
-                  {(provided, snapshot) => (
-                    <Paper
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      elevation={snapshot.isDragging ? 6 : 1}
-                      className={
-                        snapshot.isDragging ? "question dragging" : "question"
-                      }
-                      sx={{ mb: 1, p: 2 }}
-                    >
-                      <Typography>{content}</Typography>
-                    </Paper>
-                  )}
-                </Draggable>
+                <>
+                  <Typography>Rank #{index + 1}</Typography>
+                  <Draggable key={id} draggableId={id} index={index}>
+                    {(provided, snapshot) => (
+                      <Paper
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        elevation={snapshot.isDragging ? 6 : 1}
+                        className={
+                          snapshot.isDragging ? "question dragging" : "question"
+                        }
+                        sx={{ mb: 1, p: 2 }}
+                      >
+                        <Typography>{content}</Typography>
+                      </Paper>
+                    )}
+                  </Draggable>
+                </>
               ))}
               {provided.placeholder}
             </Box>
