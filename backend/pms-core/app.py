@@ -1113,7 +1113,7 @@ def get_questions_per_student(id):
 @app.schedule(Cron(0, 7, "*", "*", "?", "*"))
 def daily_tasks(event):
 
-    today = datetime.fromisoformat(event["time"])
+    today = datetime.fromisoformat(get_current_time_utc())
     today_date_string = today.strftime("%Y-%m-%d")
 
     html_message = f"<h3>Scheduled tasks for {today_date_string}</h3>"
