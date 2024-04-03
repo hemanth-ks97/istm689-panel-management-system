@@ -48,9 +48,12 @@ const QuestionsPage = () => {
   };
 
   const handleOnSubmit = () => {
+    // clean up questions without text
+    // dont send empty questions!
+    const q = questions.filter((question) => question.trim() !== "");
     let data = {
       panelId,
-      questions,
+      questions: q,
     };
     httpClient
       .post("/question/batch", data, { headers })

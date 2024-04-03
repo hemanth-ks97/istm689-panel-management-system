@@ -695,9 +695,6 @@ def post_question_batch():
         present = datetime.now(timezone.utc)
         questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
 
-        print(present)
-        print(questions_deadline)
-
         if present > questions_deadline:
             raise BadRequestError("Not anymore")
 
@@ -728,12 +725,22 @@ def post_question_batch():
         get_question_db().add_questions_batch(new_questions)
 
         pretty_time = datetime.now(timezone.utc).strftime("%m/%d/%Y at %H:%M:%S UTC")
+
+        panel_name = panel["PanelName"]
+        questions_requested = panel["NumberOfQuestions"]
+        questions_deadline_pretty = questions_deadline.strftime(
+            "%m/%d/%Y at %H:%M:%S UTC"
+        )
+
         html_body = "<h4>Questions Submitted Successfully</h4>"
         html_body += "<p>Thank you for submitting your questions. We appreciate your engagement.</p>"
         html_body += "<p>Submission details:</p>"
         html_body += "<ul>"
+        html_body += f"<li>Panel: {panel_name}</li>"
         html_body += f"<li>Number of questions submitted: {len(new_questions)}</li>"
-        html_body += f"<li>Submission time: {pretty_time}</li>"
+        html_body += f"<li>Number of questions requested: {questions_requested}</li>"
+        html_body += f"<li>Submission: {pretty_time}</li>"
+        html_body += f"<li>Deadline: {questions_deadline_pretty}</li>"
         html_body += "</ul>"
         html_body += "<p>Remember that your questions will be reviewed.</p>"
         html_body += "<p>Best regards,<br/>"
