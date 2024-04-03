@@ -736,7 +736,7 @@ def post_question_batch():
         html_body += "<p>Thank you for submitting your questions. We appreciate your engagement.</p>"
         html_body += "<p>Submission details:</p>"
         html_body += "<ul>"
-        html_body += f"<li>Panel: {panel_name}</li>"
+        html_body += f"<li>{panel_name}</li>"
         html_body += f"<li>Number of questions submitted: {len(new_questions)}</li>"
         html_body += f"<li>Number of questions requested: {questions_requested}</li>"
         html_body += f"<li>Submission: {pretty_time}</li>"
@@ -845,6 +845,33 @@ def post_question_tagging(id):
             batch_update_request[q_id] = question
 
         get_question_db().add_questions_batch(batch_update_request.values())
+
+        html_body = "<h4>Question flagged</h4>"
+
+        html_body += f"<p>{panel['PanelName']}</p>"
+        html_body += "<ul>"
+        for question_id in flagged_list:
+            flagged_question = get_question_db().get_question(question_id)
+            flagged_user = get_user_db().get_user(flagged_question["UserID"])
+            html_body += f"<li>Question ID: {flagged_question['QuestionID']}</li>"
+            html_body += "<ul>"
+
+            html_body += f"<li>Text: {flagged_question['QuestionText']}</li>"
+            html_body += (
+                f"<li>Author: {flagged_user['LName']}, {flagged_user['FName']}</li>"
+            )
+            html_body += (
+                f"<li>Flagged by count: {len(flagged_question['FlaggedBy'])}</li>"
+            )
+            html_body += "</ul>"
+
+        html_body += "</ul>"
+        if len(flagged_list) > 0:
+            send_email(
+                destination_addresses=["davidgomilliontest@gmail.com"],
+                subject="Questions flagged!",
+                html_body=html_body,
+            )
 
         return f"{len(liked_list)} questions liked\n{len(disliked_list)} questions disliked\n{len(flagged_list)} questions flagged !"
     except Exception as e:
