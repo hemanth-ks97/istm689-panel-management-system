@@ -726,7 +726,26 @@ def post_question_batch():
             new_questions.append(new_question)
 
         get_question_db().add_questions_batch(new_questions)
+
+        pretty_time = datetime.now(timezone.utc).strftime("%m/%d/%Y at %H:%M:%S UTC")
+        html_body = "<h4>Questions Submitted Successfully</h4>"
+        html_body += "<p>Thank you for submitting your questions. We appreciate your engagement.</p>"
+        html_body += "<p>Submission details:</p>"
+        html_body += "<ul>"
+        html_body += f"<li>Number of questions submitted: {len(new_questions)}</li>"
+        html_body += f"<li>Submission time: {pretty_time}</li>"
+        html_body += "</ul>"
+        html_body += "<p>Remember that your questions will be reviewed.</p>"
+        html_body += "<p>Best regards,</p>"
+        html_body += "<p>PMS team</p></div></body></html>"
+
         # Returns the result of put_item, kind of metadata and stuff
+        send_email(
+            destination_addresses=["davidgomilliontest@gmail.com"],
+            subject="Questions submitted",
+            html_body=html_body,
+        )
+
         return {
             "message": "Questions successfully inserted in the DB",
         }
