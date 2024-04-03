@@ -58,9 +58,17 @@ const QuestionsPage = () => {
     httpClient
       .post("/question/batch", data, { headers })
       .then((response) => {
-        enqueueSnackbar(response?.data?.message || "Some error", {
-          variant: "success",
-        });
+        const { data } = response;
+
+        if (data?.error) {
+          enqueueSnackbar(data.error, {
+            variant: "error",
+          });
+        } else {
+          enqueueSnackbar(data.message, {
+            variant: "success",
+          });
+        }
         // Reset questions after submitting
         setQuestions(Array(noOfQuestions).fill(""));
       })

@@ -696,7 +696,7 @@ def post_question_batch():
         questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
 
         if present > questions_deadline:
-            raise BadRequestError("Not anymore")
+            raise BadRequestError("Action not allow anymore")
 
         raw_questions = incoming_json["questions"]
 
