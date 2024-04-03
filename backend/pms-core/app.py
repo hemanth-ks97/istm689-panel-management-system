@@ -736,8 +736,8 @@ def post_question_batch():
         html_body += f"<li>Submission time: {pretty_time}</li>"
         html_body += "</ul>"
         html_body += "<p>Remember that your questions will be reviewed.</p>"
-        html_body += "<p>Best regards,</p>"
-        html_body += "<p>PMS team</p></div></body></html>"
+        html_body += "<p>Best regards,<br/>"
+        html_body += "PMS team</p>"
 
         # Returns the result of put_item, kind of metadata and stuff
         send_email(
@@ -1129,7 +1129,7 @@ def get_questions_per_student(id):
 
 # It will run every day at 07:00 AM UTC
 # 07:00 AM UTC -> 02:00 AM CST or 01:00 AM depeding on daylight saving time
-@app.schedule(Cron(0, 7, "*", "*", "?", "*"))
+@app.schedule(Cron(48, 14, "*", "*", "?", "*"))
 def daily_tasks(event):
 
     today = datetime.fromisoformat(get_current_time_utc())
