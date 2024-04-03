@@ -770,15 +770,10 @@ def post_question_batch():
 def post_question_tagging(id):
     # Request Format {"liked":["<id_1>", "<id_2>",..., "<id_n>"], "disliked":["<id_1>", "<id_2>",..., "<id_n>"], "flagged":["<id_1>", "<id_2>",..., "<id_n>"]}
     try:
-        panel = get_panel_db().get_panel(id)
-        if panel is None:
-            raise BadRequestError("The panel id does not exist")
-        if get_current_time_utc() > panel["TagStageDeadline"]:
-            raise BadRequestError("The deadline for this task has passed")
-
         user_id = app.current_request.context["authorizer"]["principalId"]
         request = app.current_request.json_body
 
+        # Validation first because it is `cheaper` than querying the database
         if "liked" not in request:
             raise BadRequestError("Key 'liked' not found in incoming request")
         if type(request["liked"]) is not list:
@@ -791,6 +786,12 @@ def post_question_tagging(id):
             raise BadRequestError("Key 'flagged' not found in incoming request")
         if type(request["flagged"]) is not list:
             raise BadRequestError("Key 'flagged' should be a list")
+
+        panel = get_panel_db().get_panel(id)
+        if panel is None:
+            raise BadRequestError("The panel id does not exist")
+        if get_current_time_utc() > panel["TagStageDeadline"]:
+            raise BadRequestError("The deadline for this task has passed")
 
         liked_list, disliked_list, flagged_list = (
             request["liked"],
