@@ -1164,7 +1164,7 @@ def get_questions_per_student(id):
 
 # It will run every day at 07:00 AM UTC
 # 07:00 AM UTC -> 02:00 AM CST or 01:00 AM depeding on daylight saving time
-@app.schedule(Cron(48, 14, "*", "*", "?", "*"))
+@app.schedule(Cron(0, 7, "*", "*", "?", "*"))
 def daily_tasks(event):
 
     today = datetime.fromisoformat(get_current_time_utc())
