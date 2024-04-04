@@ -8,27 +8,37 @@ from urllib.parse import quote
 
 from chalice import (
     Chalice,
-    AuthResponse,
     CORSConfig,
-    NotFoundError,
-    BadRequestError,
     Response,
     Cron,
+    AuthResponse,
+    BadRequestError,
+    UnauthorizedError,
+    ForbiddenError,
+    NotFoundError,
+    ConflictError,
+    TooManyRequestsError,
+    ChaliceViewError,
 )
+
+# BadRequestError,- returns a status code of 400
+# UnauthorizedError,- returns a status code of 401
+# ForbiddenError,- returns a status code of 403
+# NotFoundError,- returns a status code of 404
+# ConflictError,- returns a status code of 409
+# TooManyRequestsError,- returns a status code of 429
+# ChaliceViewError,- returns a status code of 500
+
+
 from chalicelib.email import send_email
 from chalicelib.config import (
     ENV,
     ALLOW_ORIGIN,
     ALLOWED_AUTHORIZATION_TYPES,
-    USER_TABLE_NAME,
-    QUESTION_TABLE_NAME,
-    PANEL_TABLE_NAME,
-    METRIC_TABLE_NAME,
     PANELS_BUCKET_NAME,
     GOOGLE_RECAPTCHA_SECRET_KEY,
 )
 from chalicelib.constants import (
-    BOTO3_DYNAMODB_TYPE,
     REQUEST_CONTENT_TYPE_JSON,
     GOOGLE_RECAPTCHA_VERIFY_URL,
     ADMIN_ROLE,
@@ -1001,6 +1011,23 @@ def get_panel_questions(id):
 
 
 @app.route(
+    "/panel/{id}/questions/submitted",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_my_panel_questions(id):
+    try:
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        questions = get_question_db().get_my_questions_by_panel(
+            panel_id=id, user_id=user_id
+        )
+    except Exception:
+        raise ChaliceViewError("Error trying to get questions")
+
+    return {"questions": questions}
+
+
+@app.route(
     "/panel/{id}/metrics",
     methods=["GET"],
     authorizer=authorizers,
@@ -1119,7 +1146,7 @@ def get_questions_per_student(id):
 
 # It will run every day at 07:00 AM UTC
 # 07:00 AM UTC -> 02:00 AM CST or 01:00 AM depeding on daylight saving time
-@app.schedule(Cron(0, 7, "*", "*", "?", "*"))
+@app.schedule(Cron(5, 0, "*", "*", "?", "*"))
 def daily_tasks(event):
 
     today = datetime.fromisoformat(get_current_time_utc())

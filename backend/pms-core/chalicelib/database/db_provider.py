@@ -78,7 +78,19 @@ class QuestionDB(object):
     def get_question(self, question_id):
         pass
 
+    def add_questions_batch(self, questions):
+        pass
+
     def delete_question(self, question_id):
+        pass
+
+    def get_question_ids_by_panel_id(self, panel_id):
+        pass
+
+    def get_questions_by_panel(self, panel_id):
+        pass
+
+    def get_my_questions_by_panel(self, panel_id, user_id):
         pass
 
 
@@ -128,6 +140,12 @@ class DynamoQuestionDB(QuestionDB):
 
     def get_questions_by_panel(self, panel_id):
         response = self._table.scan(FilterExpression=Attr("PanelID").eq(panel_id))
+        return response["Items"]
+
+    def get_my_questions_by_panel(self, panel_id, user_id):
+        response = self._table.scan(
+            FilterExpression=Attr("PanelID").eq(panel_id) & Attr("UserID").eq(user_id)
+        )
         return response["Items"]
 
     def delete_question(self, question_id):
