@@ -8,10 +8,12 @@ from google.auth import exceptions
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from uuid import uuid4
-from chalicelib import db
+
 from json import dumps, loads
 
 from .constants import GOOGLE_ISSUER, BOTO3_S3_TYPE, BOTO3_DYNAMODB_TYPE
+
+from chalicelib.database.db_provider import get_user_db, get_panel_db
 
 from .config import (
     JWT_SECRET,
@@ -20,37 +22,9 @@ from .config import (
     JWT_ISSUER,
     JWT_TOKEN_EXPIRATION_DAYS,
     PANELS_BUCKET_NAME,
-    USER_TABLE_NAME,
-    QUESTION_TABLE_NAME,
 )
 
 s3_client = boto3.client(BOTO3_S3_TYPE)
-_USER_DB = None
-_QUESTION_DB = None
-
-
-def get_user_db():
-    global _USER_DB
-    try:
-        if _USER_DB is None:
-            _USER_DB = db.DynamoUserDB(
-                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(USER_TABLE_NAME)
-            )
-    except Exception as e:
-        return {"error": str(e)}
-    return _USER_DB
-
-
-def get_question_db():
-    global _QUESTION_DB
-    try:
-        if _QUESTION_DB is None:
-            _QUESTION_DB = db.DynamoQuestionDB(
-                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(QUESTION_TABLE_NAME)
-            )
-    except Exception as e:
-        return {"error": str(e)}
-    return _QUESTION_DB
 
 
 def _generate_id():
