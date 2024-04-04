@@ -38,7 +38,7 @@ from chalicelib.constants import (
     STUDENT_ROLE_AUTHORIZE_ROUTES,
     PANELIST_ROLE_AUTHORIZE_ROUTES,
 )
-from chalicelib import db
+
 from chalicelib.utils import (
     verify_token,
     get_token_subject,
@@ -56,60 +56,15 @@ from chalicelib.utils import (
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
 
+from chalicelib.database.db_provider import (
+    get_user_db,
+    get_question_db,
+    get_panel_db,
+    get_metric_db,
+)
+
 
 app = Chalice(app_name=f"{ENV}-pms-core")
-_USER_DB = None
-_QUESTION_DB = None
-_PANEL_DB = None
-_METRIC_DB = None
-
-
-def get_user_db():
-    global _USER_DB
-    try:
-        if _USER_DB is None:
-            _USER_DB = db.DynamoUserDB(
-                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(USER_TABLE_NAME)
-            )
-    except Exception as e:
-        return {"error": str(e)}
-    return _USER_DB
-
-
-def get_question_db():
-    global _QUESTION_DB
-    try:
-        if _QUESTION_DB is None:
-            _QUESTION_DB = db.DynamoQuestionDB(
-                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(QUESTION_TABLE_NAME)
-            )
-    except Exception as e:
-        return {"error": str(e)}
-    return _QUESTION_DB
-
-
-def get_panel_db():
-    global _PANEL_DB
-    try:
-        if _PANEL_DB is None:
-            _PANEL_DB = db.DynamoPanelDB(
-                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(PANEL_TABLE_NAME)
-            )
-    except Exception as e:
-        return {"error": str(e)}
-    return _PANEL_DB
-
-
-def get_metric_db():
-    global _METRIC_DB
-    try:
-        if _METRIC_DB is None:
-            _METRIC_DB = db.DynamoMetricDB(
-                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(METRIC_TABLE_NAME)
-            )
-    except Exception as e:
-        return {"error": str(e)}
-    return _METRIC_DB
 
 
 def dummy():
@@ -1326,6 +1281,7 @@ def get_questions_for_voting_stage(id):
             body={"error": "Questions not found for panel"}, status_code=404
         )
 
+
 @app.route(
     "/panel/{id}/questions/voting",
     methods=["POST"],
@@ -1346,12 +1302,13 @@ def post_submit_votes(id):
             q_obj["VoteScore"] += score if "VoteScore" in q_obj else score
             batch_res.append(q_obj)
             score -= 1
-        
+
         get_question_db().add_questions_batch(batch_res)
         return f"Voting recorded successfully"
     except Exception as e:
         return {"error": str(e)}
-    
+
+
 @app.route(
     "/panel/{id}/questions/final",
     methods=["GET"],
@@ -1380,14 +1337,22 @@ def get_final_question_list(id):
         for cluster_obj in questions_data:
             question_obj = get_question_db().get_question(cluster_obj["rep_id"])
             question_cache.append(question_obj)
-        
-        top_questions = sorted(question_cache, key=lambda x:x["VoteScore"], reverse=True)
+
+        top_questions = sorted(
+            question_cache, key=lambda x: x["VoteScore"], reverse=True
+        )
 
         res = []
         for obj in top_questions[:10]:
-            res.append({"rep_id": obj["QuestionID"], "rep_question": obj["QuestionText"], "votes": obj["VoteScore"]})
+            res.append(
+                {
+                    "rep_id": obj["QuestionID"],
+                    "rep_question": obj["QuestionText"],
+                    "votes": obj["VoteScore"],
+                }
+            )
 
-        return res 
-        
+        return res
+
     except Exception as e:
         return {"error": str(e)}
