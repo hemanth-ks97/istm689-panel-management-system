@@ -44,6 +44,16 @@ from chalicelib.constants import (
     ADMIN_ROLE_AUTHORIZE_ROUTES,
     STUDENT_ROLE_AUTHORIZE_ROUTES,
     PANELIST_ROLE_AUTHORIZE_ROUTES,
+    submit_score,
+    std_question_score,
+    above_std_score,
+    engagement_score_tag,
+    engagement_score_vote,
+    tagging_score,
+    voting_score,
+    extra_voting_score,
+    top_questions_score,
+    total_score
 )
 
 from chalicelib.utils import (
@@ -78,28 +88,6 @@ _USER_DB = None
 _QUESTION_DB = None
 _PANEL_DB = None
 _METRIC_DB = None
-
-#Score for only submitting questions
-submit_score = 10 
-#Points if question is between +1 and -1 std deviation of likes
-std_question_score = 10
-#Points if question is above +1 std deviation of likes
-above_std_score = 5
-#Points for overall engagement during tagging
-engagement_score_tag = 10
-#Points for overall engagement during voting
-engagement_score_vote = 10
-#Points for tagging all questions
-tagging_score = 30  
-#Points for voting all questions
-voting_score = 30
-#Points for question if it is in voting stage
-extra_voting_score = 5
-#Points if question is selected in top 10 of voting
-top_questions_score = 10
-
-total_score = 0
-#Grade = (Questions *0.2) + (Tagging * .3) + (Voting * .3) + (Engagement * .2)
 
 
 def get_user_db():
@@ -1201,6 +1189,7 @@ def get_all_metrics_():
 
     return metrics
 
+<<<<<<< HEAD
 
 @app.route(
     "/panel/{id}/questions/tagging",
@@ -1484,3 +1473,109 @@ def get_final_question_list(id):
 
     except Exception as e:
         return {"error": str(e)}
+=======
+@app.route(
+    "/metric/final",
+    methods=["POST"],
+    authorizer=authorizers,
+)
+def post_grades():
+    """
+    Metric route for posting, needs to be added to daily job
+    """
+    try:
+        incoming_json = app.current_request.json_body
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        panel_id = incoming_json["panelId"]       
+        metric = get_metric_db().get_metric(user_id,panel_id)
+
+        """
+        Check if student has completed assignment using taggingTimeIn 
+        """
+        if metric[("TagStageInTime")] is not None:
+           
+            """
+            Calculate SD of all students enagagement score 
+            """
+        """
+        Optional: check SD for how many votes each student has made and check if the student is doing the same. (Calculate votes in question db and store)
+        """
+        """
+        Give points if tagging is done. Give points if engagement is in SD
+        """
+        """
+        Multiply both for final tagging points
+        """
+        tag_score = tagging_score
+       
+
+        """
+        For questions:
+        """
+        """
+        Calculate SD of net likes of all students
+        """
+        """
+        Give -5% for each question which has likes between -1 to 0 SD
+        """
+        """
+        Give -10% for each question which has likes less than -1 SD
+        """
+        """
+        Add negatives to the question score for final question score
+        """
+        questions_score = submit_score
+
+        """
+        For voting:
+        """
+        """
+        Check if student has completed assignment using votingTimeIn 
+        """
+        """
+        Calculate SD of all students enagagement score 
+        """
+        """
+        Give points if voting is done. Give points if engagement is in SD
+       """
+        """
+        Multiply both for final voting points
+        """
+        vote_score = voting_score
+       
+        """
+        Look for any bonuses if score is lower than total possible
+        """
+        """
+        Calculate total score as Grade = (Questions) + (Tagging) + (Voting) + (Bonus) = 100
+        """
+        final_score = total_score
+
+
+
+        """
+        Create json for submission to DynamoDB
+        """
+        metric_for_submit ={
+                "UserID": user_id,
+                "PanelID": panel_id,
+                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "FinalTotalScore": Decimal(final_score),
+                "QuestionStageScore": Decimal(questions_score),
+                "TagStageScore": Decimal(tag_score),
+                "VoteStageScore": Decimal(vote_score)
+
+            }
+        get_metric_db().add_metric(metric_for_submit)
+
+
+       
+        return Response(
+            body={"message": "Grades posted successfully"},
+            status_code=200,
+            headers={"Content-Type": "application/json"},
+        )
+    except Exception as e:
+        return {"error": str(e)}
+        
+>>>>>>> a03387d (Added framework for grading)
