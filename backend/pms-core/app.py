@@ -37,6 +37,16 @@ from chalicelib.constants import (
     ADMIN_ROLE_AUTHORIZE_ROUTES,
     STUDENT_ROLE_AUTHORIZE_ROUTES,
     PANELIST_ROLE_AUTHORIZE_ROUTES,
+    submit_score,
+    std_question_score,
+    above_std_score,
+    engagement_score_tag,
+    engagement_score_vote,
+    tagging_score,
+    voting_score,
+    extra_voting_score,
+    top_questions_score,
+    total_score
 )
 
 from chalicelib.utils import (
@@ -658,22 +668,23 @@ def post_question_batch():
         new_questions = []
         for question in raw_questions:
             # Build Question object for database
-            new_question = {
-                "QuestionID": generate_question_id(),
-                "UserID": user_id,
-                "PanelID": incoming_json["panelId"],
-                "QuestionText": question,
-                "CreatedAt": get_current_time_utc(),
-                "DislikedBy": [],
-                "LikedBy": [],
-                "NeutralizedBy": [],
-                "DislikeScore": -1,
-                "FinalScore": -1,
-                "LikeScore": -1,
-                "NeutralScore": -1,
-                "PresentationBonusScore": -1,
-                "VotingStageBonusScore": -1,
-            }
+            if question != "":
+                new_question = {
+                    "QuestionID": generate_question_id(),
+                    "UserID": user_id,
+                    "PanelID": incoming_json["panelId"],
+                    "QuestionText": question,
+                    "CreatedAt": get_current_time_utc(),
+                    "DislikedBy": [],
+                    "LikedBy": [],
+                    "NeutralizedBy": [],
+                    "DislikeScore": -1,
+                    "FinalScore": -1,
+                    "LikeScore": -1,
+                    "NeutralScore": -1,
+                    "PresentationBonusScore": -1,
+                    "VotingStageBonusScore": -1,
+                }
 
             new_questions.append(new_question)
 
@@ -707,6 +718,26 @@ def post_question_batch():
             subject="Questions submitted",
             html_body=html_body,
         )
+
+        # #Check if all questions have been submitted
+        no_of_questions = get_panel_db().get_number_of_questions_by_panel_id(panel_id)
+        #Add score to metrics
+        if no_of_questions == len(new_questions):
+            metric_for_submit ={
+                "UserID": user_id,
+                "PanelID": panel_id,
+                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "EnteredQuestionsTotalScore": Decimal(submit_score)
+            }
+        else:
+            sub_score_for_questions = round((len(new_questions)/no_of_questions[0])*submit_score)
+            metric_for_submit ={
+                "UserID": user_id,
+                "PanelID": panel_id,
+                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "EnteredQuestionsTotalScore": Decimal(sub_score_for_questions)
+            }
+        get_metric_db().add_metric(metric_for_submit)
 
         return {
             "message": "Questions successfully inserted in the DB",
@@ -1354,5 +1385,109 @@ def get_final_question_list(id):
 
         return res
 
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.route(
+    "/metric/final",
+    methods=["POST"],
+    authorizer=authorizers,
+)
+def post_grades():
+    """
+    Metric route for posting, needs to be added to daily job
+    """
+    try:
+        incoming_json = app.current_request.json_body
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        panel_id = incoming_json["panelId"]       
+        metric = get_metric_db().get_metric(user_id,panel_id)
+
+        """
+        Check if student has completed assignment using taggingTimeIn 
+        """
+        if metric[("TagStageInTime")] is not None:
+           
+            """
+            Calculate SD of all students enagagement score 
+            """
+        """
+        Optional: check SD for how many votes each student has made and check if the student is doing the same. (Calculate votes in question db and store)
+        """
+        """
+        Give points if tagging is done. Give points if engagement is in SD
+        """
+        """
+        Multiply both for final tagging points
+        """
+        tag_score = tagging_score
+       
+
+        """
+        For questions:
+        """
+        """
+        Calculate SD of net likes of all students
+        """
+        """
+        Give -5% for each question which has likes between -1 to 0 SD
+        """
+        """
+        Give -10% for each question which has likes less than -1 SD
+        """
+        """
+        Add negatives to the question score for final question score
+        """
+        questions_score = submit_score
+
+        """
+        For voting:
+        """
+        """
+        Check if student has completed assignment using votingTimeIn 
+        """
+        """
+        Calculate SD of all students enagagement score 
+        """
+        """
+        Give points if voting is done. Give points if engagement is in SD
+       """
+        """
+        Multiply both for final voting points
+        """
+        vote_score = voting_score
+       
+        """
+        Look for any bonuses if score is lower than total possible
+        """
+        """
+        Calculate total score as Grade = (Questions) + (Tagging) + (Voting) + (Bonus) = 100
+        """
+        final_score = total_score
+
+
+
+        """
+        Create json for submission to DynamoDB
+        """
+        metric_for_submit ={
+                "UserID": user_id,
+                "PanelID": panel_id,
+                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "FinalTotalScore": Decimal(final_score),
+                "QuestionStageScore": Decimal(questions_score),
+                "TagStageScore": Decimal(tag_score),
+                "VoteStageScore": Decimal(vote_score)
+
+            }
+        get_metric_db().add_metric(metric_for_submit)
+
+
+       
+        return Response(
+            body={"message": "Grades posted successfully"},
+            status_code=200,
+            headers={"Content-Type": "application/json"},
+        )
     except Exception as e:
         return {"error": str(e)}
