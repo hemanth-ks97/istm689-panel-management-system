@@ -668,6 +668,7 @@ def post_question_batch():
 
         new_questions = []
 
+
         for question in raw_questions:
             if question != "":
                 new_question = {
@@ -687,6 +688,7 @@ def post_question_batch():
                     "VotingStageBonusScore": -1,
                 }
 
+                new_questions.append(new_question)
                 new_questions.append(new_question)
 
         get_question_db().add_questions_batch(new_questions)
