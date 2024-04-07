@@ -1,5 +1,6 @@
 """Main application file for the PMS Core API."""
 
+from decimal import Decimal
 import requests
 import boto3
 import pandas as pd
