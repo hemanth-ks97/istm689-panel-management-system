@@ -1158,7 +1158,7 @@ def get_questions_per_student(id):
         student_metrics = get_metric_db().get_metric(user_id, panel_id)
         student_metrics["TagStageInTime"] = get_current_time_utc()
         get_metric_db().add_metric(student_metrics)
-        
+
         return {"question": user_question}
     else:
         return Response(body={"error": "Question not found for user"}, status_code=404)
@@ -1321,6 +1321,10 @@ def get_questions_for_voting_stage(id):
 
     if question_map:
         print(f"Question map: {question_map}")
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["VoteStageInTime"] = get_current_time_utc()
+        get_metric_db().add_metric(student_metrics)
+
         return {"question": question_map}
     else:
         # If question_map is empty after processing, it means no questions were found.
@@ -1351,6 +1355,12 @@ def post_submit_votes(id):
             score -= 1
 
         get_question_db().add_questions_batch(batch_res)
+
+        # Record VoteStageOutTime 
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["VoteStageOutTime"] = get_current_time_utc()
+        get_metric_db().add_metric(student_metrics)
+
         return f"Voting recorded successfully"
     except Exception as e:
         return {"error": str(e)}
