@@ -758,6 +758,7 @@ def post_question_tagging(id):
     # Request Format {"liked":["<id_1>", "<id_2>",..., "<id_n>"], "disliked":["<id_1>", "<id_2>",..., "<id_n>"], "flagged":["<id_1>", "<id_2>",..., "<id_n>"]}
     try:
         user_id = app.current_request.context["authorizer"]["principalId"]
+        panel_id = id
         request = app.current_request.json_body
 
         # Validation first because it is `cheaper` than querying the database
@@ -859,6 +860,16 @@ def post_question_tagging(id):
                 subject="Questions flagged!",
                 html_body=html_body,
             )
+
+        # Adding total interactions and storing it in metrics table
+        total_interactions = len(liked_list) + len(disliked_list) + len(flagged_list)
+
+        # Add total_interactions, and out_time to metrics db
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["TagStageOutTime"] = get_current_time_utc()
+        student_metrics["TagStageInteractions"] = total_interactions
+
+        get_metric_db().add_metric(student_metrics)
 
         return f"{len(liked_list)} questions liked\n{len(disliked_list)} questions disliked\n{len(flagged_list)} questions flagged !"
     except Exception as e:
@@ -1144,6 +1155,10 @@ def get_questions_per_student(id):
         user_question = questions_data.get(user_id)
 
     if user_question:
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["TagStageInTime"] = get_current_time_utc()
+        get_metric_db().add_metric(student_metrics)
+        
         return {"question": user_question}
     else:
         return Response(body={"error": "Question not found for user"}, status_code=404)
