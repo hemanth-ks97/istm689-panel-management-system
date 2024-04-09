@@ -23,6 +23,7 @@ USER_TABLE_NAME = environ.get("DYNAMODB_USER_TABLE_NAME", "local-user")
 QUESTION_TABLE_NAME = environ.get("DYNAMODB_QUESTION_TABLE_NAME", "local-question")
 PANEL_TABLE_NAME = environ.get("DYNAMODB_PANEL_TABLE_NAME", "local-panel")
 METRIC_TABLE_NAME = environ.get("DYNAMODB_METRIC_TABLE_NAME", "local-metric")
+LOG_TABLE_NAME = environ.get("DYNAMODB_LOG_TABLE_NAME", "local-log")
 PANELS_BUCKET_NAME = environ.get(
     "S3_PANELS_BUCKET_NAME", "local-istm689-panels-students-data"
 )

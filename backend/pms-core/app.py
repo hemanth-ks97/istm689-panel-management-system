@@ -1,11 +1,8 @@
 """Main application file for the PMS Core API."""
 
-from collections import defaultdict
-
 import requests
 import boto3
 import pandas as pd
-from random import shuffle
 from io import StringIO
 from urllib.parse import quote
 
@@ -23,15 +20,10 @@ from chalicelib.config import (
     ENV,
     ALLOW_ORIGIN,
     ALLOWED_AUTHORIZATION_TYPES,
-    USER_TABLE_NAME,
-    QUESTION_TABLE_NAME,
-    PANEL_TABLE_NAME,
-    METRIC_TABLE_NAME,
     PANELS_BUCKET_NAME,
     GOOGLE_RECAPTCHA_SECRET_KEY,
 )
 from chalicelib.constants import (
-    BOTO3_DYNAMODB_TYPE,
     REQUEST_CONTENT_TYPE_JSON,
     GOOGLE_RECAPTCHA_VERIFY_URL,
     ADMIN_ROLE,
@@ -41,76 +33,33 @@ from chalicelib.constants import (
     STUDENT_ROLE_AUTHORIZE_ROUTES,
     PANELIST_ROLE_AUTHORIZE_ROUTES,
 )
-from chalicelib import db
+
 from chalicelib.utils import (
     verify_token,
     get_token_subject,
     create_token,
-    dfs,
-    upload_objects,
     get_s3_objects,
     generate_panel_id,
     generate_question_id,
     generate_user_id,
+    generate_log_id,
     get_current_time_utc,
+    distribute_tag_questions,
+    group_similar_questions,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
 
+from chalicelib.database.db_provider import (
+    get_user_db,
+    get_question_db,
+    get_panel_db,
+    get_metric_db,
+    get_log_db,
+)
+
 
 app = Chalice(app_name=f"{ENV}-pms-core")
-_USER_DB = None
-_QUESTION_DB = None
-_PANEL_DB = None
-_METRIC_DB = None
-
-
-def get_user_db():
-    global _USER_DB
-    try:
-        if _USER_DB is None:
-            _USER_DB = db.DynamoUserDB(
-                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(USER_TABLE_NAME)
-            )
-    except Exception as e:
-        return {"error": str(e)}
-    return _USER_DB
-
-
-def get_question_db():
-    global _QUESTION_DB
-    try:
-        if _QUESTION_DB is None:
-            _QUESTION_DB = db.DynamoQuestionDB(
-                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(QUESTION_TABLE_NAME)
-            )
-    except Exception as e:
-        return {"error": str(e)}
-    return _QUESTION_DB
-
-
-def get_panel_db():
-    global _PANEL_DB
-    try:
-        if _PANEL_DB is None:
-            _PANEL_DB = db.DynamoPanelDB(
-                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(PANEL_TABLE_NAME)
-            )
-    except Exception as e:
-        return {"error": str(e)}
-    return _PANEL_DB
-
-
-def get_metric_db():
-    global _METRIC_DB
-    try:
-        if _METRIC_DB is None:
-            _METRIC_DB = db.DynamoMetricDB(
-                boto3.resource(BOTO3_DYNAMODB_TYPE).Table(METRIC_TABLE_NAME)
-            )
-    except Exception as e:
-        return {"error": str(e)}
-    return _METRIC_DB
 
 
 def dummy():
@@ -243,6 +192,22 @@ def post_login_google():
         # Register last login
         user["LastLogin"] = get_current_time_utc()
         get_user_db().update_user(user)
+
+        source_ip = app.current_request.context["identity"]["sourceIp"]
+        user_agent = app.current_request.headers["user-agent"]
+        path = app.current_request.path
+
+        new_log = {
+            "LogID": generate_log_id(),
+            "UserID": user["UserID"],
+            "UserFName": user["FName"],
+            "UserLName": user["LName"],
+            "SourceIP": source_ip,
+            "UserAgent": user_agent,
+            "Action": path,
+            "CreatedAt": get_current_time_utc(),
+        }
+        get_log_db().add_log(new_log)
     except Exception:
         # Not always true but this is a Chalice Exception
         raise NotFoundError("User not found")
@@ -696,11 +661,8 @@ def post_question_batch():
         present = datetime.now(timezone.utc)
         questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
 
-        print(present)
-        print(questions_deadline)
-
         if present > questions_deadline:
-            raise BadRequestError("Not anymore")
+            raise BadRequestError("Action not allow anymore")
 
         raw_questions = incoming_json["questions"]
 
@@ -727,7 +689,36 @@ def post_question_batch():
             new_questions.append(new_question)
 
         get_question_db().add_questions_batch(new_questions)
+
+        pretty_time = datetime.now(timezone.utc).strftime("%m/%d/%Y at %H:%M:%S UTC")
+
+        panel_name = panel["PanelName"]
+        questions_requested = panel["NumberOfQuestions"]
+        questions_deadline_pretty = questions_deadline.strftime(
+            "%m/%d/%Y at %H:%M:%S UTC"
+        )
+
+        html_body = "<h4>Questions Submitted Successfully</h4>"
+        html_body += "<p>Thank you for submitting your questions. We appreciate your engagement.</p>"
+        html_body += "<p>Submission details:</p>"
+        html_body += "<ul>"
+        html_body += f"<li>{panel_name}</li>"
+        html_body += f"<li>Number of questions submitted: {len(new_questions)}</li>"
+        html_body += f"<li>Number of questions requested: {questions_requested}</li>"
+        html_body += f"<li>Submission: {pretty_time}</li>"
+        html_body += f"<li>Deadline: {questions_deadline_pretty}</li>"
+        html_body += "</ul>"
+        html_body += "<p>Remember that your questions will be reviewed.</p>"
+        html_body += "<p>Best regards,<br/>"
+        html_body += "PMS team</p>"
+
         # Returns the result of put_item, kind of metadata and stuff
+        send_email(
+            destination_addresses=["davidgomilliontest@gmail.com"],
+            subject="Questions submitted",
+            html_body=html_body,
+        )
+
         return {
             "message": "Questions successfully inserted in the DB",
         }
@@ -745,15 +736,10 @@ def post_question_batch():
 def post_question_tagging(id):
     # Request Format {"liked":["<id_1>", "<id_2>",..., "<id_n>"], "disliked":["<id_1>", "<id_2>",..., "<id_n>"], "flagged":["<id_1>", "<id_2>",..., "<id_n>"]}
     try:
-        panel = get_panel_db().get_panel(id)
-        if panel is None:
-            raise BadRequestError("The panel id does not exist")
-        if get_current_time_utc() > panel["TagStageDeadline"]:
-            raise BadRequestError("The deadline for this task has passed")
-
         user_id = app.current_request.context["authorizer"]["principalId"]
         request = app.current_request.json_body
 
+        # Validation first because it is `cheaper` than querying the database
         if "liked" not in request:
             raise BadRequestError("Key 'liked' not found in incoming request")
         if type(request["liked"]) is not list:
@@ -766,6 +752,12 @@ def post_question_tagging(id):
             raise BadRequestError("Key 'flagged' not found in incoming request")
         if type(request["flagged"]) is not list:
             raise BadRequestError("Key 'flagged' should be a list")
+
+        panel = get_panel_db().get_panel(id)
+        if panel is None:
+            raise BadRequestError("The panel id does not exist")
+        if get_current_time_utc() > panel["TagStageDeadline"]:
+            raise BadRequestError("The deadline for this task has passed")
 
         liked_list, disliked_list, flagged_list = (
             request["liked"],
@@ -820,6 +812,33 @@ def post_question_tagging(id):
 
         get_question_db().add_questions_batch(batch_update_request.values())
 
+        html_body = "<h4>Question flagged</h4>"
+
+        html_body += f"<p>{panel['PanelName']}</p>"
+        html_body += "<ul>"
+        for question_id in flagged_list:
+            flagged_question = get_question_db().get_question(question_id)
+            flagged_user = get_user_db().get_user(flagged_question["UserID"])
+            html_body += f"<li>Question ID: {flagged_question['QuestionID']}</li>"
+            html_body += "<ul>"
+
+            html_body += f"<li>Text: {flagged_question['QuestionText']}</li>"
+            html_body += (
+                f"<li>Author: {flagged_user['LName']}, {flagged_user['FName']}</li>"
+            )
+            html_body += (
+                f"<li>Flagged by count: {len(flagged_question['FlaggedBy'])}</li>"
+            )
+            html_body += "</ul>"
+
+        html_body += "</ul>"
+        if len(flagged_list) > 0:
+            send_email(
+                destination_addresses=["davidgomilliontest@gmail.com"],
+                subject="Questions flagged!",
+                html_body=html_body,
+            )
+
         return f"{len(liked_list)} questions liked\n{len(disliked_list)} questions disliked\n{len(flagged_list)} questions flagged !"
     except Exception as e:
         return {"error": str(e)}
@@ -832,36 +851,52 @@ def post_question_tagging(id):
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def post_question_mark_similar(id):
-    # Request Format {"similar":["<id_1>", "<id_2>",..., "<id_n>"]}
+    # Request Format {"similar":[["<id_1>", "<id_2>",..., "<id_n>"], [], []]}
     # for every question_id in the list, append to its "similar-to" lsit in the database with every other question_id
     try:
+        panel_id = id
+        user_id = app.current_request.context["authorizer"]["principalId"]
         panel = get_panel_db().get_panel(id)
+        request = app.current_request.json_body
+
+        present = datetime.now(timezone.utc)
+        tagging_deadline = datetime.fromisoformat(panel["TagStageDeadline"])
+
         if panel is None:
             raise BadRequestError("The panel id does not exist")
-        if get_current_time_utc() > panel["TagStageDeadline"]:
+        if present > tagging_deadline:
             raise BadRequestError("The deadline for this task has passed")
-
-        request = app.current_request.json_body
+        if "similar" not in request:
+            raise BadRequestError("Incorrect Request Format: missing key - \"similar\" ")
+        
         similar_list = request["similar"]
-        similar_set = set(similar_list)
 
-        for q_id in similar_set:
-            question_obj = get_question_db().get_question(q_id)
-            if not question_obj:
-                raise BadRequestError("Invalid question_id", q_id)
-            other_ids = similar_set.copy()
-            other_ids.remove(q_id)
-            if "SimilarTo" in question_obj:
-                question_obj["SimilarTo"].extend(
-                    uuid for uuid in other_ids if uuid not in question_obj["SimilarTo"]
-                )
-            else:
-                question_obj["SimilarTo"] = list(other_ids)
-            get_question_db().add_question(question_obj)
+        for similar_subset in similar_list:
+            similar_set = set(similar_subset)
+            for q_id in similar_set:
+                question_obj = get_question_db().get_question(q_id)
+                if not question_obj:
+                    raise BadRequestError("Invalid question_id", q_id)
+                other_ids = similar_set.copy()
+                other_ids.remove(q_id)
+                if "SimilarTo" in question_obj:
+                    question_obj["SimilarTo"].extend(
+                        uuid for uuid in other_ids if uuid not in question_obj["SimilarTo"]
+                    )
+                else:
+                    question_obj["SimilarTo"] = list(other_ids)
+                get_question_db().add_question(question_obj)
+        
+        # Adding tag-stage out time
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["TagStageOutTime"] = get_current_time_utc()
+        get_metric_db().add_metric(student_metrics)
 
-        return f"{len(similar_list)} questions marked as similar"
+        return f"{len(similar_list)} sets of questions marked as similar"
     except Exception as e:
-        return {"error": str(e)}
+        return Response(
+            body={"error": str(e)}, status_code=500
+        )
 
 
 """PANEL ENDPOINTS"""
@@ -972,103 +1007,10 @@ def patch_panel(id):
     methods=["GET"],
     authorizer=authorizers,
 )
-def distribute_tag_questions(id):
-    try:
-        # Get list of all questions for that panel from the usersDB
-        questions = get_question_db().get_questions_by_panel(id)
+def get_panel_distribute(id):
+    response = distribute_tag_questions(id)
 
-        # Creating map to store questionID and corresponding userID
-        question_map = {}
-
-        # Get all questionIDs and corresponding UserID from questions
-        for question in questions:
-            question_id = question.get("QuestionID")
-            user_id = question.get("UserID")
-            question_text = question.get("QuestionText")
-            question_map[question_id] = {
-                "UserID": user_id,
-                "QuestionText": question_text,
-            }
-
-        # Store all questionIDs from Map
-        question_ids = list(question_map.keys())
-
-        # Get total students from the usersDB
-        student_ids = list(get_user_db().get_student_user_ids())
-        number_of_questions_per_student = 10
-        number_of_questions = len(question_ids)
-        number_of_students = len(student_ids)
-        number_of_question_slots = number_of_questions_per_student * number_of_students
-        number_of_repetition_of_questions = (
-            number_of_question_slots // number_of_questions
-        )
-        number_of_extra_question_slots = number_of_question_slots % number_of_questions
-
-        # Print variable values
-        print("Panel ID: ", id)
-        print("Number of questions per student: ", number_of_questions_per_student)
-        print("Total number of questions: ", number_of_questions)
-        print("Total number of students: ", number_of_students)
-        print("Total number of question slots: ", number_of_question_slots)
-        print("Number of extra question slots: ", number_of_extra_question_slots)
-
-        # Distribute questions to slots
-        distributed_question_id_slots = []
-
-        # Append each question id to the list with repetitions
-        for question_id in question_ids:
-            distributed_question_id_slots.extend(
-                [question_id] * number_of_repetition_of_questions
-            )
-
-        # Fill remaining slots with top question ids and append to the list
-        if number_of_extra_question_slots > 0:
-            top_questions = question_ids[:number_of_extra_question_slots]
-            distributed_question_id_slots.extend(top_questions)
-
-        # Shuffle the question slots to randomize the order
-        shuffle(distributed_question_id_slots)
-
-        # Create a collection to store questionSubLists
-        student_id_questions_map = {}
-
-        for _ in range(number_of_students):
-            student_id = student_ids.pop(0)
-
-            # Create a sublist for each iteration
-            question_id_text_map = {}
-
-            # Pop questions from the questions slot list to put in the map
-            for _ in range(number_of_questions_per_student):
-                question_id = distributed_question_id_slots.pop(0)
-
-                # Check if question exists in the map keys and check if question was entered by user
-                while (question_id in question_id_text_map.keys()) or (
-                    student_id == question_map[question_id]["UserID"]
-                ):
-                    # Append it to the end of the master list and fetch the next question
-                    distributed_question_id_slots.append(question_id)
-
-                    # Get next question from the questionID slot list
-                    question_id = distributed_question_id_slots.pop(0)
-
-                # Add question to map
-                question_id_text_map[question_id] = question_map[question_id][
-                    "QuestionText"
-                ]
-
-            # Assign the sublist to the next available student ID
-            student_id_questions_map[student_id] = question_id_text_map
-
-        # Add the student_question_map to an S3 bucket
-
-        upload_objects(
-            PANELS_BUCKET_NAME, id, "questions.json", student_id_questions_map
-        )
-
-        return student_id_questions_map
-    except Exception as e:
-        return {"error": str(e)}
+    return response
 
 
 @app.route(
@@ -1136,91 +1078,10 @@ def patch_metric():
 )
 def get_panel_(id):
     try:
-        questions = get_question_db().get_questions_by_panel(id)
-
-        # Build adjacency list {<q_id> : [q_id1, q_id2, ..., q_idn]} for every q_id present in panel_id
-        adj_list = defaultdict(list)
-        for question_obj in questions:
-            if "SimilarTo" in question_obj:
-                adj_list[question_obj["QuestionID"]] = question_obj["SimilarTo"]
-
-        # Iterate through all questions and perform DFS
-        similar_culsters = []
-        visited = set()
-        for question in questions:
-            is_new, cluster = dfs(question["QuestionID"], visited, adj_list)
-            if is_new:
-                similar_culsters.append(cluster)
-
-        # Build hash-map of retrieved questions for faster lookup
-        question_map = {}
-        for question_obj in questions:
-            question_map[question_obj["QuestionID"]] = question_obj
-
-        # Pick representative question from each cluster of similar questions (highest likes)
-        # Exclude flagged questions
-        # Calculate total cluster likes
-        # store it in a new list
-
-        rep_question_clusters = []
-
-        for cluster in similar_culsters:
-            rep_id = cluster[0]
-            rep_likes = 0
-            cluster_likes = 0
-            cluster_dislikes = 0
-            filtered_cluster = []
-
-            if len(cluster) > 1:
-                for q_id in cluster:
-                    if (
-                        "FlaggedBy" not in question_map[rep_id]
-                        or len(question_map[q_id]["FlaggedBy"]) == 0
-                    ):
-                        filtered_cluster.append(q_id)
-                        q_likes = len(question_map[q_id]["LikedBy"])
-                        q_dislikes = len(question_map[q_id]["DislikedBy"])
-                        if q_likes > rep_likes:
-                            rep_id = q_id
-                            rep_likes = q_likes
-                        cluster_likes += q_likes
-                        cluster_dislikes += q_dislikes
-            else:
-                if (
-                    "FlaggedBy" not in question_map[rep_id]
-                    or len(question_map[rep_id]["FlaggedBy"]) == 0
-                ):
-                    filtered_cluster.append(rep_id)
-
-            if len(filtered_cluster) > 0:
-                rep_question_clusters.append(
-                    {
-                        "rep_id": rep_id,
-                        "rep_question": question_map[rep_id]["QuestionText"],
-                        "cluster": filtered_cluster,
-                        "cluster_likes": cluster_likes,
-                        "cluster_dislikes": cluster_dislikes,
-                        "cluster_net_likes": cluster_likes - cluster_dislikes,
-                    }
-                )
-
-        # Sort by net cluster likes in descending order
-        sorted_by_net_cluster_likes = sorted(
-            rep_question_clusters, key=lambda x: x["cluster_net_likes"], reverse=True
-        )
-
-        # Store top 20 clusters in S3
-        upload_objects(
-            PANELS_BUCKET_NAME,
-            id,
-            "sortedCluster.json",
-            sorted_by_net_cluster_likes[:20],
-        )
-
-        return sorted_by_net_cluster_likes
-
+        response = group_similar_questions(id)
+        return response
     except Exception as e:
-        return {"error": str(e)}
+        raise BadRequestError("Error trying to group questions")
 
 
 """METRIC ENDPOINTS"""
@@ -1288,7 +1149,7 @@ def get_questions_per_student(id):
 @app.schedule(Cron(0, 7, "*", "*", "?", "*"))
 def daily_tasks(event):
 
-    today = datetime.fromisoformat(event["time"])
+    today = datetime.fromisoformat(get_current_time_utc())
     today_date_string = today.strftime("%Y-%m-%d")
 
     html_message = f"<h3>Scheduled tasks for {today_date_string}</h3>"
@@ -1324,9 +1185,8 @@ def daily_tasks(event):
         html_message += "<li>None</p>"
     else:
         for panel in panels:
-            # Run distributing questions function!!
-            # Something like this
-            # distributed = distribute_questions(panel['PanelID'])
+            # Run distribute question script
+            distribute_tag_questions(panel["PanelID"])
             html_message += f"<li>{panel['PanelName']} by {panel['Panelist']} (ID: {panel['PanelID']})</li>"  # Add if distribute question script ran succesfully
     html_message += "</ul>"
 
@@ -1343,9 +1203,8 @@ def daily_tasks(event):
     else:
 
         for panel in panels:
-            # Run Grouping similar questions function!!!
-            # Something like this
-            # grouped = group_question(panel['PanelID'])
+            # Run distribute question script for each panel
+            group_similar_questions(panel["PanelID"])
             html_message += f"<li>{panel['PanelName']} by {panel['Panelist']} (ID: {panel['PanelID']})</li>"  # Add if distribute question script ran succesfully
     html_message += "</ul>"
 
@@ -1421,9 +1280,11 @@ def get_questions_for_voting_stage(id):
         return Response(
             body={"error": "Unable to fetch question data"}, status_code=500
         )
-    
+
     if not questions_data:
-        return Response(body={"error": "Questions not found for panel"}, status_code=404)
+        return Response(
+            body={"error": "Questions not found for panel"}, status_code=404
+        )
 
     # Initialize question_map
     question_map = {}
@@ -1432,10 +1293,10 @@ def get_questions_for_voting_stage(id):
     for item in questions_data:
         rep_id = item["rep_id"]
         rep_question = item["rep_question"]
-    
+
         # Update question_map with rep_id as key and question details as value
         question_map[rep_id] = {
-        "QuestionText": rep_question,
+            "QuestionText": rep_question,
         }
 
     if question_map:
@@ -1443,4 +1304,82 @@ def get_questions_for_voting_stage(id):
         return {"question": question_map}
     else:
         # If question_map is empty after processing, it means no questions were found.
-        return Response(body={"error": "Questions not found for panel"}, status_code=404)
+        return Response(
+            body={"error": "Questions not found for panel"}, status_code=404
+        )
+
+
+@app.route(
+    "/panel/{id}/questions/voting",
+    methods=["POST"],
+    authorizer=authorizers,
+)
+def post_submit_votes(id):
+    try:
+        # {vote_order: [<id_1>, <id_2>, <id_3>...<id_20>]}
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        panel_id = id
+        request = app.current_request.json_body
+        if "vote_order" not in request:
+            raise BadRequestError("vote_order not present in request body")
+        score = 20
+        batch_res = []
+        for q_id in request["vote_order"]:
+            q_obj = get_question_db().get_question(q_id)
+            q_obj["VoteScore"] += score if "VoteScore" in q_obj else score
+            batch_res.append(q_obj)
+            score -= 1
+
+        get_question_db().add_questions_batch(batch_res)
+        return f"Voting recorded successfully"
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.route(
+    "/panel/{id}/questions/final",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_final_question_list(id):
+    try:
+        panel_id = id
+        object_key = f"{panel_id}/sortedCluster.json"
+
+        questions_data, error = get_s3_objects(PANELS_BUCKET_NAME, object_key)
+
+        if error:
+            app.log.error(f"Error fetching from S3: {error}")
+            return Response(
+                body={"error": "Unable to fetch question data"}, status_code=500
+            )
+
+        if not questions_data:
+            return Response(
+                body={"error": "Questions not found for panel"}, status_code=404
+            )
+
+        # Build question cache of top 20 questions
+        question_cache = []
+        for cluster_obj in questions_data:
+            question_obj = get_question_db().get_question(cluster_obj["rep_id"])
+            question_cache.append(question_obj)
+
+        top_questions = sorted(
+            question_cache, key=lambda x: x["VoteScore"], reverse=True
+        )
+
+        res = []
+        for obj in top_questions[:10]:
+            res.append(
+                {
+                    "rep_id": obj["QuestionID"],
+                    "rep_question": obj["QuestionText"],
+                    "votes": obj["VoteScore"],
+                }
+            )
+
+        return res
+
+    except Exception as e:
+        return {"error": str(e)}
