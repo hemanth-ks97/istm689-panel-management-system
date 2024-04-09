@@ -20,15 +20,10 @@ from chalicelib.config import (
     ENV,
     ALLOW_ORIGIN,
     ALLOWED_AUTHORIZATION_TYPES,
-    USER_TABLE_NAME,
-    QUESTION_TABLE_NAME,
-    PANEL_TABLE_NAME,
-    METRIC_TABLE_NAME,
     PANELS_BUCKET_NAME,
     GOOGLE_RECAPTCHA_SECRET_KEY,
 )
 from chalicelib.constants import (
-    BOTO3_DYNAMODB_TYPE,
     REQUEST_CONTENT_TYPE_JSON,
     GOOGLE_RECAPTCHA_VERIFY_URL,
     ADMIN_ROLE,
@@ -43,12 +38,11 @@ from chalicelib.utils import (
     verify_token,
     get_token_subject,
     create_token,
-    dfs,
-    upload_objects,
     get_s3_objects,
     generate_panel_id,
     generate_question_id,
     generate_user_id,
+    generate_log_id,
     get_current_time_utc,
     distribute_tag_questions,
     group_similar_questions,
@@ -61,6 +55,7 @@ from chalicelib.database.db_provider import (
     get_question_db,
     get_panel_db,
     get_metric_db,
+    get_log_db,
 )
 
 
@@ -197,6 +192,22 @@ def post_login_google():
         # Register last login
         user["LastLogin"] = get_current_time_utc()
         get_user_db().update_user(user)
+
+        source_ip = app.current_request.context["identity"]["sourceIp"]
+        user_agent = app.current_request.headers["user-agent"]
+        path = app.current_request.path
+
+        new_log = {
+            "LogID": generate_log_id(),
+            "UserID": user["UserID"],
+            "UserFName": user["FName"],
+            "UserLName": user["LName"],
+            "SourceIP": source_ip,
+            "UserAgent": user_agent,
+            "Action": path,
+            "CreatedAt": get_current_time_utc(),
+        }
+        get_log_db().add_log(new_log)
     except Exception:
         # Not always true but this is a Chalice Exception
         raise NotFoundError("User not found")

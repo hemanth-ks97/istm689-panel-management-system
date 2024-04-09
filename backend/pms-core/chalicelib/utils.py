@@ -47,6 +47,11 @@ def generate_panel_id():
     return f"p-{_generate_id()}"
 
 
+def generate_log_id():
+    """Generate a unique log id."""
+    return f"l-{_generate_id()}"
+
+
 def decode_and_validate_google_token(token):
     request = requests.Request()
     try:

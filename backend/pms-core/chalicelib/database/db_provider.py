@@ -71,7 +71,7 @@ def get_log_db():
     global _LOG_DB
     try:
         if _LOG_DB is None:
-            _LOG_DB = DynamoPanelDB(resource(BOTO3_DYNAMODB_TYPE).Table(LOG_TABLE_NAME))
+            _LOG_DB = DynamoLogDB(resource(BOTO3_DYNAMODB_TYPE).Table(LOG_TABLE_NAME))
     except Exception as e:
         return {"error": str(e)}
     return _LOG_DB
@@ -431,10 +431,15 @@ class DynamoLogDB(LogDB):
         return response["Items"]
 
     def add_log(self, log):
-        pass
+        return self._table.put_item(Item=log)
 
     def get_log(self, log_id):
-        pass
+        response = self._table.get_item(
+            Key={
+                "LogID": log_id,
+            },
+        )
+        return response.get("Item")
 
     def get_logs_by_date(self, date):
         pass
