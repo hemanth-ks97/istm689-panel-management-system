@@ -141,6 +141,10 @@ class DynamoQuestionDB(QuestionDB):
     def get_questions_by_panel(self, panel_id):
         response = self._table.scan(FilterExpression=Attr("PanelID").eq(panel_id))
         return response["Items"]
+    
+    def get_questions_by_user(self, user_id):
+        response = self._table.scan(FilterExpression=Attr("UserID").eq(user_id))
+        return response["Items"]
 
     def delete_question(self, question_id):
         self._table.delete_item(
