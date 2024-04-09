@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { Box, Button, Grid, Checkbox, FormControlLabel } from '@mui/material';
 import QuestionCard from '../../widgets/QuestionCard';
 import LoadingSpinner from '../../widgets/LoadingSpinner';
+import { httpClient } from '../../../client';
+import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useSnackbar } from "notistack";
 
 const FilterQuestionsPage = ({ questions, onNext, onBack }) => {
   const [loading, setLoading] = useState(false);
@@ -18,6 +22,15 @@ const FilterQuestionsPage = ({ questions, onNext, onBack }) => {
     isSimilar: false,
     groupId: null, // Track group ID for coloring
   }));
+
+  const { enqueueSnackbar } = useSnackbar();
+  const { panelId } = useParams();
+  const { user } = useSelector((state) => state.user);
+
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${user?.token}`,
+  };
 
   const [allQuestions, setAllQuestions] = useState(initialQuestions);
 
@@ -64,6 +77,23 @@ const FilterQuestionsPage = ({ questions, onNext, onBack }) => {
       similar: similarGroups,
     };
     console.log(requestBody); // Here, replace with your API call
+    setLoading(true);
+
+    httpClient
+      .post(`/panel/${panelId}/mark_similar`, requestBody, {
+        headers: headers,
+      })
+      .then((response) => {      
+        enqueueSnackbar("Activity recorded", {
+          variant: "success",
+        })
+      })
+      .catch((error) =>
+        enqueueSnackbar(error.message, {
+          variant: "error",
+        })
+      )
+      .finally(() => setLoading(false));
   };
 
   if (loading) {
