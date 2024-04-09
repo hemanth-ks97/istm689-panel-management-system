@@ -7,7 +7,7 @@ import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
 
-const FilterQuestionsPage = ({ questions, onNext, onBack }) => {
+const CombineQuestionsPage = ({ questions, onNext, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [groupCounter, setGroupCounter] = useState(0); // Counter to assign unique group IDs
   const [similarGroups, setSimilarGroups] = useState([]);
@@ -127,4 +127,4 @@ const FilterQuestionsPage = ({ questions, onNext, onBack }) => {
   );
 };
 
-export default FilterQuestionsPage;
+export default CombineQuestionsPage;

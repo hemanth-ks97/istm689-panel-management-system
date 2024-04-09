@@ -8,7 +8,7 @@ import { useParams } from "react-router-dom";
 import LoadingSpinner from "../../widgets/LoadingSpinner";
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
-import FilterQuestionsPage from "./FilterQuestionsPage";
+import CombineQuestionsPage from "./CombineQuestionsPage";
 /**
  * in this component we can render different steps like liking/disliking/flagging questions,
  * marking questions as similar
@@ -44,7 +44,7 @@ const TaggingPage = () => {
       case 0:
         return <LikeQuestionPage questions={questionList} onNext={handleNext} />;
       case 1:
-        return <FilterQuestionsPage questions={questionList} onBack={handleBack} onNext={handleNext} />; 
+        return <CombineQuestionsPage questions={questionList} onBack={handleBack} onNext={handleNext} />; 
       default:
         return 'Reaction Submitted';
     }
