@@ -3,6 +3,7 @@ from chalicelib.config import (
     QUESTION_TABLE_NAME,
     PANEL_TABLE_NAME,
     METRIC_TABLE_NAME,
+    LOG_TABLE_NAME,
 )
 from chalicelib.constants import (
     BOTO3_DYNAMODB_TYPE,
@@ -15,6 +16,7 @@ _USER_DB = None
 _QUESTION_DB = None
 _PANEL_DB = None
 _METRIC_DB = None
+_LOG_DB = None
 
 
 def get_panel_db():
@@ -63,6 +65,16 @@ def get_metric_db():
     except Exception as e:
         return {"error": str(e)}
     return _METRIC_DB
+
+
+def get_log_db():
+    global _LOG_DB
+    try:
+        if _LOG_DB is None:
+            _LOG_DB = DynamoLogDB(resource(BOTO3_DYNAMODB_TYPE).Table(LOG_TABLE_NAME))
+    except Exception as e:
+        return {"error": str(e)}
+    return _LOG_DB
 
 
 """Question Database Service"""
@@ -412,3 +424,40 @@ class DynamoMetricDB(MetricDB):
     def get_metrics_by_panel(self, panel_id):
         response = self._table.scan(FilterExpression=Attr("PanelID").eq(panel_id))
         return response["Items"]
+
+
+class LogDB(object):
+    def list_logs(self):
+        pass
+
+    def add_log(self, log):
+        pass
+
+    def get_log(self, log_id):
+        pass
+
+    def get_logs_by_date(self, date):
+        pass
+
+
+class DynamoLogDB(LogDB):
+    def __init__(self, table_resource):
+        self._table = table_resource
+
+    def list_logs(self):
+        response = self._table.scan()
+        return response["Items"]
+
+    def add_log(self, log):
+        return self._table.put_item(Item=log)
+
+    def get_log(self, log_id):
+        response = self._table.get_item(
+            Key={
+                "LogID": log_id,
+            },
+        )
+        return response.get("Item")
+
+    def get_logs_by_date(self, date):
+        pass

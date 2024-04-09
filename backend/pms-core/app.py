@@ -53,12 +53,11 @@ from chalicelib.utils import (
     verify_token,
     get_token_subject,
     create_token,
-    dfs,
-    upload_objects,
     get_s3_objects,
     generate_panel_id,
     generate_question_id,
     generate_user_id,
+    generate_log_id,
     get_current_time_utc,
     distribute_tag_questions,
     group_similar_questions,
@@ -71,6 +70,7 @@ from chalicelib.database.db_provider import (
     get_question_db,
     get_panel_db,
     get_metric_db,
+    get_log_db,
 )
 
 
@@ -207,6 +207,22 @@ def post_login_google():
         # Register last login
         user["LastLogin"] = get_current_time_utc()
         get_user_db().update_user(user)
+
+        source_ip = app.current_request.context["identity"]["sourceIp"]
+        user_agent = app.current_request.headers["user-agent"]
+        path = app.current_request.path
+
+        new_log = {
+            "LogID": generate_log_id(),
+            "UserID": user["UserID"],
+            "UserFName": user["FName"],
+            "UserLName": user["LName"],
+            "SourceIP": source_ip,
+            "UserAgent": user_agent,
+            "Action": path,
+            "CreatedAt": get_current_time_utc(),
+        }
+        get_log_db().add_log(new_log)
     except Exception:
         # Not always true but this is a Chalice Exception
         raise NotFoundError("User not found")
@@ -850,36 +866,52 @@ def post_question_tagging(id):
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def post_question_mark_similar(id):
-    # Request Format {"similar":["<id_1>", "<id_2>",..., "<id_n>"]}
+    # Request Format {"similar":[["<id_1>", "<id_2>",..., "<id_n>"], [], []]}
     # for every question_id in the list, append to its "similar-to" lsit in the database with every other question_id
     try:
+        panel_id = id
+        user_id = app.current_request.context["authorizer"]["principalId"]
         panel = get_panel_db().get_panel(id)
+        request = app.current_request.json_body
+
+        present = datetime.now(timezone.utc)
+        tagging_deadline = datetime.fromisoformat(panel["TagStageDeadline"])
+
         if panel is None:
             raise BadRequestError("The panel id does not exist")
-        if get_current_time_utc() > panel["TagStageDeadline"]:
+        if present > tagging_deadline:
             raise BadRequestError("The deadline for this task has passed")
-
-        request = app.current_request.json_body
+        if "similar" not in request:
+            raise BadRequestError("Incorrect Request Format: missing key - \"similar\" ")
+        
         similar_list = request["similar"]
-        similar_set = set(similar_list)
 
-        for q_id in similar_set:
-            question_obj = get_question_db().get_question(q_id)
-            if not question_obj:
-                raise BadRequestError("Invalid question_id", q_id)
-            other_ids = similar_set.copy()
-            other_ids.remove(q_id)
-            if "SimilarTo" in question_obj:
-                question_obj["SimilarTo"].extend(
-                    uuid for uuid in other_ids if uuid not in question_obj["SimilarTo"]
-                )
-            else:
-                question_obj["SimilarTo"] = list(other_ids)
-            get_question_db().add_question(question_obj)
+        for similar_subset in similar_list:
+            similar_set = set(similar_subset)
+            for q_id in similar_set:
+                question_obj = get_question_db().get_question(q_id)
+                if not question_obj:
+                    raise BadRequestError("Invalid question_id", q_id)
+                other_ids = similar_set.copy()
+                other_ids.remove(q_id)
+                if "SimilarTo" in question_obj:
+                    question_obj["SimilarTo"].extend(
+                        uuid for uuid in other_ids if uuid not in question_obj["SimilarTo"]
+                    )
+                else:
+                    question_obj["SimilarTo"] = list(other_ids)
+                get_question_db().add_question(question_obj)
+        
+        # Adding tag-stage out time
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["TagStageOutTime"] = get_current_time_utc()
+        get_metric_db().add_metric(student_metrics)
 
-        return f"{len(similar_list)} questions marked as similar"
+        return f"{len(similar_list)} sets of questions marked as similar"
     except Exception as e:
-        return {"error": str(e)}
+        return Response(
+            body={"error": str(e)}, status_code=500
+        )
 
 
 """PANEL ENDPOINTS"""

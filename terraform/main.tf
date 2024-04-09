@@ -240,6 +240,18 @@ resource "aws_dynamodb_table" "metric-table" {
   }
 }
 
+resource "aws_dynamodb_table" "log-table" {
+  name           = "${terraform.workspace}-log"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "LogID"
+  attribute {
+    name = "LogID"
+    type = "S"
+  }
+}
+
 ### local ###
 #question table
 resource "aws_dynamodb_table" "local-question-table" {
@@ -333,6 +345,19 @@ resource "aws_dynamodb_table" "local-metric-table" {
     projection_type = "ALL"
     read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
     write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+}
+
+#log table
+resource "aws_dynamodb_table" "local-log-table" {
+  name           = "local-log"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "LogID"
+  attribute {
+    name = "LogID"
+    type = "S"
   }
 }
 
