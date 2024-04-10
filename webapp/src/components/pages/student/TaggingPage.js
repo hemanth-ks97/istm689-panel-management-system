@@ -1,7 +1,14 @@
 import { React, useEffect, useState } from "react";
 
 // MUI
-import { Box, Stepper, Step, StepLabel, Typography, StepConnector } from "@mui/material";
+import {
+  Box,
+  Stepper,
+  Step,
+  StepLabel,
+  Typography,
+  StepConnector,
+} from "@mui/material";
 import LikeQuestionPage from "./LikeQuestionPage";
 import { httpClient } from "../../../client";
 import { useParams } from "react-router-dom";
@@ -15,10 +22,9 @@ import CombineQuestionsPage from "./CombineQuestionsPage";
  * for now we are rendering the first step which is liking/dsilking/flagging questions
  *
  */
-const steps = ['React on Questions', 'Combine Similar Questions'];
+const steps = ["React on Questions", "Combine Similar Questions"];
 
 const TaggingPage = () => {
-
   const [activeStep, setActiveStep] = useState(0);
   const [questionList, setQuestionList] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
@@ -42,20 +48,40 @@ const TaggingPage = () => {
   const getStepContent = (stepIndex) => {
     switch (stepIndex) {
       case 0:
-        return <LikeQuestionPage questions={questionList} onNext={handleNext} />;
+        return (
+          <LikeQuestionPage questions={questionList} onNext={handleNext} />
+        );
       case 1:
-        return <CombineQuestionsPage questions={questionList} onBack={handleBack} onNext={handleNext} />; 
+        return (
+          <CombineQuestionsPage
+            questions={questionList}
+            onBack={handleBack}
+            onNext={handleNext}
+          />
+        );
       default:
-        return 'Reaction Submitted';
+        return "Reaction Submitted";
     }
   };
 
   const getStepDescription = () => {
     switch (activeStep) {
       case 0:
-        return <span><strong>Instruction:</strong> This assignment displays 20 questions that you need to react to. Express your reaction to each question by liking, disliking, or flagging.</span>;
+        return (
+          <span>
+            <strong>Instruction:</strong> This assignment displays 20 questions
+            that you need to react to. Express your reaction to each question by
+            liking, disliking, or flagging.
+          </span>
+        );
       case 1:
-        return <span><strong>Instruction:</strong> This assignment displays 20 questions that you may combine if similar. Mark similar questions by selecting them and then click "Mark As Similar" at the bottom.</span>;
+        return (
+          <span>
+            <strong>Instruction:</strong> This assignment displays 20 questions
+            that you may combine if similar. Mark similar questions by selecting
+            them and then click "Mark As Similar" at the bottom.
+          </span>
+        );
       default:
         return "";
     }
@@ -68,8 +94,8 @@ const TaggingPage = () => {
         headers: headers,
       })
       .then((response) => {
-        setQuestionList(response.data.question)
-        console.log(response.data.question)
+        setQuestionList(response.data.question);
+        console.log(response.data.question);
       })
       .catch((error) =>
         enqueueSnackbar(error.message, {
@@ -77,36 +103,46 @@ const TaggingPage = () => {
         })
       )
       .finally(() => setLoading(false));
-
-  }, [])
+  }, []);
 
   if (loading) {
     return <LoadingSpinner />;
   }
 
   return (
-    <Box sx={{ width: '100%', minHeight: 200, maxHeight: { xs: 600, sm: 800, md: 800, lg: 2000 } }}>
-      <Typography variant="h5" gutterBottom style={{ textAlign: 'center' }}>Tag Questions</Typography>
-      <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-      <Stepper activeStep={activeStep}
-               sx={{ maxWidth: '800px', width: '100%', '.MuiStepConnector-line': { flexGrow: 0 } }}
-              >
-        {steps.map((label) => (
-          <Step key={label}>
-            <StepLabel>{label}</StepLabel>
-          </Step>
-        ))}
-      </Stepper>
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: 200,
+        maxHeight: { xs: 600, sm: 800, md: 800, lg: 2000 },
+      }}
+    >
+      <Typography variant="h5" gutterBottom style={{ textAlign: "center" }}>
+        Tag Questions
+      </Typography>
+      <Box sx={{ width: "100%", display: "flex", justifyContent: "center" }}>
+        <Stepper
+          activeStep={activeStep}
+          sx={{
+            maxWidth: "800px",
+            width: "100%",
+            ".MuiStepConnector-line": { flexGrow: 0 },
+          }}
+        >
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
       </Box>
-      <Typography variant="h6" gutterBottom sx={{ mt: 2, textAlign: 'center' }}>
+      <Typography variant="h6" gutterBottom sx={{ mt: 2, textAlign: "center" }}>
         Step {activeStep + 1}: {steps[activeStep]}
       </Typography>
       <Typography variant="subtitle1" gutterBottom sx={{ ml: 8, mt: 2, mr: 2 }}>
-          {getStepDescription()}
+        {getStepDescription()}
       </Typography>
-      <Box>
-        {getStepContent(activeStep)}
-      </Box>
+      <Box>{getStepContent(activeStep)}</Box>
     </Box>
   );
 };

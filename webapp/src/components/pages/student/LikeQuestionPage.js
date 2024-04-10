@@ -35,18 +35,25 @@ const LikeQuestionPage = ({ questions, onNext }) => {
     setQuestionData((currentData) =>
       currentData.map((question) => {
         if (question.id === id) {
-          
-          const updatedQuestion = { ...question, isLiked: false, isDisliked: false, isFlagged: false };
-          updatedQuestion[type] = !question[type];  
+          const updatedQuestion = {
+            ...question,
+            isLiked: false,
+            isDisliked: false,
+            isFlagged: false,
+          };
+          updatedQuestion[type] = !question[type];
           return updatedQuestion;
         }
         return question;
       })
     );
   };
-  
 
-  const buildRequestBody = (likedQuestions, dislikedQuestions, flaggedQuestions) => {
+  const buildRequestBody = (
+    likedQuestions,
+    dislikedQuestions,
+    flaggedQuestions
+  ) => {
     return {
       liked: likedQuestions,
       disliked: dislikedQuestions,
@@ -56,11 +63,21 @@ const LikeQuestionPage = ({ questions, onNext }) => {
 
   const handleSubmitAndProceed = () => {
     // You can merge your submission logic here before proceeding to the next part
-    const likedQuestions = questionData.filter((q) => q.isLiked).map((q) => q.id);
-    const dislikedQuestions = questionData.filter((q) => q.isDisliked).map((q) => q.id);
-    const flaggedQuestions = questionData.filter((q) => q.isFlagged).map((q) => q.id);
+    const likedQuestions = questionData
+      .filter((q) => q.isLiked)
+      .map((q) => q.id);
+    const dislikedQuestions = questionData
+      .filter((q) => q.isDisliked)
+      .map((q) => q.id);
+    const flaggedQuestions = questionData
+      .filter((q) => q.isFlagged)
+      .map((q) => q.id);
 
-    const requestBody = buildRequestBody(likedQuestions, dislikedQuestions, flaggedQuestions);
+    const requestBody = buildRequestBody(
+      likedQuestions,
+      dislikedQuestions,
+      flaggedQuestions
+    );
 
     setLoading(true);
 
@@ -68,10 +85,10 @@ const LikeQuestionPage = ({ questions, onNext }) => {
       .post(`/panel/${panelId}/tagging`, requestBody, {
         headers: headers,
       })
-      .then((response) => {      
+      .then((response) => {
         enqueueSnackbar("Activity recorded", {
           variant: "success",
-        })
+        });
         setQuestionData([]);
         onNext();
       })
@@ -93,7 +110,10 @@ const LikeQuestionPage = ({ questions, onNext }) => {
 
   const indexOfLastQuestion = currentPage * questionsPerPage;
   const indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
-  const currentQuestions = questionData.slice(indexOfFirstQuestion, indexOfLastQuestion);
+  const currentQuestions = questionData.slice(
+    indexOfFirstQuestion,
+    indexOfLastQuestion
+  );
 
   const theme = useTheme();
 
@@ -104,19 +124,42 @@ const LikeQuestionPage = ({ questions, onNext }) => {
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        width: '100%', 
-        padding: 2, 
-        overflow: 'auto'
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        width: "100%",
+        padding: 2,
+        overflow: "auto",
       }}
     >
-      {questionData.slice((currentPage - 1) * questionsPerPage, currentPage * questionsPerPage).map((question, idx) => (
-        <QuestionCard key={question.id} {...question} questionNumber={((currentPage - 1) * questionsPerPage) + idx + 1} onUpdate={handleQuestionUpdate} />
-      ))}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: '600px', mt: 2 }}>
-        <Button variant="contained" disabled={currentPage === 1} onClick={handlePreviousPage}>
+      {questionData
+        .slice(
+          (currentPage - 1) * questionsPerPage,
+          currentPage * questionsPerPage
+        )
+        .map((question, idx) => (
+          <QuestionCard
+            hideActions={true}
+            key={question.id}
+            {...question}
+            questionNumber={(currentPage - 1) * questionsPerPage + idx + 1}
+            onUpdate={handleQuestionUpdate}
+          />
+        ))}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          width: "100%",
+          maxWidth: "600px",
+          mt: 2,
+        }}
+      >
+        <Button
+          variant="contained"
+          disabled={currentPage === 1}
+          onClick={handlePreviousPage}
+        >
           Back
         </Button>
         {currentPage < totalPages && (
@@ -125,7 +168,11 @@ const LikeQuestionPage = ({ questions, onNext }) => {
           </Button>
         )}
         {currentPage === totalPages && (
-          <Button variant="contained" color="primary" onClick={handleSubmitAndProceed}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSubmitAndProceed}
+          >
             Submit and Proceed
           </Button>
         )}
