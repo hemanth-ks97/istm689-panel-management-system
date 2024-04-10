@@ -1576,7 +1576,7 @@ def post_grades(id):
                 """               
                 deviation_inter = (student["TagStageInteractions"] - mean_inter_tag) / std_inter_tag
 
-                if -1 <= deviation_inter <= 1:
+                if -1 <= deviation_inter:
                     tag_score = tagging_score
                 else:
                     penalty = round(min(tagging_score, abs(1 - abs(deviation_inter)) * penalty_rate),2)    
