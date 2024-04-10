@@ -8,67 +8,59 @@ import { useParams } from "react-router-dom";
 import LoadingSpinner from "../../widgets/LoadingSpinner";
 
 const QuestionsPage = () => {
-  const { panelId } = useParams();
   const { user } = useSelector((state) => state.user);
+  const { panelId } = useParams();
+  const [panel, setPanel] = useState(null);
   const [questions, setQuestions] = useState([]);
+  const [submittedQuestions, setSubmittedQuestions] = useState([]);
   const [canEdit, setCanEdit] = useState(false);
-  const [pageTitle, setPageTitle] = useState("Submit your Questions");
-
   const [isLoading, setIsLoading] = useState(true);
-  // const [panel, setPanel] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${user?.token}`,
   };
 
-  // useEffect(() => {
-  //   if (!panelId) {
-  //     return;
-  //   }
-
-  //   const numberOfQuestions = panel?.NumberOfQuestions;
-  //   setQuestions(Array(numberOfQuestions).fill(""));
-
-  //   // setIsLoading(true);
-  //   // httpClient
-  //   //   .get(`/panel/${panelId}/questions/submitted`, {
-  //   //     headers,
-  //   //   })
-  //   //   .then(({ data }) => {
-  //   //     // check if there are some questions already submitted
-  //   //   })
-  //   //   .catch(() => {})
-  //   //   .finally(() => setIsLoading(false));
-  // }, [panel]);
-
   useEffect(() => {
     if (!panelId) {
       return;
     }
 
-    httpClient
-      .get(`/panel/${panelId}/questions/submitted`, {
-        headers,
-      })
-      .then(({ data }) => {
-        const submittedQuestions = data?.questions || [];
+    const fetchData = async () => {
+      const panel = await httpClient.get(`/panel/${panelId}`, { headers });
+      setPanel(panel);
 
-        if (submittedQuestions.length > 0) {
-          const questionText = submittedQuestions.map(
-            (question) => question.QuestionText
-          );
-          setPageTitle("Your submitted questions");
-          setQuestions(questionText);
+      const questionsInServer = await httpClient.get(
+        `/panel/${panelId}/questions/submitted`,
+        {
+          headers,
         }
-      })
-      .catch((error) => {
-        enqueueSnackbar(error.message, {
-          variant: "error",
-        });
-      })
+      );
+
+      if (questionsInServer.length > 0) {
+        // Student already submitted questions!
+        setSubmittedQuestions(questionsInServer);
+      } else {
+        // Student did not submit questions!
+        const numberOfQuestions = panel?.NumberOfQuestions;
+        setQuestions(Array(numberOfQuestions).fill(""));
+      }
+
+      const deadline = new Date(panel.TagStageDeadline);
+      const now = new Date();
+
+      console.log("deadline: " + deadline);
+      console.log("now: " + now);
+
+      if (deadline > now) {
+        setCanEdit(false);
+      }
+    };
+
+    fetchData()
+      .catch(console.error)
       .finally(() => setIsLoading(false));
-  }, [panelId]);
+  }, []);
 
   const handleQuestionChange = (index, value) => {
     const newQuestions = [...questions];
@@ -101,7 +93,6 @@ const QuestionsPage = () => {
         // Reset questions after submitting
       })
       .catch((error) => {
-        console.log(error);
         enqueueSnackbar(error.message, { variant: "error" });
       });
   };
@@ -113,7 +104,7 @@ const QuestionsPage = () => {
   return (
     <Box flex={1} id={"Box"}>
       <Typography variant="h5" mt={3} textAlign="center">
-        {pageTitle}
+        Submit your questions
       </Typography>
 
       {questions.map((q, index) => (
