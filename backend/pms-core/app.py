@@ -1241,7 +1241,7 @@ def get_questions_per_student(id):
     if user_question:
         return {"question": user_question}
     else:
-        return Response(body={"error": "Question not found for user"}, status_code=404) 
+        return Response(body={"error": "Question not found for user"}, status_code=404)
 
 
 # It will run every day at 07:00 AM UTC

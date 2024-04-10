@@ -139,7 +139,6 @@ const LikeQuestionPage = ({ questions, onNext }) => {
         )
         .map((question, idx) => (
           <QuestionCard
-            hideActions={true}
             key={question.id}
             {...question}
             questionNumber={(currentPage - 1) * questionsPerPage + idx + 1}
