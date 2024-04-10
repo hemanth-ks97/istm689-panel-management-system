@@ -746,12 +746,17 @@ def post_question_batch():
 
         new_questions = []
         for question in raw_questions:
+            # Remove unnecessary spaces
+            stripped_question = question.strip()
             # Build Question object for database
+            if stripped_question == "":
+                # If the question is empty, do not store it
+                continue
             new_question = {
                 "QuestionID": generate_question_id(),
                 "UserID": user_id,
                 "PanelID": incoming_json["panelId"],
-                "QuestionText": question,
+                "QuestionText": stripped_question,
                 "CreatedAt": get_current_time_utc(),
                 "DislikedBy": [],
                 "LikedBy": [],

@@ -10,10 +10,9 @@ import LoadingSpinner from "../../widgets/LoadingSpinner";
 const QuestionsPage = () => {
   const { user } = useSelector((state) => state.user);
   const { panelId } = useParams();
-  const [panel, setPanel] = useState(null);
+  const [panelInfo, setPanelInfo] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [submittedQuestions, setSubmittedQuestions] = useState([]);
-  const [canEdit, setCanEdit] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
   const headers = {
@@ -27,33 +26,31 @@ const QuestionsPage = () => {
     }
 
     const fetchData = async () => {
-      const panel = await httpClient.get(`/panel/${panelId}`, { headers });
-      setPanel(panel);
+      const { data: panel } = await httpClient.get(`/panel/${panelId}`, {
+        headers,
+      });
 
-      const questionsInServer = await httpClient.get(
+      setPanelInfo(panel);
+
+      const { data: questionsInServer } = await httpClient.get(
         `/panel/${panelId}/questions/submitted`,
         {
           headers,
         }
       );
 
-      if (questionsInServer.length > 0) {
+      const questionsSubmittedArray = questionsInServer.questions;
+
+      if (questionsSubmittedArray.length > 0) {
         // Student already submitted questions!
-        setSubmittedQuestions(questionsInServer);
+        // loop trogh array, and store test only
+        setSubmittedQuestions(
+          questionsSubmittedArray.map((q) => q.QuestionText)
+        );
       } else {
         // Student did not submit questions!
         const numberOfQuestions = panel?.NumberOfQuestions;
         setQuestions(Array(numberOfQuestions).fill(""));
-      }
-
-      const deadline = new Date(panel.TagStageDeadline);
-      const now = new Date();
-
-      console.log("deadline: " + deadline);
-      console.log("now: " + now);
-
-      if (deadline > now) {
-        setCanEdit(false);
       }
     };
 
@@ -69,12 +66,15 @@ const QuestionsPage = () => {
   };
 
   const handleOnSubmit = () => {
-    // clean up questions without text
-    // dont send empty questions!
-    const q = questions.filter((question) => question.trim() !== "");
+    // Remove unnecessary white spaces
+    const trimmedQuestions = questions.map((q) => q.trim());
+    // Remove any question that is just an empty string
+    // Prevent from sending empty questions to backend
+    const filteredQuestions = trimmedQuestions.filter((q) => q.trim() !== "");
+
     let data = {
       panelId,
-      questions: q,
+      questions: filteredQuestions,
     };
     httpClient
       .post("/question/batch", data, { headers })
@@ -97,10 +97,48 @@ const QuestionsPage = () => {
       });
   };
 
+  // Render loading spinner during initialization
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
+  // If student already submitted questions, render them, disable eveything
+  if (submittedQuestions.length > 0) {
+    return (
+      <Box flex={1} id={"Box"}>
+        <Typography variant="h5" mt={3} textAlign="center">
+          You have already submitted your questions
+        </Typography>
+        {submittedQuestions.map((q, index) => (
+          <TextField
+            key={index}
+            id={`question${index}`}
+            label={`Question ${index + 1}`}
+            multiline
+            variant="filled"
+            value={q}
+            disabled
+            fullWidth
+            sx={{ flex: 1, m: 2, width: "95%" }}
+            margin="normal"
+          />
+        ))}
+      </Box>
+    );
+  }
+
+  // Check panel deadline and current time
+  if (Date.now() > new Date(panelInfo?.QuestionStageDeadline)) {
+    return (
+      <>
+        <Typography variant="h5" mt={3} textAlign="center">
+          Deadline for submitting questions has passed!
+        </Typography>
+      </>
+    );
+  }
+
+  // Otherwise, render neccesary questiosn
   return (
     <Box flex={1} id={"Box"}>
       <Typography variant="h5" mt={3} textAlign="center">
@@ -117,7 +155,6 @@ const QuestionsPage = () => {
             multiline
             variant="filled"
             value={q}
-            disabled={!canEdit}
             onChange={(e) => handleQuestionChange(index, e.target.value)}
             fullWidth
             sx={{ flex: 1, m: 2, width: "95%" }}
@@ -129,7 +166,6 @@ const QuestionsPage = () => {
         sx={{ flex: 1, m: 2, marginRight: "10%" }}
         variant="contained"
         color="primary"
-        disabled={!canEdit}
         onClick={handleOnSubmit}
       >
         Submit
