@@ -8,13 +8,28 @@ from urllib.parse import quote
 
 from chalice import (
     Chalice,
-    AuthResponse,
     CORSConfig,
-    NotFoundError,
-    BadRequestError,
     Response,
     Cron,
+    AuthResponse,
+    BadRequestError,
+    UnauthorizedError,
+    ForbiddenError,
+    NotFoundError,
+    ConflictError,
+    TooManyRequestsError,
+    ChaliceViewError,
 )
+
+# BadRequestError,- returns a status code of 400
+# UnauthorizedError,- returns a status code of 401
+# ForbiddenError,- returns a status code of 403
+# NotFoundError,- returns a status code of 404
+# ConflictError,- returns a status code of 409
+# TooManyRequestsError,- returns a status code of 429
+# ChaliceViewError,- returns a status code of 500
+
+
 from chalicelib.email import send_email
 from chalicelib.config import (
     ENV,
@@ -165,9 +180,22 @@ def post_login_google():
         json_body = app.current_request.json_body
         incoming_token = json_body["token"]
 
+        source_ip = app.current_request.context["identity"]["sourceIp"]
+        user_agent = app.current_request.headers["user-agent"]
+        path = app.current_request.path
+
         valid_and_verified_token = verify_token(incoming_token)
 
         if not valid_and_verified_token:
+            new_log = {
+                "LogID": generate_log_id(),
+                "SourceIP": source_ip,
+                "UserAgent": user_agent,
+                "Action": path,
+                "Result": "Token not valid or verified",
+                "CreatedAt": get_current_time_utc(),
+            }
+            get_log_db().add_log(new_log)
             raise ValueError("Invalid Token")
 
         user_email = valid_and_verified_token["email"]
@@ -176,6 +204,16 @@ def post_login_google():
 
         # Check if result was found
         if not users_found:
+            new_log = {
+                "LogID": generate_log_id(),
+                "EmailID": user_email,
+                "SourceIP": source_ip,
+                "UserAgent": user_agent,
+                "Action": path,
+                "Result": "User not found in the database",
+                "CreatedAt": get_current_time_utc(),
+            }
+            get_log_db().add_log(new_log)
             raise NotFoundError("User not found")
 
         user = users_found[0]
@@ -193,25 +231,22 @@ def post_login_google():
         user["LastLogin"] = get_current_time_utc()
         get_user_db().update_user(user)
 
-        source_ip = app.current_request.context["identity"]["sourceIp"]
-        user_agent = app.current_request.headers["user-agent"]
-        path = app.current_request.path
-
-        new_log = {
-            "LogID": generate_log_id(),
-            "UserID": user["UserID"],
-            "UserFName": user["FName"],
-            "UserLName": user["LName"],
-            "SourceIP": source_ip,
-            "UserAgent": user_agent,
-            "Action": path,
-            "CreatedAt": get_current_time_utc(),
-        }
-        get_log_db().add_log(new_log)
     except Exception:
         # Not always true but this is a Chalice Exception
         raise NotFoundError("User not found")
 
+    new_log = {
+        "LogID": generate_log_id(),
+        "UserID": user["UserID"],
+        "UserFName": user["FName"],
+        "UserLName": user["LName"],
+        "SourceIP": source_ip,
+        "UserAgent": user_agent,
+        "Action": path,
+        "Result": "User logged in successfully",
+        "CreatedAt": get_current_time_utc(),
+    }
+    get_log_db().add_log(new_log)
     return {"token": new_token}
 
 
@@ -236,18 +271,52 @@ def post_login_panel():
     res = requests.post(url, params=params)
     response = res.json()
 
+    panelist_email = incoming_json["email"]
+    source_ip = app.current_request.context["identity"]["sourceIp"]
+    user_agent = app.current_request.headers["user-agent"]
+    path = app.current_request.path
+
     if response["success"] is False:
+        new_log = {
+            "LogID": generate_log_id(),
+            "EmailID": panelist_email,
+            "SourceIP": source_ip,
+            "UserAgent": user_agent,
+            "Action": path,
+            "Result": "reCaptcha validation failed",
+            "CreatedAt": get_current_time_utc(),
+        }
+        get_log_db().add_log(new_log)
         raise BadRequestError(response["error-codes"])
 
-    panelist_email = incoming_json["email"]
     users = get_user_db().get_user_by_email(panelist_email)
 
     if not users:
+        new_log = {
+            "LogID": generate_log_id(),
+            "EmailID": panelist_email,
+            "SourceIP": source_ip,
+            "UserAgent": user_agent,
+            "Action": path,
+            "Result": "Email not found",
+            "CreatedAt": get_current_time_utc(),
+        }
+        get_log_db().add_log(new_log)
         raise NotFoundError("User not found")
 
     user = users[0]
 
     if user["Role"] != PANELIST_ROLE:
+        new_log = {
+            "LogID": generate_log_id(),
+            "EmailID": panelist_email,
+            "SourceIP": source_ip,
+            "UserAgent": user_agent,
+            "Action": path,
+            "Result": "Email is not a panelist",
+            "CreatedAt": get_current_time_utc(),
+        }
+        get_log_db().add_log(new_log)
         raise BadRequestError("User is not a panelist")
 
     url_safe_name = quote(f"{user['FName']} {user['LName']}")
@@ -289,6 +358,17 @@ def post_login_panel():
     # Register last login
     user["LastLogin"] = get_current_time_utc()
     get_user_db().update_user(user)
+
+    new_log = {
+        "LogID": generate_log_id(),
+        "EmailID": panelist_email,
+        "SourceIP": source_ip,
+        "UserAgent": user_agent,
+        "Action": path,
+        "Result": "Panelist successfully logged in",
+        "CreatedAt": get_current_time_utc(),
+    }
+    get_log_db().add_log(new_log)
 
     return response
 
@@ -651,8 +731,6 @@ def post_question_batch():
         user_id = app.current_request.context["authorizer"]["principalId"]
         panel_id = incoming_json["panelId"]
 
-        # Validate if panel still acepts questions!!
-
         panel = get_panel_db().get_panel(panel_id)
         if panel is None:
             raise NotFoundError("Panel (%s) not found" % panel_id)
@@ -668,12 +746,17 @@ def post_question_batch():
 
         new_questions = []
         for question in raw_questions:
+            # Remove unnecessary spaces
+            stripped_question = question.strip()
             # Build Question object for database
+            if stripped_question == "":
+                # If the question is empty, do not store it
+                continue
             new_question = {
                 "QuestionID": generate_question_id(),
                 "UserID": user_id,
                 "PanelID": incoming_json["panelId"],
-                "QuestionText": question,
+                "QuestionText": stripped_question,
                 "CreatedAt": get_current_time_utc(),
                 "DislikedBy": [],
                 "LikedBy": [],
@@ -867,8 +950,8 @@ def post_question_mark_similar(id):
         if present > tagging_deadline:
             raise BadRequestError("The deadline for this task has passed")
         if "similar" not in request:
-            raise BadRequestError("Incorrect Request Format: missing key - \"similar\" ")
-        
+            raise BadRequestError("Incorrect Request Format: missing key - 'similar'")
+
         similar_list = request["similar"]
 
         for similar_subset in similar_list:
@@ -881,12 +964,14 @@ def post_question_mark_similar(id):
                 other_ids.remove(q_id)
                 if "SimilarTo" in question_obj:
                     question_obj["SimilarTo"].extend(
-                        uuid for uuid in other_ids if uuid not in question_obj["SimilarTo"]
+                        uuid
+                        for uuid in other_ids
+                        if uuid not in question_obj["SimilarTo"]
                     )
                 else:
                     question_obj["SimilarTo"] = list(other_ids)
                 get_question_db().add_question(question_obj)
-        
+
         # Adding tag-stage out time
         student_metrics = get_metric_db().get_metric(user_id, panel_id)
         student_metrics["TagStageOutTime"] = get_current_time_utc()
@@ -894,9 +979,7 @@ def post_question_mark_similar(id):
 
         return f"{len(similar_list)} sets of questions marked as similar"
     except Exception as e:
-        return Response(
-            body={"error": str(e)}, status_code=500
-        )
+        return Response(body={"error": str(e)}, status_code=500)
 
 
 """PANEL ENDPOINTS"""
@@ -1028,6 +1111,23 @@ def get_panel_questions(id):
 
 
 @app.route(
+    "/panel/{id}/questions/submitted",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_my_panel_questions(id):
+    try:
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        questions = get_question_db().get_my_questions_by_panel(
+            panel_id=id, user_id=user_id
+        )
+    except Exception:
+        raise ChaliceViewError("Error trying to get questions")
+
+    return {"questions": questions}
+
+
+@app.route(
     "/panel/{id}/metrics",
     methods=["GET"],
     authorizer=authorizers,
@@ -1146,7 +1246,7 @@ def get_questions_per_student(id):
 
 # It will run every day at 07:00 AM UTC
 # 07:00 AM UTC -> 02:00 AM CST or 01:00 AM depeding on daylight saving time
-@app.schedule(Cron(0, 7, "*", "*", "?", "*"))
+@app.schedule(Cron(5, 0, "*", "*", "?", "*"))
 def daily_tasks(event):
 
     today = datetime.fromisoformat(get_current_time_utc())
