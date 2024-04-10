@@ -11,7 +11,7 @@ const CombineQuestionsPage = ({ questions, onNext, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [groupCounter, setGroupCounter] = useState(0); // Counter to assign unique group IDs
   const [similarGroups, setSimilarGroups] = useState([]);
-  const [groupColors] = useState(["#FFC0CB", "#ADD8E6", "#90EE90", "#FFB6C1", "#FFFACD"]); // Example color array
+  const [groupColors] = useState(["#FFC0CB", "#ADD8E6", "#90EE90", "#FFB6C1", "#FFFACD"]); // Color array
   const [similarGroupsHistory, setSimilarGroupsHistory] = useState([]);
   const [allQuestionsHistory, setAllQuestionsHistory] = useState([]);
 
@@ -47,7 +47,7 @@ const CombineQuestionsPage = ({ questions, onNext, onBack }) => {
       setSimilarGroupsHistory([...similarGroupsHistory, similarGroups]);
       setAllQuestionsHistory([...allQuestionsHistory, allQuestions]);
   
-      // Your existing logic to update similarGroups and allQuestions
+      // Logic to update similarGroups and allQuestions
       const newGroupId = groupCounter;
       setSimilarGroups([...similarGroups, selectedQuestions.map(q => q.id)]);
       setAllQuestions(allQuestions.map(question => ({
@@ -76,7 +76,7 @@ const CombineQuestionsPage = ({ questions, onNext, onBack }) => {
     const requestBody = {
       similar: similarGroups,
     };
-    console.log(requestBody); // Here, replace with your API call
+    console.log(requestBody); 
     setLoading(true);
 
     httpClient

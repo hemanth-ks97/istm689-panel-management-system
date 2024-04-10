@@ -15,7 +15,7 @@ import CombineQuestionsPage from "./CombineQuestionsPage";
  * for now we are rendering the first step which is liking/dsilking/flagging questions
  *
  */
-const steps = ['Reacting on Questions', 'Combining Questions'];
+const steps = ['React on Questions', 'Combine Similar Questions'];
 
 const TaggingPage = () => {
 
@@ -53,9 +53,9 @@ const TaggingPage = () => {
   const getStepDescription = () => {
     switch (activeStep) {
       case 0:
-        return " (Like, dislike or flag the below questions)";
+        return <span><strong>Instruction:</strong> This assignment displays 20 questions that you need to react to. Express your reaction to each question by liking, disliking, or flagging.</span>;
       case 1:
-        return " (Combine duplicate questions if any)";
+        return <span><strong>Instruction:</strong> This assignment displays 20 questions that you may combine if similar. Mark similar questions by selecting them and then click "Mark As Similar" at the bottom.</span>;
       default:
         return "";
     }
@@ -98,10 +98,11 @@ const TaggingPage = () => {
         ))}
       </Stepper>
       </Box>
-      {/* Step Description */}
-      <Typography variant="h6" gutterBottom style={{ marginTop: 6, textAlign: 'center' }}>
+      <Typography variant="h6" gutterBottom sx={{ mt: 2, textAlign: 'center' }}>
         Step {activeStep + 1}: {steps[activeStep]}
-        {getStepDescription()}
+      </Typography>
+      <Typography variant="subtitle1" gutterBottom sx={{ ml: 8, mt: 2, mr: 2 }}>
+          {getStepDescription()}
       </Typography>
       <Box>
         {getStepContent(activeStep)}
