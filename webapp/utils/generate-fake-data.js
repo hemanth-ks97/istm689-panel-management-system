@@ -5,7 +5,7 @@ import {
   BatchWriteItemCommand,
 } from "@aws-sdk/client-dynamodb";
 
-const ENV = process.env.ENV || "local";
+const ENV = process.env.ENV || "dev";
 
 const TABLE_NAME = {
   USER: `${ENV}-user`,
@@ -150,6 +150,7 @@ const createDynamoDBMetricObject = (metric) => {
 
   return {
     PanelID: { S: metric.PanelID },
+    PanelName: { S: metric.PanelName },
     UserID: { S: metric.UserID },
     UserFName: { S: metric.UserFName },
     UserLName: { S: metric.UserLName },
@@ -305,9 +306,16 @@ const createRandomQuestion = (panelID, userID) => {
   return question;
 };
 
-const createRandomMetric = ({ panelID, userID, userFName, userLName }) => {
+const createRandomMetric = ({
+  panelID,
+  panelName,
+  userID,
+  userFName,
+  userLName,
+}) => {
   const metric = {
     PanelID: panelID,
+    PanelName: panelName,
     UserID: userID,
     UserFName: userFName,
     UserLName: userLName,
@@ -328,6 +336,7 @@ const createRandomMetric = ({ panelID, userID, userFName, userLName }) => {
 
 const generateMetrics = ({ panels, users }) => {
   let panelID;
+  let panelName;
   let userID;
   let userFName;
   let userLName;
@@ -336,12 +345,14 @@ const generateMetrics = ({ panels, users }) => {
   // Loop through each generated panel to create questions
   for (let panel of panels) {
     panelID = panel.PutRequest.Item.PanelID.S;
+    panelName = panel.PutRequest.Item.PanelName.S;
     for (let user of users) {
       userID = user.PutRequest.Item.UserID.S;
       userFName = user.PutRequest.Item.FName.S;
       userLName = user.PutRequest.Item.LName.S;
       const metric = createRandomMetric({
         panelID,
+        panelName,
         userID,
         userFName,
         userLName,
@@ -355,7 +366,7 @@ const generateMetrics = ({ panels, users }) => {
   return newMetrics;
 };
 
-const generateQuestions = ({ panels, users, questionsByPanel = 20 }) => {
+const generateQuestions = ({ panels, users, questionsByPanel = 40 }) => {
   let panelID;
   let userID;
   let randomUserIndex;
