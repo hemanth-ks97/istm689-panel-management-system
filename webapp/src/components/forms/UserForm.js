@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import * as yup from "yup";
 import { useFormik } from "formik";
 // MUI
-import { Button, TextField, Typography } from "@mui/material";
+import { Button, TextField, Typography, Select, MenuItem } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
 
@@ -19,13 +19,13 @@ const validationSchema = yup.object({
     .required("Email is required"),
   FName: yup.string("Enter FName").required("FName is required"),
   LName: yup.string("Enter LName").required("LName is required"),
-  UIN: yup.number("Enter UIN").required("UIN is required"),
+  UIN: yup.number("Enter UIN"),
   Role: yup
     .string("Enter Role")
     .oneOf(["student", "panelist", "admin"])
     .required("Role is required"),
-  CanvasID: yup.number("Enter CanvasID").required("CanvasID is required"),
-  Section: yup.string("Enter Section").required("Section is required"),
+  CanvasID: yup.number("Enter CanvasID"),
+  Section: yup.string("Enter Section"),
 });
 
 const UserForm = ({ currentUser }) => {
@@ -135,7 +135,7 @@ const UserForm = ({ currentUser }) => {
           error={formik.touched.UIN && Boolean(formik.errors.UIN)}
           helperText={formik.touched.UIN && formik.errors.UIN}
         />
-        <TextField
+        <Select
           style={{ margin: "5px" }}
           fullWidth
           id="Role"
@@ -144,9 +144,12 @@ const UserForm = ({ currentUser }) => {
           value={formik.values.Role}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
-          error={formik.touched.Role && Boolean(formik.errors.Role)}
-          helperText={formik.touched.Role && formik.errors.Role}
-        />
+          error={formik.touched.userType && Boolean(formik.errors.userType)}
+        >
+          <MenuItem value="student">Student</MenuItem>
+          <MenuItem value="panelist">Panelist</MenuItem>
+          <MenuItem value="admin">Admin</MenuItem>
+        </Select>
         <TextField
           style={{ margin: "5px" }}
           fullWidth

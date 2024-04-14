@@ -535,30 +535,40 @@ def post_user():
         incoming_json = app.current_request.json_body
 
         # Check for all required fields
-        if "name" not in incoming_json:
-            raise BadRequestError("Key 'name' not found in incoming request")
-        if "lastname" not in incoming_json:
-            raise BadRequestError("Key 'lastname' not found in incoming request")
-        if "email" not in incoming_json:
-            raise BadRequestError("Key 'email' not found in incoming request")
-        if "role" not in incoming_json:
-            raise BadRequestError("Key 'role' not found in incoming request")
+        if "EmailID" not in incoming_json:
+            raise BadRequestError("Key 'EmailID' not found in incoming request")
+        if "FName" not in incoming_json:
+            raise BadRequestError("Key 'FName' not found in incoming request")
+        if "LName" not in incoming_json:
+            raise BadRequestError("Key 'LName' not found in incoming request")
+        if "Role" not in incoming_json:
+            raise BadRequestError("Key 'Role' not found in incoming request")
+        if "UIN" not in incoming_json:
+            raise BadRequestError("Key 'UIN' not found in incoming request")
+        if "CanvasID" not in incoming_json:
+            raise BadRequestError("Key 'CanvasID' not found in incoming request")
+        if "Section" not in incoming_json:
+            raise BadRequestError("Key 'Section' not found in incoming request")
 
+        new_id = generate_user_id()
         # Build User object for database
         new_user = {
-            "UserID": generate_user_id(),
+            "UserID": new_id,
             "CreatedAt": get_current_time_utc(),
-            "Name": incoming_json["name"],
-            "LastName": incoming_json["lastname"],
-            "Email": incoming_json["email"],
-            "Role": incoming_json["role"],
+            "FName": incoming_json["FName"],
+            "LName": incoming_json["LName"],
+            "EmailID": incoming_json["EmailID"],
+            "Role": incoming_json["Role"],
+            "UIN": incoming_json["UIN"],
+            "CanvasID": incoming_json["CanvasID"],
+            "Section": incoming_json["Section"],
         }
 
         get_user_db().add_user(new_user)
-        # Returns the result of put_item, kind of metadata and stuff
+        return {"UserID": new_id}
 
     except Exception as e:
-        return {"error": str(e)}
+        raise BadRequestError("Something went wrong")
 
 
 @app.route(
