@@ -8,7 +8,7 @@ const AdminPanelsPage = () => {
   const [selectedAction, setSelectedAction] = useState("list");
   return (
     <>
-      <p></p>
+      <br />
       <ButtonGroup>
         <Button onClick={() => setSelectedAction("list")}>
           List all panels
@@ -17,7 +17,7 @@ const AdminPanelsPage = () => {
           Add new Panel
         </Button>
       </ButtonGroup>
-      <></>
+
       {selectedAction === "create" && (
         <>
           <Typography>Add a new panel</Typography>
