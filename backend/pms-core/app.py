@@ -1028,29 +1028,58 @@ def post_panel():
     try:
         incoming_json = app.current_request.json_body
 
+        if "PanelName" not in incoming_json:
+            raise BadRequestError("Key 'PanelName' not found in incoming request")
+        if "Panelist" not in incoming_json:
+            raise BadRequestError("Key 'Panelist' not found in incoming request")
+        if "NumberOfQuestions" not in incoming_json:
+            raise BadRequestError(
+                "Key 'NumberOfQuestions' not found in incoming request"
+            )
+        if "QuestionStageDeadline" not in incoming_json:
+            raise BadRequestError(
+                "Key 'QuestionStageDeadline' not found in incoming request"
+            )
+        if "VoteStageDeadline" not in incoming_json:
+            raise BadRequestError(
+                "Key 'VoteStageDeadline' not found in incoming request"
+            )
+        if "TagStageDeadline" not in incoming_json:
+            raise BadRequestError(
+                "Key 'TagStageDeadline' not found in incoming request"
+            )
+        if "PanelVideoLink" not in incoming_json:
+            raise BadRequestError("Key 'PanelVideoLink' not found in incoming request")
+        if "PanelPresentationDate" not in incoming_json:
+            raise BadRequestError(
+                "Key 'PanelPresentationDate' not found in incoming request"
+            )
+        if "PanelDesc" not in incoming_json:
+            raise BadRequestError("Key 'PanelDesc' not found in incoming request")
+        if "Visibility" not in incoming_json:
+            raise BadRequestError("Key 'Visibility' not found in incoming request")
+        if "PanelStartDate" not in incoming_json:
+            raise BadRequestError("Key 'PanelStartDate' not found in incoming request")
+
+        new_id = generate_panel_id()
         new_panel = {
-            "PanelID": generate_panel_id(),
-            "NumberOfQuestions": incoming_json["numberOfQuestions"],
-            "PanelName": incoming_json["panelName"],
-            "Panelist": incoming_json["panelist"],
-            "QuestionStageDeadline": incoming_json["questionStageDeadline"],
-            "VoteStageDeadline": incoming_json["voteStageDeadline"],
-            "TagStageDeadline": incoming_json["tagStageDeadline"],
-            "PanelVideoLink": incoming_json["panelVideoLink"],
-            "PanelPresentationDate": incoming_json["panelPresentationDate"],
-            "PanelDesc": incoming_json["panelDesc"],
-            "PanelStartDate": incoming_json["panelStartDate"],
-            "Visibility": incoming_json["visibility"],
+            "PanelID": new_id,
+            "PanelName": incoming_json["PanelName"],
+            "PanelDesc": incoming_json["PanelDesc"],
+            "Panelist": incoming_json["Panelist"],
+            "PanelStartDate": incoming_json["PanelStartDate"],
+            "QuestionStageDeadline": incoming_json["QuestionStageDeadline"],
+            "TagStageDeadline": incoming_json["TagStageDeadline"],
+            "VoteStageDeadline": incoming_json["VoteStageDeadline"],
+            "PanelPresentationDate": incoming_json["PanelPresentationDate"],
+            "NumberOfQuestions": incoming_json["NumberOfQuestions"],
+            "PanelVideoLink": incoming_json["PanelVideoLink"],
+            "Visibility": incoming_json["Visibility"],
             "CreatedAt": get_current_time_utc(),
         }
         get_panel_db().add_panel(new_panel)
 
-        # We don't know if we added the panel successfully
-        return Response(
-            body={"message": "Panel added successfully"},
-            status_code=200,
-            headers={"Content-Type": "application/json"},
-        )
+        return {"PanelID": new_id}
     except Exception as e:
         return {"error": str(e)}
 
