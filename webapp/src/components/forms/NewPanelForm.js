@@ -9,7 +9,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-
+import { DatePicker, DateTimePicker } from "@mui/x-date-pickers";
 import LoadingSpinner from "../widgets/LoadingSpinner";
 
 import { httpClient } from "../../client";
@@ -210,6 +210,8 @@ const NewPanelForm = () => {
                 formik.touched.PanelStartDate && formik.errors.PanelStartDate
               }
             />
+
+            <DateTimePicker style={{ margin: "5px" }} fullWidth />
             <TextField
               style={{ margin: "5px" }}
               fullWidth
