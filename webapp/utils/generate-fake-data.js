@@ -24,7 +24,7 @@ const delay = (time = 3000) => {
 
 const teamMembers = [
   {
-    UserID: `u-${faker.string.uuid()}`,
+    UserID: "u-a4f9bca0-4c52-4642-9794-81c7b3b45531",
     CanvasID: 1111,
     UIN: 11111111,
     EmailID: "joaquin.gimenez@tamu.edu",
@@ -34,7 +34,7 @@ const teamMembers = [
     Section: "ISTM-622-601",
   },
   {
-    UserID: `u-${faker.string.uuid()}`,
+    UserID: "u-cee0f4ca-aba2-4e0f-a5ba-5cd128c286d3",
     CanvasID: 2222,
     UIN: 22222222,
     EmailID: "anshita.gupta@tamu.edu",
@@ -44,7 +44,7 @@ const teamMembers = [
     Section: "ISTM-622-601",
   },
   {
-    UserID: `u-${faker.string.uuid()}`,
+    UserID: "u-a733969b-ed99-461f-9787-aa3a0550c2f2",
     CanvasID: 3333,
     UIN: 33333333,
     EmailID: "anujakumthekar@tamu.edu",
@@ -54,7 +54,7 @@ const teamMembers = [
     Section: "ISTM-622-601",
   },
   {
-    UserID: `u-${faker.string.uuid()}`,
+    UserID: "u-50f646e3-b717-47da-9b53-954596afab1d",
     CanvasID: 4444,
     UIN: 44444444,
     EmailID: "helencrawford@tamu.edu",
@@ -64,7 +64,7 @@ const teamMembers = [
     Section: "ISTM-622-601",
   },
   {
-    UserID: `u-${faker.string.uuid()}`,
+    UserID: "u-196196b6-44ba-4cfd-bcbf-5c4b01131796",
     CanvasID: 5555,
     EmailID: "aditya.naik@tamu.edu",
     FName: "Aditya",
@@ -74,7 +74,7 @@ const teamMembers = [
     UIN: 55555555,
   },
   {
-    UserID: `u-${faker.string.uuid()}`,
+    UserID: "u-3aa5fe9a-64ab-4933-a961-ee7504dcfa41",
     CanvasID: 6666,
     EmailID: "pawan.terdal@tamu.edu",
     FName: "Pawan",
@@ -84,7 +84,7 @@ const teamMembers = [
     UIN: 66666666,
   },
   {
-    UserID: `u-${faker.string.uuid()}`,
+    UserID: "u-4d5aae92-7624-4578-a44f-6129e465049d",
     CanvasID: 7777,
     EmailID: "hemanth@tamu.edu",
     FName: "Hemanth",
@@ -94,7 +94,7 @@ const teamMembers = [
     UIN: 77777777,
   },
   {
-    UserID: `u-${faker.string.uuid()}`,
+    UserID: "u-c7767087-4594-48cf-b7bd-a1da9bf8f718",
     CanvasID: 8888,
     EmailID: "davidgomilliontest@gmail.com",
     FName: "Test",
@@ -150,6 +150,7 @@ const createDynamoDBMetricObject = (metric) => {
 
   return {
     PanelID: { S: metric.PanelID },
+    PanelName: { S: metric.PanelName },
     UserID: { S: metric.UserID },
     UserFName: { S: metric.UserFName },
     UserLName: { S: metric.UserLName },
@@ -305,9 +306,16 @@ const createRandomQuestion = (panelID, userID) => {
   return question;
 };
 
-const createRandomMetric = ({ panelID, userID, userFName, userLName }) => {
+const createRandomMetric = ({
+  panelID,
+  panelName,
+  userID,
+  userFName,
+  userLName,
+}) => {
   const metric = {
     PanelID: panelID,
+    PanelName: panelName,
     UserID: userID,
     UserFName: userFName,
     UserLName: userLName,
@@ -328,6 +336,7 @@ const createRandomMetric = ({ panelID, userID, userFName, userLName }) => {
 
 const generateMetrics = ({ panels, users }) => {
   let panelID;
+  let panelName;
   let userID;
   let userFName;
   let userLName;
@@ -336,12 +345,14 @@ const generateMetrics = ({ panels, users }) => {
   // Loop through each generated panel to create questions
   for (let panel of panels) {
     panelID = panel.PutRequest.Item.PanelID.S;
+    panelName = panel.PutRequest.Item.PanelName.S;
     for (let user of users) {
       userID = user.PutRequest.Item.UserID.S;
       userFName = user.PutRequest.Item.FName.S;
       userLName = user.PutRequest.Item.LName.S;
       const metric = createRandomMetric({
         panelID,
+        panelName,
         userID,
         userFName,
         userLName,
@@ -355,7 +366,7 @@ const generateMetrics = ({ panels, users }) => {
   return newMetrics;
 };
 
-const generateQuestions = ({ panels, users, questionsByPanel = 20 }) => {
+const generateQuestions = ({ panels, users, questionsByPanel = 40 }) => {
   let panelID;
   let userID;
   let randomUserIndex;
