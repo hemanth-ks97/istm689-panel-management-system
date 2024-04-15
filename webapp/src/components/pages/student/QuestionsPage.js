@@ -89,6 +89,8 @@ const QuestionsPage = () => {
           enqueueSnackbar(data.message, {
             variant: "success",
           });
+          const filteredQuestions = questions.filter((q) => q.trim() !== "");
+          setSubmittedQuestions(filteredQuestions);
         }
         // Reset questions after submitting
       })
