@@ -226,7 +226,8 @@ def distribute_tag_questions(panel_id):
     try:
         # Get list of all questions for that panel from the usersDB
         questions = get_question_db().get_questions_by_panel(panel_id)
-
+        if questions is None:
+            return f"Questions for Panel {id} not found"
         # Creating map to store questionID and corresponding userID
         question_map = {}
 
@@ -245,9 +246,13 @@ def distribute_tag_questions(panel_id):
 
         # Get total students from the usersDB
         student_ids = list(get_user_db().get_student_user_ids())
-        number_of_tag_questions_per_student = 20
         number_of_questions = len(question_ids)
         number_of_students = len(student_ids)
+
+        number_of_questions_submitted_per_student = get_panel_db().get_panel(panel_id).get("NumberOfQuestions")
+        number_of_assignable_tag_questions_per_student = number_of_questions - number_of_questions_submitted_per_student
+        number_of_tag_questions_per_student = min(number_of_assignable_tag_questions_per_student, 20)
+
         number_of_question_slots = number_of_tag_questions_per_student * number_of_students
         number_of_repetition_of_questions = (
             number_of_question_slots // number_of_questions
@@ -256,7 +261,8 @@ def distribute_tag_questions(panel_id):
 
         # Print variable values
         print("Panel ID: ", panel_id)
-        print("Number of questions per student: ", number_of_tag_questions_per_student)
+        print("Number of questions submitted per student: ", number_of_questions_submitted_per_student)
+        print("Number of questions to tag per student: ", number_of_tag_questions_per_student)
         print("Total number of questions: ", number_of_questions)
         print("Total number of students: ", number_of_students)
         print("Total number of question slots: ", number_of_question_slots)
