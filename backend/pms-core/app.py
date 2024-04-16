@@ -626,7 +626,17 @@ def patch_user(id):
 def get_my_metrics():
     try:
         user_id = app.current_request.context["authorizer"]["principalId"]
-        metrics = get_metric_db().get_metrics_by_user(user_id=user_id)
+
+        public_panels = get_panel_db().get_public_panels()
+        metrics = []
+
+        for panel in public_panels:
+            metric = get_metric_db().get_metric(
+                user_id=user_id, panel_id=panel["PanelID"]
+            )
+            if metric is not None:
+                metrics.append(metric)
+
     except Exception as e:
         raise ChaliceViewError("Could not get metrics for user")
 
