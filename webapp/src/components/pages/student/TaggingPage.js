@@ -8,6 +8,7 @@ import {
   StepLabel,
   Typography,
   StepConnector,
+  Grid,
 } from "@mui/material";
 import LikeQuestionPage from "./LikeQuestionPage";
 import { httpClient } from "../../../client";
@@ -29,7 +30,7 @@ const TaggingPage = () => {
   const [questionList, setQuestionList] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { panelId } = useParams();
   const { user } = useSelector((state) => state.user);
 
@@ -89,7 +90,7 @@ const TaggingPage = () => {
   };
 
   useEffect(() => {
-    setLoading(true);
+    setIsLoading(true);
     httpClient
       .get(`/panel/${panelId}/questions/tagging`, {
         headers: headers,
@@ -99,31 +100,54 @@ const TaggingPage = () => {
         console.log(response.data.question);
       })
       .catch((error) => {
-        if (error.response.data.error){
+        if (error.response.data.error) {
           setErrorMessage(error.response.data.error);
           enqueueSnackbar(error.response.data.error, {
             variant: "info",
-          })
-        }else{
+          });
+        } else {
           enqueueSnackbar(error.response.data.error, {
             variant: "error",
-          })
+          });
         }
-      }
-      )
-      .finally(() => setLoading(false));
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
-  if (loading) {
-    return <LoadingSpinner />;
+  if (isLoading) {
+    return (
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        sx={{ minHeight: "100vh" }}
+      >
+        <Grid item xs={3}>
+          <LoadingSpinner />
+        </Grid>
+      </Grid>
+    );
   }
 
-  if (errorMessage){
-    return(
-      <Typography variant="h5" mt={3} textAlign="center">
-      {errorMessage}
-    </Typography>
-    )
+  if (errorMessage) {
+    return (
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        sx={{ minHeight: "100vh" }}
+      >
+        <Grid item xs={3}>
+          <Typography variant="h5" mt={3} textAlign="center">
+            {errorMessage}
+          </Typography>
+        </Grid>
+      </Grid>
+    );
   }
 
   return (
