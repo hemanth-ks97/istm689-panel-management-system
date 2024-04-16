@@ -113,7 +113,7 @@ const GradesPage = () => {
 
   const grades = metrics.map((metric) => {
     return {
-      name: metric?.PanelName || "Could not determine",
+      name: metric?.PanelName || "Could not determine panel name",
       total: metric?.FinalTotalScore || -1,
       grades: [
         {
