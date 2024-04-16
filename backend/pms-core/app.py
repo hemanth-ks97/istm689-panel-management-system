@@ -40,17 +40,6 @@ from chalicelib.constants import (
     STUDENT_ROLE_AUTHORIZE_ROUTES,
     PANELIST_ROLE_AUTHORIZE_ROUTES,
     submit_score,
-    std_question_score,
-    above_std_score,
-    engagement_score_tag,
-    engagement_score_vote,
-    tagging_score,
-    voting_score,
-    extra_voting_score,
-    top_questions_score,
-    total_score,
-    penalty_rate,
-    performance_score
 )
 
 from chalicelib.utils import (
