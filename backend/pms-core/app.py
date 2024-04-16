@@ -619,11 +619,26 @@ def patch_user(id):
 
 
 @app.route(
+    "/my/metrics",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_my_metrics():
+    try:
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        metrics = get_metric_db().get_metrics_by_user(user_id=user_id)
+    except Exception as e:
+        raise ChaliceViewError("Could not get metrics for user")
+
+    return metrics
+
+
+@app.route(
     "/user/{id}/metrics",
     methods=["GET"],
     authorizer=authorizers,
 )
-def get_user_metrics(id):
+def get_metrics(id):
 
     # Need to check
     # If you are a user, you can only request your grades!
@@ -631,7 +646,7 @@ def get_user_metrics(id):
     try:
         metrics = get_metric_db().get_metrics_by_user(id)
     except Exception as e:
-        return {"error": str(e)}
+        raise ChaliceViewError("Could not get metrics for user")
 
     return metrics
 
@@ -1254,7 +1269,7 @@ def get_questions_per_student(id):
     panel = get_panel_db().get_panel(panel_id)
     if panel is None:
         raise NotFoundError("Panel (%s) not found" % panel_id)
-    
+
     # Deadline checks
     present_time = datetime.now(timezone.utc)
     questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
@@ -1262,13 +1277,23 @@ def get_questions_per_student(id):
 
     print(present_time, questions_deadline, tagging_deadline)
     if present_time < questions_deadline + timedelta(minutes=30):
-        return Response(body={"error": f"Action not allowed yet. This stage opens 30 mins after the deadline for the \"Submit Questions\" stage"}, status_code=400)
+        return Response(
+            body={
+                "error": f'Action not allowed yet. This stage opens 30 mins after the deadline for the "Submit Questions" stage'
+            },
+            status_code=400,
+        )
 
     # Fetch the metrics for the student from the database and check if they have already completed it
     student_metrics = get_metric_db().get_metric(user_id, panel_id)
     if "TagStageOutTime" in student_metrics:
-        return Response(body={"error": "This task has been completed and can no longer be modified"}, status_code=400)
-    
+        return Response(
+            body={
+                "error": "This task has been completed and can no longer be modified"
+            },
+            status_code=400,
+        )
+
     # Check if the tagging stage deadline has passed
     if present_time > tagging_deadline:
         return Response(body={"error": "Action not allowed anymore"}, status_code=400)
@@ -1410,11 +1435,11 @@ def get_questions_for_voting_stage(id):
     # user_question = None
     # Fetch user id
     user_id = app.current_request.context["authorizer"]["principalId"]
-    
+
     panel = get_panel_db().get_panel(panel_id)
     if panel is None:
         raise NotFoundError("Panel (%s) not found" % panel_id)
-    
+
     # Deadline checks
     present_time = datetime.now(timezone.utc)
     tagging_deadline = datetime.fromisoformat(panel["TagStageDeadline"])
@@ -1422,18 +1447,33 @@ def get_questions_for_voting_stage(id):
 
     # check if the deadline for the tagging stage has sufficiently passed
     if present_time < tagging_deadline + timedelta(minutes=30):
-        return Response(body={"error": f"Action not allowed yet. This stage opens 30 mins after the deadline for the \"Tag Questions\" stage"}, status_code=400)
-     
+        return Response(
+            body={
+                "error": f'Action not allowed yet. This stage opens 30 mins after the deadline for the "Tag Questions" stage'
+            },
+            status_code=400,
+        )
+
     # Fetch the metrics for the student from the database and check if they have already completed it
     student_metrics = get_metric_db().get_metric(user_id, panel_id)
     if "TagStageOutTime" in student_metrics:
-        return Response(body={"error": "This task has been completed and can no longer be modified"}, status_code=400)
+        return Response(
+            body={
+                "error": "This task has been completed and can no longer be modified"
+            },
+            status_code=400,
+        )
 
     # Fetch the metrics for the student from the database and check if they have already completed it
     student_metrics = get_metric_db().get_metric(user_id, panel_id)
     if "VoteStageOutTime" in student_metrics:
-        return Response(body={"error": "This task has been completed and can no longer be modified"}, status_code=400)
-    
+        return Response(
+            body={
+                "error": "This task has been completed and can no longer be modified"
+            },
+            status_code=400,
+        )
+
     # Check if the voting stage deadline has passed
     if present_time > voting_deadline:
         return Response(body={"error": "Action not allowed anymore"}, status_code=400)
