@@ -750,7 +750,7 @@ def post_question_batch():
         questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
 
         if present > questions_deadline:
-            raise BadRequestError("Action not allow anymore")
+            raise BadRequestError("Action not allowed anymore")
 
         raw_questions = incoming_json["questions"]
 
@@ -1222,17 +1222,32 @@ def get_questions_per_student(id):
     # Fetch user id
     user_id = app.current_request.context["authorizer"]["principalId"]
 
+    panel = get_panel_db().get_panel(panel_id)
+    if panel is None:
+        raise NotFoundError("Panel (%s) not found" % panel_id)
+    
+    # Deadline checks
+    present_time = datetime.now(timezone.utc)
+    questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
+    tagging_deadline = datetime.fromisoformat(panel["TagStageDeadline"])
+
+    print(present_time, questions_deadline, tagging_deadline)
+    if present_time < questions_deadline + timedelta(minutes=30):
+        return Response(body={"error": f"Action not allowed yet. This stage opens 30 mins after the deadline for the \"Submit Questions\" stage"}, status_code=400)
+
+    # Fetch the metrics for the student from the database and check if they have already completed it
+    student_metrics = get_metric_db().get_metric(user_id, panel_id)
+    if "TagStageOutTime" in student_metrics:
+        return Response(body={"error": "This task has been completed and can no longer be modified"}, status_code=400)
+    
+    # Check if the tagging stage deadline has passed
+    if present_time > tagging_deadline:
+        return Response(body={"error": "Action not allowed anymore"}, status_code=400)
+
     if not panel_id or not user_id:
         return Response(body={"error": "Missing panelId or userId"}, status_code=400)
 
     object_key = f"{panel_id}/questions.json"
-
-    # Check cache first!
-
-    # if not cached
-    #  - get s3 object
-    #  - set cache with TTL
-    #  - return object
 
     print(
         f"Getting questions for User ID: {user_id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}"
@@ -1366,6 +1381,33 @@ def get_questions_for_voting_stage(id):
     # user_question = None
     # Fetch user id
     user_id = app.current_request.context["authorizer"]["principalId"]
+    
+    panel = get_panel_db().get_panel(panel_id)
+    if panel is None:
+        raise NotFoundError("Panel (%s) not found" % panel_id)
+    
+    # Deadline checks
+    present_time = datetime.now(timezone.utc)
+    tagging_deadline = datetime.fromisoformat(panel["TagStageDeadline"])
+    voting_deadline = datetime.fromisoformat(panel["VoteStageDeadline"])
+
+    # check if the deadline for the tagging stage has sufficiently passed
+    if present_time < tagging_deadline + timedelta(minutes=30):
+        return Response(body={"error": f"Action not allowed yet. This stage opens 30 mins after the deadline for the \"Tag Questions\" stage"}, status_code=400)
+     
+    # Fetch the metrics for the student from the database and check if they have already completed it
+    student_metrics = get_metric_db().get_metric(user_id, panel_id)
+    if "TagStageOutTime" in student_metrics:
+        return Response(body={"error": "This task has been completed and can no longer be modified"}, status_code=400)
+    
+    # Check if the voting stage deadline has passed
+    if present_time > voting_deadline:
+        return Response(body={"error": "Action not allowed anymore"}, status_code=400)
+
+    # Fetch the metrics for the student from the database and check if they have already completed it
+    student_metrics = get_metric_db().get_metric(user_id, panel_id)
+    if "VoteStageOutTime" in student_metrics:
+        return Response(body={"error": "This task has been completed and can no longer be modified"}, status_code=400)
 
     if not panel_id or not user_id:
         return Response(body={"error": "Missing panelId or userId"}, status_code=400)
