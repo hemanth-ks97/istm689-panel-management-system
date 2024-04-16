@@ -211,7 +211,6 @@ const NewPanelForm = () => {
               }
             />
 
-            <DateTimePicker style={{ margin: "5px" }} fullWidth />
             <TextField
               style={{ margin: "5px" }}
               fullWidth
