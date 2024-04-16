@@ -1399,15 +1399,15 @@ def get_questions_for_voting_stage(id):
     student_metrics = get_metric_db().get_metric(user_id, panel_id)
     if "TagStageOutTime" in student_metrics:
         return Response(body={"error": "This task has been completed and can no longer be modified"}, status_code=400)
-    
-    # Check if the voting stage deadline has passed
-    if present_time > voting_deadline:
-        return Response(body={"error": "Action not allowed anymore"}, status_code=400)
 
     # Fetch the metrics for the student from the database and check if they have already completed it
     student_metrics = get_metric_db().get_metric(user_id, panel_id)
     if "VoteStageOutTime" in student_metrics:
         return Response(body={"error": "This task has been completed and can no longer be modified"}, status_code=400)
+    
+    # Check if the voting stage deadline has passed
+    if present_time > voting_deadline:
+        return Response(body={"error": "Action not allowed anymore"}, status_code=400)
 
     if not panel_id or not user_id:
         return Response(body={"error": "Missing panelId or userId"}, status_code=400)
