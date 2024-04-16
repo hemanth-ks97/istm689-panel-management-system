@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Button, Typography, useTheme } from "@mui/material";
+import { Box, Button, Typography, useTheme, Grid } from "@mui/material";
 import QuestionCard from "../../widgets/QuestionCard";
 import LoadingSpinner from "../../widgets/LoadingSpinner";
 import { httpClient } from "../../../client";
@@ -26,7 +26,7 @@ const LikeQuestionPage = ({ questions, onNext }) => {
   };
 
   const [questionData, setQuestionData] = useState(initialQuestions);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const questionsPerPage = 4;
   const totalPages = Math.ceil(questionData.length / questionsPerPage);
@@ -79,7 +79,7 @@ const LikeQuestionPage = ({ questions, onNext }) => {
       flaggedQuestions
     );
 
-    setLoading(true);
+    setIsLoading(true);
 
     httpClient
       .post(`/panel/${panelId}/tagging`, requestBody, {
@@ -97,7 +97,7 @@ const LikeQuestionPage = ({ questions, onNext }) => {
           variant: "error",
         })
       )
-      .finally(() => setLoading(false));
+      .finally(() => setIsLoading(false));
   };
 
   const handleNextPage = () => {
@@ -117,8 +117,21 @@ const LikeQuestionPage = ({ questions, onNext }) => {
 
   const theme = useTheme();
 
-  if (loading) {
-    return <LoadingSpinner />;
+  if (isLoading) {
+    return (
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        sx={{ minHeight: "100vh" }}
+      >
+        <Grid item xs={3}>
+          <LoadingSpinner />
+        </Grid>
+      </Grid>
+    );
   }
 
   return (

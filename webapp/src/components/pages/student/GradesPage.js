@@ -13,6 +13,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Grid,
 } from "@mui/material";
 
 import { useSelector } from "react-redux";
@@ -102,7 +103,20 @@ const GradesPage = () => {
   }, []);
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return (
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        sx={{ minHeight: "100vh" }}
+      >
+        <Grid item xs={3}>
+          <LoadingSpinner />
+        </Grid>
+      </Grid>
+    );
   }
 
   if (metrics.length === 0) {

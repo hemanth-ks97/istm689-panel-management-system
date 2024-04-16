@@ -6,6 +6,7 @@ import {
   ListItemButton,
   ListItemText,
   Typography,
+  Grid,
 } from "@mui/material";
 
 import { useNavigate } from "react-router-dom";
@@ -43,7 +44,20 @@ const PanelDashboardPage = ({ user }) => {
   }, []);
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return (
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        sx={{ minHeight: "100vh" }}
+      >
+        <Grid item xs={3}>
+          <LoadingSpinner />
+        </Grid>
+      </Grid>
+    );
   }
 
   if (!panels || panels.length === 0) {
