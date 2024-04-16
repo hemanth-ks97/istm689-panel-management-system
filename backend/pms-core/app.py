@@ -1,8 +1,10 @@
 """Main application file for the PMS Core API."""
 
+from decimal import Decimal
 import requests
 import boto3
 import pandas as pd
+import numpy as np
 from io import StringIO
 from urllib.parse import quote
 
@@ -47,6 +49,7 @@ from chalicelib.constants import (
     ADMIN_ROLE_AUTHORIZE_ROUTES,
     STUDENT_ROLE_AUTHORIZE_ROUTES,
     PANELIST_ROLE_AUTHORIZE_ROUTES,
+    submit_score,
 )
 
 from chalicelib.utils import (
@@ -61,6 +64,7 @@ from chalicelib.utils import (
     get_current_time_utc,
     distribute_tag_questions,
     group_similar_questions,
+    grading_script,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -837,6 +841,28 @@ def post_question_batch():
             html_body=html_body,
         )
 
+        # #Check if all questions have been submitted
+        no_of_questions = get_panel_db().get_number_of_questions_by_panel_id(panel_id)
+        # Add score to metrics
+        if no_of_questions == len(new_questions):
+            metric_for_submit = {
+                "UserID": user_id,
+                "PanelID": panel_id,
+                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "EnteredQuestionsTotalScore": Decimal(submit_score),
+            }
+        else:
+            sub_score_for_questions = round(
+                (len(new_questions) / no_of_questions[0]) * submit_score
+            )
+            metric_for_submit = {
+                "UserID": user_id,
+                "PanelID": panel_id,
+                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "EnteredQuestionsTotalScore": Decimal(sub_score_for_questions),
+            }
+        get_metric_db().add_metric(metric_for_submit)
+
         return {
             "message": "Questions successfully inserted in the DB",
         }
@@ -855,6 +881,7 @@ def post_question_tagging(id):
     # Request Format {"liked":["<id_1>", "<id_2>",..., "<id_n>"], "disliked":["<id_1>", "<id_2>",..., "<id_n>"], "flagged":["<id_1>", "<id_2>",..., "<id_n>"]}
     try:
         user_id = app.current_request.context["authorizer"]["principalId"]
+        panel_id = id
         request = app.current_request.json_body
 
         # Validation first because it is `cheaper` than querying the database
@@ -956,6 +983,16 @@ def post_question_tagging(id):
                 subject="Questions flagged!",
                 html_body=html_body,
             )
+
+        # Adding total interactions and storing it in metrics table
+        total_interactions = len(liked_list) + len(disliked_list) + len(flagged_list)
+
+        # Add total_interactions, and out_time to metrics db
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["TagStageOutTime"] = get_current_time_utc()
+        student_metrics["TagStageInteractions"] = total_interactions
+
+        get_metric_db().add_metric(student_metrics)
 
         return f"{len(liked_list)} questions liked\n{len(disliked_list)} questions disliked\n{len(flagged_list)} questions flagged !"
     except Exception as e:
@@ -1328,6 +1365,10 @@ def get_questions_per_student(id):
         user_question = questions_data.get(user_id)
 
     if user_question:
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["TagStageInTime"] = get_current_time_utc()
+        get_metric_db().add_metric(student_metrics)
+
         return {"question": user_question}
     else:
         return Response(body={"error": "Question not found for user"}, status_code=404)
@@ -1532,6 +1573,10 @@ def get_questions_for_voting_stage(id):
 
     if question_map:
         print(f"Question map: {question_map}")
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["VoteStageInTime"] = get_current_time_utc()
+        get_metric_db().add_metric(student_metrics)
+
         return {"question": question_map}
     else:
         # If question_map is empty after processing, it means no questions were found.
@@ -1562,6 +1607,12 @@ def post_submit_votes(id):
             score -= 1
 
         get_question_db().add_questions_batch(batch_res)
+
+        # Record VoteStageOutTime
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["VoteStageOutTime"] = get_current_time_utc()
+        get_metric_db().add_metric(student_metrics)
+
         return f"Voting recorded successfully"
     except Exception as e:
         return {"error": str(e)}
@@ -1614,3 +1665,12 @@ def get_final_question_list(id):
 
     except Exception as e:
         return {"error": str(e)}
+
+
+@app.route(
+    "/panel/{id}/metric/final",
+    methods=["GET"],
+    # authorizer=authorizers,
+)
+def post_grades(id):
+    grading_script(id)

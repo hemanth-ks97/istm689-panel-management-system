@@ -153,6 +153,10 @@ class DynamoQuestionDB(QuestionDB):
     def get_questions_by_panel(self, panel_id):
         response = self._table.scan(FilterExpression=Attr("PanelID").eq(panel_id))
         return response["Items"]
+    
+    def get_questions_by_user(self, user_id):
+        response = self._table.scan(FilterExpression=Attr("UserID").eq(user_id))
+        return response["Items"]
 
     def get_my_questions_by_panel(self, panel_id, user_id):
         response = self._table.scan(
