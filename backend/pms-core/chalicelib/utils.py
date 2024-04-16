@@ -13,7 +13,7 @@ from json import dumps, loads
 
 from .constants import GOOGLE_ISSUER, BOTO3_S3_TYPE, BOTO3_DYNAMODB_TYPE
 
-from chalicelib.database.db_provider import get_user_db, get_panel_db
+from chalicelib.database.db_provider import get_user_db, get_panel_db, get_question_db
 
 from .config import (
     JWT_SECRET,
@@ -226,7 +226,8 @@ def distribute_tag_questions(panel_id):
     try:
         # Get list of all questions for that panel from the usersDB
         questions = get_question_db().get_questions_by_panel(panel_id)
-
+        if questions is None:
+            return f"Questions for Panel {id} not found"
         # Creating map to store questionID and corresponding userID
         question_map = {}
 
@@ -245,10 +246,14 @@ def distribute_tag_questions(panel_id):
 
         # Get total students from the usersDB
         student_ids = list(get_user_db().get_student_user_ids())
-        number_of_questions_per_student = 10
         number_of_questions = len(question_ids)
         number_of_students = len(student_ids)
-        number_of_question_slots = number_of_questions_per_student * number_of_students
+
+        number_of_questions_submitted_per_student = get_panel_db().get_panel(panel_id).get("NumberOfQuestions")
+        number_of_assignable_tag_questions_per_student = number_of_questions - number_of_questions_submitted_per_student
+        number_of_tag_questions_per_student = min(number_of_assignable_tag_questions_per_student, 20)
+
+        number_of_question_slots = number_of_tag_questions_per_student * number_of_students
         number_of_repetition_of_questions = (
             number_of_question_slots // number_of_questions
         )
@@ -256,7 +261,8 @@ def distribute_tag_questions(panel_id):
 
         # Print variable values
         print("Panel ID: ", panel_id)
-        print("Number of questions per student: ", number_of_questions_per_student)
+        print("Number of questions submitted per student: ", number_of_questions_submitted_per_student)
+        print("Number of questions to tag per student: ", number_of_tag_questions_per_student)
         print("Total number of questions: ", number_of_questions)
         print("Total number of students: ", number_of_students)
         print("Total number of question slots: ", number_of_question_slots)
@@ -281,6 +287,7 @@ def distribute_tag_questions(panel_id):
 
         # Create a collection to store questionSubLists
         student_id_questions_map = {}
+        # counter = 0
 
         for _ in range(number_of_students):
             student_id = student_ids.pop(0)
@@ -289,12 +296,18 @@ def distribute_tag_questions(panel_id):
             question_id_text_map = {}
 
             # Pop questions from the questions slot list to put in the map
-            for _ in range(number_of_questions_per_student):
+            for _ in range(number_of_tag_questions_per_student):
+
+                # Initialize counter
+                counter = 0
+
+                # Get next question from the questionID slot list
                 question_id = distributed_question_id_slots.pop(0)
 
                 # Check if question exists in the map keys and check if question was entered by user
+                # (failure condition - skip to next question)
                 while (question_id in question_id_text_map.keys()) or (
-                    student_id == question_map[question_id]["UserID"]
+                        student_id == question_map[question_id]["UserID"]
                 ):
                     # Append it to the end of the master list and fetch the next question
                     distributed_question_id_slots.append(question_id)
@@ -302,19 +315,26 @@ def distribute_tag_questions(panel_id):
                     # Get next question from the questionID slot list
                     question_id = distributed_question_id_slots.pop(0)
 
+                    # Increment counter
+                    if counter > number_of_tag_questions_per_student:
+                        break
+                    else:
+                        counter += 1
+
                 # Add question to map
                 question_id_text_map[question_id] = question_map[question_id][
                     "QuestionText"
                 ]
 
-            # Assign the sublist to the next available student ID
-            student_id_questions_map[student_id] = question_id_text_map
+            if len(question_id_text_map) == number_of_tag_questions_per_student:
+                # Assign the sublist to the next available student ID
+                student_id_questions_map[student_id] = question_id_text_map
+            else:
+                # Handle edge case where last student doesn't get questions
+                distribute_tag_questions(panel_id)
 
-        # Add the student_question_map to an S3 bucket
-
-        upload_objects(
-            PANELS_BUCKET_NAME, panel_id, "questions.json", student_id_questions_map
-        )
+            # Add the student_question_map to an S3 bucket
+            upload_objects(PANELS_BUCKET_NAME, id, student_id_questions_map)
 
         return student_id_questions_map
     except Exception as e:
