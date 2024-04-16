@@ -48,6 +48,8 @@ GOOGLE_RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"
 submit_score = 20
 # Score for performace of the question
 performance_score = 10
+#Total score possible for questions
+total_question_score = 40
 # Points for overall engagement during tagging
 engagement_score_tag = 10
 # Points for overall engagement during voting
@@ -69,7 +71,7 @@ extra_voting_score = 5
 # Points if question is selected in top 10 of voting - offset for any activity
 top_questions_score = 5
 
-total_score = 0
+total_score = 100
 
 # Grade = (Questions) + (Tagging) + (Voting) = 100
 # Overall Bonus that can be earned = 20

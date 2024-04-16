@@ -31,7 +31,8 @@ from chalicelib.constants import (
     top_questions_score,
     total_score,
     penalty_rate,
-    performance_score )
+    performance_score,
+    total_question_score )
 
 from .config import (
     JWT_SECRET,
@@ -541,8 +542,8 @@ def grading_script(panel_id):
             for question in student_questions:
                 question_scores.append(question["FinalScore"])
             student_question_score = round(np.sum(question_scores)/int(total_questions),2)
-            student_grades[student["UserID"]]["QuestionStageScore"] = student_question_score + student["EnteredQuestionsTotalScore"]
-
+            question_stage_score = Decimal( ((student_question_score + student["EnteredQuestionsTotalScore"]) / total_question_score) * 100)
+            student_grades[student["UserID"]]["QuestionStageScore"] = question_stage_score
         # Giving bonus scores for cray cray questions
         # +5 for getting to voting stage
         for question in questions_data[:20]:
@@ -605,8 +606,9 @@ def grading_script(panel_id):
             """
             Multiply both for final tagging points
             """
-            final_tag_score = eng_score + tag_score
-            student_grades[student["UserID"]]["TagStageScore"] += min(tagging_score + engagement_score_tag,Decimal(final_tag_score))
+            final_tag_score = eng_score + tag_score + student_grades[student_id]["TagStageScore"]
+            tag_stage_score = Decimal((final_tag_score/tagging_score + engagement_score_tag) * 100) 
+            student_grades[student["UserID"]]["TagStageScore"] = min(Decimal(total_score),tag_stage_score)
 
 
             """
@@ -629,10 +631,12 @@ def grading_script(panel_id):
             """
             Multiply both for final tagging points
             """
-            final_vote_score = eng_score + voting_score
-            student_grades[student["UserID"]]["VoteStageScore"] += min(voting_score + engagement_score_vote,Decimal(final_vote_score))
+            final_vote_score = eng_score + voting_score + student_grades[student["UserID"]]["VoteStageScore"]
+            vote_stage_score = Decimal((final_vote_score/(voting_score + engagement_score_vote)) * 100)
+            student_grades[student["UserID"]]["VoteStageScore"] = min(Decimal(total_score),vote_stage_score)
 
-            student_grades[student["UserID"]]["FinalTotalScore"] = min(total_score,student_grades[student["UserID"]]["QuestionStageScore"] + student_grades[student["UserID"]]["TagStageScore"] + student_grades[student["UserID"]]["VoteStageScore"])
+            final_total_score = ( (student_grades[student["UserID"]]["QuestionStageScore"] + student_grades[student["UserID"]]["TagStageScore"] + student_grades[student["UserID"]]["VoteStageScore"])/(total_score*3)) *100
+            student_grades[student["UserID"]]["FinalTotalScore"] = min(Decimal(total_score),final_total_score)
 
         #get_metric_db().add_metric(metric_for_submit)
        
