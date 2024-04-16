@@ -1,53 +1,33 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+
 // MUI
-import { Typography, Box, Collapse, IconButton, Table, TableBody, TableCell, TableContainer, 
-TableHead, TableRow, Paper, styled } from "@mui/material";
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import {
+  Typography,
+  Box,
+  Collapse,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+} from "@mui/material";
 
-function createData(
-  name,
-  total,
-) {
-  return {
-    name,
-    total,
-    grades: [
-      {
-        type: 'Question',
-        grade: '95',
-      },
-      {
-        type: 'Tagging',
-        grade: '94',
-      },
-      {
-        type: 'Voting',
-        grade: '100',
-      },
-      {
-        type: 'Engagement',
-        grade: '100',
-      },
-    ],
-  };
-}
+import { useSelector } from "react-redux";
+import { useSnackbar } from "notistack";
+import { httpClient } from "../../../client";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import LoadingSpinner from "../../widgets/LoadingSpinner";
 
-const rows = [
-  createData('Anuja Panel', 97.25),
-  createData('Panel frictionless', 95),
-  createData('Panel cross-media', 100),
-  createData('Panel compelling', 90),
-  createData('Panel dynamic', 99),
-];
-
-function Row(props) {
-  const { row } = props;
-  const [open, setOpen] = React.useState(false);
+const Row = ({ row }) => {
+  const [open, setOpen] = useState(false);
 
   return (
-    <React.Fragment>
-      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+    <>
+      <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
         <TableCell>
           <IconButton
             aria-label="expand row"
@@ -60,9 +40,7 @@ function Row(props) {
         <TableCell component="th" scope="row">
           {row.name}
         </TableCell>
-        <TableCell>
-          {row.total}
-        </TableCell>
+        <TableCell>{row.total}</TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
@@ -71,7 +49,7 @@ function Row(props) {
               <Typography variant="h6" gutterBottom component="div">
                 Grade Breakdown
               </Typography>
-              <Table size="small" aria-label="purchases">
+              <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: "bold" }}>Criteria</TableCell>
@@ -84,7 +62,9 @@ function Row(props) {
                       <TableCell component="th" scope="row">
                         {gradesRow.type}
                       </TableCell>
-                      <TableCell>{gradesRow.grade}</TableCell> 
+                      <TableCell>
+                        {gradesRow.grade < 0 ? "N/A" : gradesRow.grade}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -93,39 +73,92 @@ function Row(props) {
           </Collapse>
         </TableCell>
       </TableRow>
-    </React.Fragment>
+    </>
   );
-}
-
-
-const DemoPaper = styled(Paper)(({ theme }) => ({
-  width: 800,
-  margin: theme.spacing(2),
-  padding: theme.spacing(2),
-  ...theme.typography.body2,
-  textAlign: "center",
-}));
+};
 
 const GradesPage = () => {
+  const { user } = useSelector((state) => state.user);
+  const { enqueueSnackbar } = useSnackbar();
+  const [metrics, setMetrics] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${user?.token}`,
+  };
+
+  useEffect(() => {
+    setIsLoading(true);
+    httpClient
+      .get("/my/metrics", { headers })
+      .then((response) => {
+        setMetrics(response.data);
+      })
+      .catch((error) => {
+        enqueueSnackbar(error.message, { variant: "error" });
+        console.log(error);
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (metrics.length === 0) {
+    return <Typography>Did not fetch any grades</Typography>;
+  }
+
+  // Build rows for the panels!
+
+  const grades = metrics.map((metric) => {
+    return {
+      name: metric?.PanelName || "Could not determine",
+      total: metric?.FinalTotalScore || -1,
+      grades: [
+        {
+          type: "Question",
+          grade: metric?.QuestionStageScore || -1,
+        },
+        {
+          type: "Tagging",
+          grade: metric?.TagStageScore || -1,
+        },
+        {
+          type: "Voting",
+          grade: metric?.VoteStageScore || -1,
+        },
+      ],
+    };
+  });
 
   return (
-
-   <Box sx={{ flexGrow: 1 }}> 
-    <Typography
+    <Box sx={{ flexGrow: 1 }}>
+      <Typography
         variant="h4"
         mt={2}
         textAlign="center"
-        sx={{ fontFamily: "monospace", fontWeight:"bold"}}>
-      Grades
-    </Typography>
-          <Box
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          sx={{ flexGrow: 1 }}
+        sx={{ fontFamily: "monospace", fontWeight: "bold" }}
+      >
+        Grades
+      </Typography>
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        sx={{ flexGrow: 1 }}
+      >
+        <Paper
+          square={false}
+          style={{
+            width: 800,
+            margin: 2,
+            padding: 2,
+            textAlign: "center",
+            typography: "body2",
+          }}
         >
-          <DemoPaper square={false}>
-            <TableContainer component={Paper}>
+          <TableContainer component={Paper}>
             <Table aria-label="collapsible table">
               <TableHead>
                 <TableRow>
@@ -135,17 +168,15 @@ const GradesPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row) => (
-                <Row key={row.name} row={row} />               
-                ))}
+                {grades.map((grade, idx) => {
+                  return <Row key={`header-${idx}`} row={grade} />;
+                })}
               </TableBody>
             </Table>
-            </TableContainer>
-          </DemoPaper>
-        </Box>
+          </TableContainer>
+        </Paper>
+      </Box>
     </Box>
-
-
   );
 };
 

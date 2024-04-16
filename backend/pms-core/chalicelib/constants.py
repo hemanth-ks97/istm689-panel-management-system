@@ -21,6 +21,7 @@ STUDENT_ROLE_AUTHORIZE_ROUTES = [
     "/panel",
     "/panel/*",
     "/question/batch",
+    "/my/metrics",
 ]
 
 
