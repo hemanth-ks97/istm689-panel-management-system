@@ -154,6 +154,8 @@ const createDynamoDBMetricObject = (metric) => {
     UserID: { S: metric.UserID },
     UserFName: { S: metric.UserFName },
     UserLName: { S: metric.UserLName },
+    UserCanvasID: { N: metric.userCanvasID },
+    UserUIN: { N: metric.userUIN },
     QuestionStageScore: { N: metric.QuestionStageScore.toString() },
     TagStageInTime: { S: metric.TagStageInTime },
     TagStageOutTime: { S: metric.TagStageOutTime },
@@ -312,6 +314,8 @@ const createRandomMetric = ({
   userID,
   userFName,
   userLName,
+  userCanvasID,
+  userUIN,
 }) => {
   const metric = {
     PanelID: panelID,
@@ -319,6 +323,8 @@ const createRandomMetric = ({
     UserID: userID,
     UserFName: userFName,
     UserLName: userLName,
+    UserCanvasID: userCanvasID,
+    UserUIN: userUIN,
     QuestionStageScore: faker.number.int({ min: 1, max: 100 }),
     TagStageInTime: faker.date.soon(),
     TagStageOutTime: faker.date.soon(),
@@ -340,6 +346,8 @@ const generateMetrics = ({ panels, users }) => {
   let userID;
   let userFName;
   let userLName;
+  let userCanvasID;
+  let userUIN;
   let newMetrics = [];
 
   // Loop through each generated panel to create questions
@@ -350,12 +358,16 @@ const generateMetrics = ({ panels, users }) => {
       userID = user.PutRequest.Item.UserID.S;
       userFName = user.PutRequest.Item.FName.S;
       userLName = user.PutRequest.Item.LName.S;
+      userCanvasID = user.PutRequest.Item.CanvasID.N;
+      userUIN = user.PutRequest.Item.UIN.N;
       const metric = createRandomMetric({
         panelID,
         panelName,
         userID,
         userFName,
         userLName,
+        userCanvasID,
+        userUIN,
       });
       newMetrics.push({
         PutRequest: { Item: createDynamoDBMetricObject(metric) },
