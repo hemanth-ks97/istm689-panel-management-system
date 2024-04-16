@@ -4,17 +4,16 @@ import { Typography, TextField, Button, Box } from "@mui/material";
 import { httpClient } from "../../../client";
 import { useSnackbar } from "notistack";
 import { useSelector } from "react-redux";
-import { useLocation, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import LoadingSpinner from "../../widgets/LoadingSpinner";
-import QuestionList from "../../widgets/QuestionList";
 
 const QuestionsPage = () => {
-  const { pathname } = useLocation();
-  const { panelId } = useParams();
   const { user } = useSelector((state) => state.user);
-  const [questions, setQuestions] = useState("");
-  const [noOfQuestions, setNoOfQuestions] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const { panelId } = useParams();
+  const [panelInfo, setPanelInfo] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [submittedQuestions, setSubmittedQuestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
   const headers = {
     "Content-Type": "application/json",
@@ -22,24 +21,43 @@ const QuestionsPage = () => {
   };
 
   useEffect(() => {
-    httpClient
-      .get(`/panel/${panelId}`, {
+    if (!panelId) {
+      return;
+    }
+
+    const fetchData = async () => {
+      const { data: panel } = await httpClient.get(`/panel/${panelId}`, {
         headers,
-      })
-      .then((response) => {
-        // Convert NumberOfQuestions to a Number
-        const numberOfQuestions = Number(response.data.NumberOfQuestions);
-        setNoOfQuestions(numberOfQuestions);
-        setQuestions(Array(numberOfQuestions).fill(""));
-        setLoading(false);
-      })
-      .catch((error) => {
-        enqueueSnackbar(error.message, {
-          variant: "error",
-        });
-        setLoading(false);
       });
-  }, [panelId]);
+
+      setPanelInfo(panel);
+
+      const { data: questionsInServer } = await httpClient.get(
+        `/panel/${panelId}/questions/submitted`,
+        {
+          headers,
+        }
+      );
+
+      const questionsSubmittedArray = questionsInServer.questions;
+
+      if (questionsSubmittedArray.length > 0) {
+        // Student already submitted questions!
+        // loop trogh array, and store test only
+        setSubmittedQuestions(
+          questionsSubmittedArray.map((q) => q.QuestionText)
+        );
+      } else {
+        // Student did not submit questions!
+        const numberOfQuestions = panel?.NumberOfQuestions;
+        setQuestions(Array(numberOfQuestions).fill(""));
+      }
+    };
+
+    fetchData()
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const handleQuestionChange = (index, value) => {
     const newQuestions = [...questions];
@@ -48,12 +66,15 @@ const QuestionsPage = () => {
   };
 
   const handleOnSubmit = () => {
-    // clean up questions without text
-    // dont send empty questions!
-    const q = questions.filter((question) => question.trim() !== "");
+    // Remove unnecessary white spaces
+    const trimmedQuestions = questions.map((q) => q.trim());
+    // Remove any question that is just an empty string
+    // Prevent from sending empty questions to backend
+    const filteredQuestions = trimmedQuestions.filter((q) => q.trim() !== "");
+
     let data = {
       panelId,
-      questions: q,
+      questions: filteredQuestions,
     };
     httpClient
       .post("/question/batch", data, { headers })
@@ -68,66 +89,91 @@ const QuestionsPage = () => {
           enqueueSnackbar(data.message, {
             variant: "success",
           });
+          const filteredQuestions = questions.filter((q) => q.trim() !== "");
+          setSubmittedQuestions(filteredQuestions);
         }
         // Reset questions after submitting
-        setQuestions(Array(noOfQuestions).fill(""));
       })
       .catch((error) => {
-        console.log(error);
         enqueueSnackbar(error.message, { variant: "error" });
       });
   };
 
-  let items;
-
-  if (loading) {
+  // Render loading spinner during initialization
+  if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  if (pathname.endsWith("questions") && panelId) {
-    items = <QuestionList panelId={panelId} />;
-  }
-
-  if (pathname.endsWith("question")) {
-    items = (
+  // If student already submitted questions, render them, disable eveything
+  if (submittedQuestions.length > 0) {
+    return (
       <Box flex={1} id={"Box"}>
-        <Typography
-          variant="h5"
-          mt={3}
-          textAlign="center"
-          sx={{ fontFamily: "monospace", fontWeight: "bold" }}
-        >
-          Submit your Questions
+        <Typography variant="h5" mt={3} textAlign="center">
+          You have already submitted your questions
         </Typography>
-        {questions.map((q, index) => (
-          <div>
-            <TextField
-              key={index}
-              id={`question${index}`}
-              label={`Question ${index + 1}`}
-              placeholder="Please write your question"
-              multiline
-              variant="filled"
-              value={q}
-              onChange={(e) => handleQuestionChange(index, e.target.value)}
-              fullWidth
-              sx={{ flex: 1, m: 2, width: "95%" }}
-              margin="normal"
-            />
-          </div>
+        {submittedQuestions.map((q, index) => (
+          <TextField
+            key={index}
+            id={`question${index}`}
+            label={`Question ${index + 1}`}
+            multiline
+            variant="filled"
+            value={q}
+            disabled
+            fullWidth
+            sx={{ flex: 1, m: 2, width: "95%" }}
+            margin="normal"
+          />
         ))}
-        <Button
-          sx={{ flex: 1, m: 2, marginRight: "10%" }}
-          variant="contained"
-          color="primary"
-          onClick={handleOnSubmit}
-        >
-          Submit
-        </Button>{" "}
       </Box>
     );
   }
-  return <>{items}</>;
+
+  // Check panel deadline and current time
+  if (Date.now() > new Date(panelInfo?.QuestionStageDeadline)) {
+    return (
+      <>
+        <Typography variant="h5" mt={3} textAlign="center">
+          Deadline for submitting questions has passed!
+        </Typography>
+      </>
+    );
+  }
+
+  // Otherwise, render neccesary questiosn
+  return (
+    <Box flex={1} id={"Box"}>
+      <Typography variant="h5" mt={3} textAlign="center">
+        Submit your questions
+      </Typography>
+
+      {questions.map((q, index) => (
+        <div>
+          <TextField
+            key={index}
+            id={`question${index}`}
+            label={`Question ${index + 1}`}
+            placeholder="Please write your question"
+            multiline
+            variant="filled"
+            value={q}
+            onChange={(e) => handleQuestionChange(index, e.target.value)}
+            fullWidth
+            sx={{ flex: 1, m: 2, width: "95%" }}
+            margin="normal"
+          />
+        </div>
+      ))}
+      <Button
+        sx={{ flex: 1, m: 2, marginRight: "10%" }}
+        variant="contained"
+        color="primary"
+        onClick={handleOnSubmit}
+      >
+        Submit
+      </Button>
+    </Box>
+  );
 };
 
 export default QuestionsPage;

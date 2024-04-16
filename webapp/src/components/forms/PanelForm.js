@@ -8,7 +8,7 @@ import { useSnackbar } from "notistack";
 import { httpClient } from "../../client";
 import LoadingSpinner from "../widgets/LoadingSpinner";
 // MUI
-import { Button, TextField, Typography } from "@mui/material";
+import { Button, TextField, Typography, Select, MenuItem } from "@mui/material";
 
 const validationSchema = yup.object({
   PanelID: yup.string().required("PanelID is required"),
@@ -98,7 +98,7 @@ const PanelForm = ({ panel }) => {
           error={formik.touched.PanelID && Boolean(formik.errors.PanelID)}
           helperText={formik.touched.PanelID && formik.errors.PanelID}
         />
-        <TextField
+        <Select
           style={{ margin: "5px" }}
           fullWidth
           id="Visibility"
@@ -107,9 +107,11 @@ const PanelForm = ({ panel }) => {
           value={formik.values.Visibility}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
-          error={formik.touched.Visibility && Boolean(formik.errors.Visibility)}
-          helperText={formik.touched.Visibility && formik.errors.Visibility}
-        />
+          error={formik.touched.userType && Boolean(formik.errors.userType)}
+        >
+          <MenuItem value="internal">Internal</MenuItem>
+          <MenuItem value="public">Public</MenuItem>
+        </Select>
         <TextField
           style={{ margin: "5px" }}
           fullWidth
@@ -127,7 +129,7 @@ const PanelForm = ({ panel }) => {
           fullWidth
           id="PanelDesc"
           name="PanelDesc"
-          label="First Name"
+          label="Panel Description"
           value={formik.values.PanelDesc}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
@@ -139,7 +141,7 @@ const PanelForm = ({ panel }) => {
           fullWidth
           id="Panelist"
           name="Panelist"
-          label="Last Name"
+          label="Panelist Name"
           value={formik.values.Panelist}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
@@ -164,12 +166,30 @@ const PanelForm = ({ panel }) => {
             formik.touched.NumberOfQuestions && formik.errors.NumberOfQuestions
           }
         />
+
+        <TextField
+          style={{ margin: "5px" }}
+          fullWidth
+          id="PanelVideoLink"
+          name="PanelVideoLink"
+          label="Video Link"
+          value={formik.values.PanelVideoLink}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={
+            formik.touched.PanelVideoLink &&
+            Boolean(formik.errors.PanelVideoLink)
+          }
+          helperText={
+            formik.touched.PanelVideoLink && formik.errors.PanelVideoLink
+          }
+        />
         <TextField
           style={{ margin: "5px" }}
           fullWidth
           id="PanelStartDate"
           name="PanelStartDate"
-          label="PanelStartDate"
+          label="Panel Start Date"
           value={formik.values.PanelStartDate}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
@@ -186,7 +206,7 @@ const PanelForm = ({ panel }) => {
           fullWidth
           id="QuestionStageDeadline"
           name="QuestionStageDeadline"
-          label="QuestionStageDeadline"
+          label="Question Stage Deadline"
           value={formik.values.QuestionStageDeadline}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
@@ -249,24 +269,6 @@ const PanelForm = ({ panel }) => {
           helperText={
             formik.touched.PanelPresentationDate &&
             formik.errors.PanelPresentationDate
-          }
-        />
-
-        <TextField
-          style={{ margin: "5px" }}
-          fullWidth
-          id="PanelVideoLink"
-          name="PanelVideoLink"
-          label="Video Link"
-          value={formik.values.PanelVideoLink}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={
-            formik.touched.PanelVideoLink &&
-            Boolean(formik.errors.PanelVideoLink)
-          }
-          helperText={
-            formik.touched.PanelVideoLink && formik.errors.PanelVideoLink
           }
         />
 

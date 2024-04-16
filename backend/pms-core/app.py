@@ -10,27 +10,37 @@ from urllib.parse import quote
 
 from chalice import (
     Chalice,
-    AuthResponse,
     CORSConfig,
-    NotFoundError,
-    BadRequestError,
     Response,
     Cron,
+    AuthResponse,
+    BadRequestError,
+    UnauthorizedError,
+    ForbiddenError,
+    NotFoundError,
+    ConflictError,
+    TooManyRequestsError,
+    ChaliceViewError,
 )
+
+# BadRequestError,- returns a status code of 400
+# UnauthorizedError,- returns a status code of 401
+# ForbiddenError,- returns a status code of 403
+# NotFoundError,- returns a status code of 404
+# ConflictError,- returns a status code of 409
+# TooManyRequestsError,- returns a status code of 429
+# ChaliceViewError,- returns a status code of 500
+
+
 from chalicelib.email import send_email
 from chalicelib.config import (
     ENV,
     ALLOW_ORIGIN,
     ALLOWED_AUTHORIZATION_TYPES,
-    USER_TABLE_NAME,
-    QUESTION_TABLE_NAME,
-    PANEL_TABLE_NAME,
-    METRIC_TABLE_NAME,
     PANELS_BUCKET_NAME,
     GOOGLE_RECAPTCHA_SECRET_KEY,
 )
 from chalicelib.constants import (
-    BOTO3_DYNAMODB_TYPE,
     REQUEST_CONTENT_TYPE_JSON,
     GOOGLE_RECAPTCHA_VERIFY_URL,
     ADMIN_ROLE,
@@ -46,16 +56,15 @@ from chalicelib.utils import (
     verify_token,
     get_token_subject,
     create_token,
-    dfs,
-    upload_objects,
     get_s3_objects,
     generate_panel_id,
     generate_question_id,
     generate_user_id,
+    generate_log_id,
     get_current_time_utc,
     distribute_tag_questions,
     group_similar_questions,
-    grading_script
+    grading_script,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -65,6 +74,7 @@ from chalicelib.database.db_provider import (
     get_question_db,
     get_panel_db,
     get_metric_db,
+    get_log_db,
 )
 
 
@@ -174,9 +184,22 @@ def post_login_google():
         json_body = app.current_request.json_body
         incoming_token = json_body["token"]
 
+        source_ip = app.current_request.context["identity"]["sourceIp"]
+        user_agent = app.current_request.headers["user-agent"]
+        path = app.current_request.path
+
         valid_and_verified_token = verify_token(incoming_token)
 
         if not valid_and_verified_token:
+            new_log = {
+                "LogID": generate_log_id(),
+                "SourceIP": source_ip,
+                "UserAgent": user_agent,
+                "Action": path,
+                "Result": "Token not valid or verified",
+                "CreatedAt": get_current_time_utc(),
+            }
+            get_log_db().add_log(new_log)
             raise ValueError("Invalid Token")
 
         user_email = valid_and_verified_token["email"]
@@ -185,6 +208,16 @@ def post_login_google():
 
         # Check if result was found
         if not users_found:
+            new_log = {
+                "LogID": generate_log_id(),
+                "EmailID": user_email,
+                "SourceIP": source_ip,
+                "UserAgent": user_agent,
+                "Action": path,
+                "Result": "User not found in the database",
+                "CreatedAt": get_current_time_utc(),
+            }
+            get_log_db().add_log(new_log)
             raise NotFoundError("User not found")
 
         user = users_found[0]
@@ -201,10 +234,23 @@ def post_login_google():
         # Register last login
         user["LastLogin"] = get_current_time_utc()
         get_user_db().update_user(user)
+
     except Exception:
         # Not always true but this is a Chalice Exception
         raise NotFoundError("User not found")
 
+    new_log = {
+        "LogID": generate_log_id(),
+        "UserID": user["UserID"],
+        "UserFName": user["FName"],
+        "UserLName": user["LName"],
+        "SourceIP": source_ip,
+        "UserAgent": user_agent,
+        "Action": path,
+        "Result": "User logged in successfully",
+        "CreatedAt": get_current_time_utc(),
+    }
+    get_log_db().add_log(new_log)
     return {"token": new_token}
 
 
@@ -229,18 +275,52 @@ def post_login_panel():
     res = requests.post(url, params=params)
     response = res.json()
 
+    panelist_email = incoming_json["email"]
+    source_ip = app.current_request.context["identity"]["sourceIp"]
+    user_agent = app.current_request.headers["user-agent"]
+    path = app.current_request.path
+
     if response["success"] is False:
+        new_log = {
+            "LogID": generate_log_id(),
+            "EmailID": panelist_email,
+            "SourceIP": source_ip,
+            "UserAgent": user_agent,
+            "Action": path,
+            "Result": "reCaptcha validation failed",
+            "CreatedAt": get_current_time_utc(),
+        }
+        get_log_db().add_log(new_log)
         raise BadRequestError(response["error-codes"])
 
-    panelist_email = incoming_json["email"]
     users = get_user_db().get_user_by_email(panelist_email)
 
     if not users:
+        new_log = {
+            "LogID": generate_log_id(),
+            "EmailID": panelist_email,
+            "SourceIP": source_ip,
+            "UserAgent": user_agent,
+            "Action": path,
+            "Result": "Email not found",
+            "CreatedAt": get_current_time_utc(),
+        }
+        get_log_db().add_log(new_log)
         raise NotFoundError("User not found")
 
     user = users[0]
 
     if user["Role"] != PANELIST_ROLE:
+        new_log = {
+            "LogID": generate_log_id(),
+            "EmailID": panelist_email,
+            "SourceIP": source_ip,
+            "UserAgent": user_agent,
+            "Action": path,
+            "Result": "Email is not a panelist",
+            "CreatedAt": get_current_time_utc(),
+        }
+        get_log_db().add_log(new_log)
         raise BadRequestError("User is not a panelist")
 
     url_safe_name = quote(f"{user['FName']} {user['LName']}")
@@ -282,6 +362,17 @@ def post_login_panel():
     # Register last login
     user["LastLogin"] = get_current_time_utc()
     get_user_db().update_user(user)
+
+    new_log = {
+        "LogID": generate_log_id(),
+        "EmailID": panelist_email,
+        "SourceIP": source_ip,
+        "UserAgent": user_agent,
+        "Action": path,
+        "Result": "Panelist successfully logged in",
+        "CreatedAt": get_current_time_utc(),
+    }
+    get_log_db().add_log(new_log)
 
     return response
 
@@ -448,30 +539,40 @@ def post_user():
         incoming_json = app.current_request.json_body
 
         # Check for all required fields
-        if "name" not in incoming_json:
-            raise BadRequestError("Key 'name' not found in incoming request")
-        if "lastname" not in incoming_json:
-            raise BadRequestError("Key 'lastname' not found in incoming request")
-        if "email" not in incoming_json:
-            raise BadRequestError("Key 'email' not found in incoming request")
-        if "role" not in incoming_json:
-            raise BadRequestError("Key 'role' not found in incoming request")
+        if "EmailID" not in incoming_json:
+            raise BadRequestError("Key 'EmailID' not found in incoming request")
+        if "FName" not in incoming_json:
+            raise BadRequestError("Key 'FName' not found in incoming request")
+        if "LName" not in incoming_json:
+            raise BadRequestError("Key 'LName' not found in incoming request")
+        if "Role" not in incoming_json:
+            raise BadRequestError("Key 'Role' not found in incoming request")
+        if "UIN" not in incoming_json:
+            raise BadRequestError("Key 'UIN' not found in incoming request")
+        if "CanvasID" not in incoming_json:
+            raise BadRequestError("Key 'CanvasID' not found in incoming request")
+        if "Section" not in incoming_json:
+            raise BadRequestError("Key 'Section' not found in incoming request")
 
+        new_id = generate_user_id()
         # Build User object for database
         new_user = {
-            "UserID": generate_user_id(),
+            "UserID": new_id,
             "CreatedAt": get_current_time_utc(),
-            "Name": incoming_json["name"],
-            "LastName": incoming_json["lastname"],
-            "Email": incoming_json["email"],
-            "Role": incoming_json["role"],
+            "FName": incoming_json["FName"],
+            "LName": incoming_json["LName"],
+            "EmailID": incoming_json["EmailID"],
+            "Role": incoming_json["Role"],
+            "UIN": incoming_json["UIN"],
+            "CanvasID": incoming_json["CanvasID"],
+            "Section": incoming_json["Section"],
         }
 
         get_user_db().add_user(new_user)
-        # Returns the result of put_item, kind of metadata and stuff
+        return {"UserID": new_id}
 
     except Exception as e:
-        return {"error": str(e)}
+        raise BadRequestError("Something went wrong")
 
 
 @app.route(
@@ -522,11 +623,26 @@ def patch_user(id):
 
 
 @app.route(
+    "/my/metrics",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_my_metrics():
+    try:
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        metrics = get_metric_db().get_metrics_by_user(user_id=user_id)
+    except Exception as e:
+        raise ChaliceViewError("Could not get metrics for user")
+
+    return metrics
+
+
+@app.route(
     "/user/{id}/metrics",
     methods=["GET"],
     authorizer=authorizers,
 )
-def get_user_metrics(id):
+def get_metrics(id):
 
     # Need to check
     # If you are a user, you can only request your grades!
@@ -534,7 +650,7 @@ def get_user_metrics(id):
     try:
         metrics = get_metric_db().get_metrics_by_user(id)
     except Exception as e:
-        return {"error": str(e)}
+        raise ChaliceViewError("Could not get metrics for user")
 
     return metrics
 
@@ -644,8 +760,6 @@ def post_question_batch():
         user_id = app.current_request.context["authorizer"]["principalId"]
         panel_id = incoming_json["panelId"]
 
-        # Validate if panel still acepts questions!!
-
         panel = get_panel_db().get_panel(panel_id)
         if panel is None:
             raise NotFoundError("Panel (%s) not found" % panel_id)
@@ -655,30 +769,34 @@ def post_question_batch():
         questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
 
         if present > questions_deadline:
-            raise BadRequestError("Action not allow anymore")
+            raise BadRequestError("Action not allowed anymore")
 
         raw_questions = incoming_json["questions"]
 
         new_questions = []
         for question in raw_questions:
+            # Remove unnecessary spaces
+            stripped_question = question.strip()
             # Build Question object for database
-            if question != "":
-                new_question = {
-                    "QuestionID": generate_question_id(),
-                    "UserID": user_id,
-                    "PanelID": incoming_json["panelId"],
-                    "QuestionText": question,
-                    "CreatedAt": get_current_time_utc(),
-                    "DislikedBy": [],
-                    "LikedBy": [],
-                    "NeutralizedBy": [],
-                    "DislikeScore": -1,
-                    "FinalScore": -1,
-                    "LikeScore": -1,
-                    "NeutralScore": -1,
-                    "PresentationBonusScore": -1,
-                    "VotingStageBonusScore": -1,
-                }
+            if stripped_question == "":
+                # If the question is empty, do not store it
+                continue
+            new_question = {
+                "QuestionID": generate_question_id(),
+                "UserID": user_id,
+                "PanelID": incoming_json["panelId"],
+                "QuestionText": stripped_question,
+                "CreatedAt": get_current_time_utc(),
+                "DislikedBy": [],
+                "LikedBy": [],
+                "NeutralizedBy": [],
+                "DislikeScore": -1,
+                "FinalScore": -1,
+                "LikeScore": -1,
+                "NeutralScore": -1,
+                "PresentationBonusScore": -1,
+                "VotingStageBonusScore": -1,
+            }
 
             new_questions.append(new_question)
 
@@ -715,21 +833,23 @@ def post_question_batch():
 
         # #Check if all questions have been submitted
         no_of_questions = get_panel_db().get_number_of_questions_by_panel_id(panel_id)
-        #Add score to metrics
+        # Add score to metrics
         if no_of_questions == len(new_questions):
-            metric_for_submit ={
+            metric_for_submit = {
                 "UserID": user_id,
                 "PanelID": panel_id,
                 "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                "EnteredQuestionsTotalScore": Decimal(submit_score)
+                "EnteredQuestionsTotalScore": Decimal(submit_score),
             }
         else:
-            sub_score_for_questions = round((len(new_questions)/no_of_questions[0])*submit_score)
-            metric_for_submit ={
+            sub_score_for_questions = round(
+                (len(new_questions) / no_of_questions[0]) * submit_score
+            )
+            metric_for_submit = {
                 "UserID": user_id,
                 "PanelID": panel_id,
                 "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                "EnteredQuestionsTotalScore": Decimal(sub_score_for_questions)
+                "EnteredQuestionsTotalScore": Decimal(sub_score_for_questions),
             }
         get_metric_db().add_metric(metric_for_submit)
 
@@ -876,36 +996,52 @@ def post_question_tagging(id):
     content_types=[REQUEST_CONTENT_TYPE_JSON],
 )
 def post_question_mark_similar(id):
-    # Request Format {"similar":["<id_1>", "<id_2>",..., "<id_n>"]}
+    # Request Format {"similar":[["<id_1>", "<id_2>",..., "<id_n>"], [], []]}
     # for every question_id in the list, append to its "similar-to" lsit in the database with every other question_id
     try:
+        panel_id = id
+        user_id = app.current_request.context["authorizer"]["principalId"]
         panel = get_panel_db().get_panel(id)
+        request = app.current_request.json_body
+
+        present = datetime.now(timezone.utc)
+        tagging_deadline = datetime.fromisoformat(panel["TagStageDeadline"])
+
         if panel is None:
             raise BadRequestError("The panel id does not exist")
-        if get_current_time_utc() > panel["TagStageDeadline"]:
+        if present > tagging_deadline:
             raise BadRequestError("The deadline for this task has passed")
+        if "similar" not in request:
+            raise BadRequestError("Incorrect Request Format: missing key - 'similar'")
 
-        request = app.current_request.json_body
         similar_list = request["similar"]
-        similar_set = set(similar_list)
 
-        for q_id in similar_set:
-            question_obj = get_question_db().get_question(q_id)
-            if not question_obj:
-                raise BadRequestError("Invalid question_id", q_id)
-            other_ids = similar_set.copy()
-            other_ids.remove(q_id)
-            if "SimilarTo" in question_obj:
-                question_obj["SimilarTo"].extend(
-                    uuid for uuid in other_ids if uuid not in question_obj["SimilarTo"]
-                )
-            else:
-                question_obj["SimilarTo"] = list(other_ids)
-            get_question_db().add_question(question_obj)
+        for similar_subset in similar_list:
+            similar_set = set(similar_subset)
+            for q_id in similar_set:
+                question_obj = get_question_db().get_question(q_id)
+                if not question_obj:
+                    raise BadRequestError("Invalid question_id", q_id)
+                other_ids = similar_set.copy()
+                other_ids.remove(q_id)
+                if "SimilarTo" in question_obj:
+                    question_obj["SimilarTo"].extend(
+                        uuid
+                        for uuid in other_ids
+                        if uuid not in question_obj["SimilarTo"]
+                    )
+                else:
+                    question_obj["SimilarTo"] = list(other_ids)
+                get_question_db().add_question(question_obj)
 
-        return f"{len(similar_list)} questions marked as similar"
+        # Adding tag-stage out time
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["TagStageOutTime"] = get_current_time_utc()
+        get_metric_db().add_metric(student_metrics)
+
+        return f"{len(similar_list)} sets of questions marked as similar"
     except Exception as e:
-        return {"error": str(e)}
+        return Response(body={"error": str(e)}, status_code=500)
 
 
 """PANEL ENDPOINTS"""
@@ -944,29 +1080,58 @@ def post_panel():
     try:
         incoming_json = app.current_request.json_body
 
+        if "PanelName" not in incoming_json:
+            raise BadRequestError("Key 'PanelName' not found in incoming request")
+        if "Panelist" not in incoming_json:
+            raise BadRequestError("Key 'Panelist' not found in incoming request")
+        if "NumberOfQuestions" not in incoming_json:
+            raise BadRequestError(
+                "Key 'NumberOfQuestions' not found in incoming request"
+            )
+        if "QuestionStageDeadline" not in incoming_json:
+            raise BadRequestError(
+                "Key 'QuestionStageDeadline' not found in incoming request"
+            )
+        if "VoteStageDeadline" not in incoming_json:
+            raise BadRequestError(
+                "Key 'VoteStageDeadline' not found in incoming request"
+            )
+        if "TagStageDeadline" not in incoming_json:
+            raise BadRequestError(
+                "Key 'TagStageDeadline' not found in incoming request"
+            )
+        if "PanelVideoLink" not in incoming_json:
+            raise BadRequestError("Key 'PanelVideoLink' not found in incoming request")
+        if "PanelPresentationDate" not in incoming_json:
+            raise BadRequestError(
+                "Key 'PanelPresentationDate' not found in incoming request"
+            )
+        if "PanelDesc" not in incoming_json:
+            raise BadRequestError("Key 'PanelDesc' not found in incoming request")
+        if "Visibility" not in incoming_json:
+            raise BadRequestError("Key 'Visibility' not found in incoming request")
+        if "PanelStartDate" not in incoming_json:
+            raise BadRequestError("Key 'PanelStartDate' not found in incoming request")
+
+        new_id = generate_panel_id()
         new_panel = {
-            "PanelID": generate_panel_id(),
-            "NumberOfQuestions": incoming_json["numberOfQuestions"],
-            "PanelName": incoming_json["panelName"],
-            "Panelist": incoming_json["panelist"],
-            "QuestionStageDeadline": incoming_json["questionStageDeadline"],
-            "VoteStageDeadline": incoming_json["voteStageDeadline"],
-            "TagStageDeadline": incoming_json["tagStageDeadline"],
-            "PanelVideoLink": incoming_json["panelVideoLink"],
-            "PanelPresentationDate": incoming_json["panelPresentationDate"],
-            "PanelDesc": incoming_json["panelDesc"],
-            "PanelStartDate": incoming_json["panelStartDate"],
-            "Visibility": incoming_json["visibility"],
+            "PanelID": new_id,
+            "PanelName": incoming_json["PanelName"],
+            "PanelDesc": incoming_json["PanelDesc"],
+            "Panelist": incoming_json["Panelist"],
+            "PanelStartDate": incoming_json["PanelStartDate"],
+            "QuestionStageDeadline": incoming_json["QuestionStageDeadline"],
+            "TagStageDeadline": incoming_json["TagStageDeadline"],
+            "VoteStageDeadline": incoming_json["VoteStageDeadline"],
+            "PanelPresentationDate": incoming_json["PanelPresentationDate"],
+            "NumberOfQuestions": incoming_json["NumberOfQuestions"],
+            "PanelVideoLink": incoming_json["PanelVideoLink"],
+            "Visibility": incoming_json["Visibility"],
             "CreatedAt": get_current_time_utc(),
         }
         get_panel_db().add_panel(new_panel)
 
-        # We don't know if we added the panel successfully
-        return Response(
-            body={"message": "Panel added successfully"},
-            status_code=200,
-            headers={"Content-Type": "application/json"},
-        )
+        return {"PanelID": new_id}
     except Exception as e:
         return {"error": str(e)}
 
@@ -1034,6 +1199,23 @@ def get_panel_questions(id):
         return {"error": str(e)}
 
     return questions
+
+
+@app.route(
+    "/panel/{id}/questions/submitted",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_my_panel_questions(id):
+    try:
+        user_id = app.current_request.context["authorizer"]["principalId"]
+        questions = get_question_db().get_my_questions_by_panel(
+            panel_id=id, user_id=user_id
+        )
+    except Exception:
+        raise ChaliceViewError("Error trying to get questions")
+
+    return {"questions": questions}
 
 
 @app.route(
@@ -1121,17 +1303,42 @@ def get_questions_per_student(id):
     # Fetch user id
     user_id = app.current_request.context["authorizer"]["principalId"]
 
+    panel = get_panel_db().get_panel(panel_id)
+    if panel is None:
+        raise NotFoundError("Panel (%s) not found" % panel_id)
+
+    # Deadline checks
+    present_time = datetime.now(timezone.utc)
+    questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
+    tagging_deadline = datetime.fromisoformat(panel["TagStageDeadline"])
+
+    print(present_time, questions_deadline, tagging_deadline)
+    if present_time < questions_deadline + timedelta(minutes=30):
+        return Response(
+            body={
+                "error": f'Action not allowed yet. This stage opens 30 mins after the deadline for the "Submit Questions" stage'
+            },
+            status_code=400,
+        )
+
+    # Fetch the metrics for the student from the database and check if they have already completed it
+    student_metrics = get_metric_db().get_metric(user_id, panel_id)
+    if "TagStageOutTime" in student_metrics:
+        return Response(
+            body={
+                "error": "This task has been completed and can no longer be modified"
+            },
+            status_code=400,
+        )
+
+    # Check if the tagging stage deadline has passed
+    if present_time > tagging_deadline:
+        return Response(body={"error": "Action not allowed anymore"}, status_code=400)
+
     if not panel_id or not user_id:
         return Response(body={"error": "Missing panelId or userId"}, status_code=400)
 
     object_key = f"{panel_id}/questions.json"
-
-    # Check cache first!
-
-    # if not cached
-    #  - get s3 object
-    #  - set cache with TTL
-    #  - return object
 
     print(
         f"Getting questions for User ID: {user_id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}"
@@ -1159,7 +1366,7 @@ def get_questions_per_student(id):
 
 # It will run every day at 07:00 AM UTC
 # 07:00 AM UTC -> 02:00 AM CST or 01:00 AM depeding on daylight saving time
-@app.schedule(Cron(0, 7, "*", "*", "?", "*"))
+@app.schedule(Cron(5, 0, "*", "*", "?", "*"))
 def daily_tasks(event):
 
     today = datetime.fromisoformat(get_current_time_utc())
@@ -1270,6 +1477,48 @@ def get_questions_for_voting_stage(id):
     # Fetch user id
     user_id = app.current_request.context["authorizer"]["principalId"]
 
+    panel = get_panel_db().get_panel(panel_id)
+    if panel is None:
+        raise NotFoundError("Panel (%s) not found" % panel_id)
+
+    # Deadline checks
+    present_time = datetime.now(timezone.utc)
+    tagging_deadline = datetime.fromisoformat(panel["TagStageDeadline"])
+    voting_deadline = datetime.fromisoformat(panel["VoteStageDeadline"])
+
+    # check if the deadline for the tagging stage has sufficiently passed
+    if present_time < tagging_deadline + timedelta(minutes=30):
+        return Response(
+            body={
+                "error": f'Action not allowed yet. This stage opens 30 mins after the deadline for the "Tag Questions" stage'
+            },
+            status_code=400,
+        )
+
+    # Fetch the metrics for the student from the database and check if they have already completed it
+    student_metrics = get_metric_db().get_metric(user_id, panel_id)
+    if "TagStageOutTime" in student_metrics:
+        return Response(
+            body={
+                "error": "This task has been completed and can no longer be modified"
+            },
+            status_code=400,
+        )
+
+    # Fetch the metrics for the student from the database and check if they have already completed it
+    student_metrics = get_metric_db().get_metric(user_id, panel_id)
+    if "VoteStageOutTime" in student_metrics:
+        return Response(
+            body={
+                "error": "This task has been completed and can no longer be modified"
+            },
+            status_code=400,
+        )
+
+    # Check if the voting stage deadline has passed
+    if present_time > voting_deadline:
+        return Response(body={"error": "Action not allowed anymore"}, status_code=400)
+
     if not panel_id or not user_id:
         return Response(body={"error": "Missing panelId or userId"}, status_code=400)
 
@@ -1349,7 +1598,7 @@ def post_submit_votes(id):
 
         get_question_db().add_questions_batch(batch_res)
 
-        # Record VoteStageOutTime 
+        # Record VoteStageOutTime
         student_metrics = get_metric_db().get_metric(user_id, panel_id)
         student_metrics["VoteStageOutTime"] = get_current_time_utc()
         get_metric_db().add_metric(student_metrics)
@@ -1407,10 +1656,11 @@ def get_final_question_list(id):
     except Exception as e:
         return {"error": str(e)}
 
+
 @app.route(
-    "/metric/final/{id}",
+    "/panel/{id}/metric/final",
     methods=["GET"],
-    #authorizer=authorizers,
+    # authorizer=authorizers,
 )
 def post_grades(id):
-   grading_script(id)
+    grading_script(id)

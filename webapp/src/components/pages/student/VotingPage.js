@@ -12,6 +12,7 @@ import StrictModeDroppable from "./StrictModeDroppable";
 const VotingPage = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
   const { panelId } = useParams();
   const { user } = useSelector((state) => state.user);
   const { enqueueSnackbar } = useSnackbar();
@@ -34,9 +35,20 @@ const VotingPage = () => {
         );
         setQuestions(questionsArray);
       })
-      .catch((error) => enqueueSnackbar(error.message, { variant: "error" }));
-
-    setLoading(false);
+      .catch((error) => {
+        console.log("HTTP ERROR", error)
+        if (error.response.data.error){
+          setErrorMessage(error.response.data.error);
+          enqueueSnackbar(error.response.data.error, {
+            variant: "info",
+          })
+        }
+        else{
+          enqueueSnackbar(error.message, { variant: "error" });
+        }
+      }
+    )
+    .finally(() => setLoading(false));
   }, [panelId, user?.token, enqueueSnackbar]);
 
   const onDragEnd = (result) => {
@@ -77,6 +89,14 @@ const VotingPage = () => {
 
   if (loading) {
     return <LoadingSpinner />;
+  }
+
+  if (errorMessage){
+    return(
+      <Typography variant="h5" mt={3} textAlign="center">
+        {errorMessage}
+      </Typography>
+    )
   }
 
   return (

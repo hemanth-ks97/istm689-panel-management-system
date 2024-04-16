@@ -32,6 +32,7 @@ const AdminGradesPage = () => {
           return {
             name: `${panel.PanelName} by ${panel.Panelist} - ${panel.PanelPresentationDate}`,
             value: panel.PanelID,
+            key: panel.PanelID
           };
         });
         options.unshift({ name: "None", value: "None" });
@@ -66,14 +67,20 @@ const AdminGradesPage = () => {
         label="Panel"
       >
         {panelFilterOptions.map((option) => (
-          <MenuItem value={option.value}>
+          <MenuItem key = {option.value} value={option.value}>
             <em>{option.name}</em>
           </MenuItem>
         ))}
       </Select>
 
       <Typography>Metrics</Typography>
-      {panelFilter && <MetricList panelId={panelFilter} />}
+      {panelFilter && (
+        <MetricList
+          key={panelFilter}
+          panelId={panelFilter}
+          panelName={panelFilterOptions.find((ele) => ele.value == panelFilter).name}
+        />
+      )}
     </>
   );
 };

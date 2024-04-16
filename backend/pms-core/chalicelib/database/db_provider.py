@@ -71,7 +71,7 @@ def get_log_db():
     global _LOG_DB
     try:
         if _LOG_DB is None:
-            _LOG_DB = DynamoPanelDB(resource(BOTO3_DYNAMODB_TYPE).Table(LOG_TABLE_NAME))
+            _LOG_DB = DynamoLogDB(resource(BOTO3_DYNAMODB_TYPE).Table(LOG_TABLE_NAME))
     except Exception as e:
         return {"error": str(e)}
     return _LOG_DB
@@ -90,7 +90,19 @@ class QuestionDB(object):
     def get_question(self, question_id):
         pass
 
+    def add_questions_batch(self, questions):
+        pass
+
     def delete_question(self, question_id):
+        pass
+
+    def get_question_ids_by_panel_id(self, panel_id):
+        pass
+
+    def get_questions_by_panel(self, panel_id):
+        pass
+
+    def get_my_questions_by_panel(self, panel_id, user_id):
         pass
 
 
@@ -144,6 +156,12 @@ class DynamoQuestionDB(QuestionDB):
     
     def get_questions_by_user(self, user_id):
         response = self._table.scan(FilterExpression=Attr("UserID").eq(user_id))
+        return response["Items"]
+
+    def get_my_questions_by_panel(self, panel_id, user_id):
+        response = self._table.scan(
+            FilterExpression=Attr("PanelID").eq(panel_id) & Attr("UserID").eq(user_id)
+        )
         return response["Items"]
 
     def delete_question(self, question_id):
@@ -435,10 +453,15 @@ class DynamoLogDB(LogDB):
         return response["Items"]
 
     def add_log(self, log):
-        pass
+        return self._table.put_item(Item=log)
 
     def get_log(self, log_id):
-        pass
+        response = self._table.get_item(
+            Key={
+                "LogID": log_id,
+            },
+        )
+        return response.get("Item")
 
     def get_logs_by_date(self, date):
         pass
