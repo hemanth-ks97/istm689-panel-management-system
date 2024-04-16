@@ -41,7 +41,7 @@ const MetricList = ({ panelId, panelName }) => {
   }, []);
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner fullScren />;
   }
 
   const columns = Object.keys(DATABASE_ATTRIBUTE_MAPPING.Metric).map((key) => {
@@ -76,8 +76,10 @@ const MetricList = ({ panelId, panelName }) => {
 
   return (
     <>
+      <Button variant="contained" onClick={handleExportClick}>
+        Export grades
+      </Button>
       <MaterialTable data={metrics} columns={columns} type={"Metric"} />
-      <Button onClick={handleExportClick}>Export grades</Button>
     </>
   );
 };
