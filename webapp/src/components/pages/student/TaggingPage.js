@@ -27,6 +27,7 @@ const steps = ["React on Questions", "Combine Similar Questions"];
 const TaggingPage = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [questionList, setQuestionList] = useState([]);
+  const [errorMessage, setErrorMessage] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
   const { panelId } = useParams();
@@ -97,16 +98,32 @@ const TaggingPage = () => {
         setQuestionList(response.data.question);
         console.log(response.data.question);
       })
-      .catch((error) =>
-        enqueueSnackbar(error.message, {
-          variant: "error",
-        })
+      .catch((error) => {
+        if (error.response.data.error){
+          setErrorMessage(error.response.data.error);
+          enqueueSnackbar(error.response.data.error, {
+            variant: "info",
+          })
+        }else{
+          enqueueSnackbar(error.response.data.error, {
+            variant: "error",
+          })
+        }
+      }
       )
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
     return <LoadingSpinner />;
+  }
+
+  if (errorMessage){
+    return(
+      <Typography variant="h5" mt={3} textAlign="center">
+      {errorMessage}
+    </Typography>
+    )
   }
 
   return (
