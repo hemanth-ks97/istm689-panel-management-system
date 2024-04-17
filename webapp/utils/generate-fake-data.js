@@ -190,15 +190,16 @@ const createDynamoDBUserObject = (user) => {
 };
 
 const createRandomUser = ({ role = "student" }) => {
+  const internalId = faker.number.int({ min: 100, max: 500 });
   return {
     UserID: `u-${faker.string.uuid()}`,
-    CanvasID: faker.number.int({ min: 100, max: 500 }),
+    CanvasID: internalId,
     EmailID: faker.internet.email(),
     FName: faker.person.firstName(),
     LName: faker.person.lastName(),
     Role: role,
     Section: "ISTM-622-601",
-    UIN: faker.number.int({ min: 1000, max: 5000 }),
+    UIN: internalId * 100,
   };
 };
 

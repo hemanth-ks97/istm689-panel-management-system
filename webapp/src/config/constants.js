@@ -63,12 +63,3 @@ export const DATABASE_ATTRIBUTE_MAPPING = {
   },
   Question: {},
 };
-
-export const firstRowInSCVFile = {
-  "Student": "    Points Possible",
-  "ID": null,
-  "SIS Login ID": null,
-  "Question Stage Score": 100,
-  "Vote Stage Score": 100,
-  "Tag Stage Score": 100,
-};

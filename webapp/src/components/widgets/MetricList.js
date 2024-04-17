@@ -5,10 +5,7 @@ import { useSnackbar } from "notistack";
 import MaterialTable from "./MaterialTable";
 import LoadingSpinner from "./LoadingSpinner";
 
-import {
-  DATABASE_ATTRIBUTE_MAPPING,
-  firstRowInSCVFile,
-} from "../../config/constants";
+import { DATABASE_ATTRIBUTE_MAPPING } from "../../config/constants";
 import { Button } from "@mui/material";
 import Papa from "papaparse";
 
@@ -53,17 +50,44 @@ const MetricList = ({ panelId, panelName }) => {
   });
 
   const handleExportClick = () => {
-    const data = [firstRowInSCVFile].concat(
-      metrics.map((item) => ({
-        Student: `${item.UserLName}, ${item.UserFName}`,
-        ID: item.id,
-        "SIS Login ID": item.uin,
-        "Question Stage Score": item.QuestionStageScore,
-        "Vote Stage Score": item.VoteStageScore,
-        "Tag Stage Score": item.TagStageScore,
-      }))
-    );
-    const csv = Papa.unparse(data);
+    const panelName = metrics[0]?.PanelName || "No Name";
+
+    const exportData = metrics.map((metric) => {
+      const {
+        UserFName,
+        UserLName,
+        UserCanvasID,
+        UserUIN,
+        QuestionStageScore,
+        TagStageScore,
+        VoteStageScore,
+      } = metric;
+
+      const exportMetric = {};
+      exportMetric["Student"] = `${UserFName}, ${UserLName}`;
+      exportMetric["ID"] = UserCanvasID;
+      exportMetric["SIS Login ID"] = UserUIN;
+      // Need to dynamically change the header name!
+      exportMetric[`${panelName} - Question Stage`] = QuestionStageScore;
+      exportMetric[`${panelName} - Vote Stage`] = VoteStageScore;
+      exportMetric[`${panelName} - Tag Stage`] = TagStageScore;
+
+      return exportMetric;
+    });
+
+    const canvasCSVHeader = {};
+    canvasCSVHeader["Student"] = "    Points Possible";
+    canvasCSVHeader["ID"] = null;
+    canvasCSVHeader["SIS Login ID"] = null;
+    // Need to dynamically change the header name!
+    canvasCSVHeader[`${panelName} - Question Stage`] = 100;
+    canvasCSVHeader[`${panelName} - Vote Stage`] = 100;
+    canvasCSVHeader[`${panelName} - Tag Stage`] = 100;
+
+    // Insert header to beginning of the array
+    exportData.unshift(canvasCSVHeader);
+
+    const csv = Papa.unparse(exportData);
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
