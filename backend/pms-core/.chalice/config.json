@@ -17,6 +17,8 @@
         "DYNAMODB_METRIC_TABLE_NAME": "production-metric",
         "DYNAMODB_LOG_TABLE_NAME": "production-log",
         "S3_PANELS_BUCKET_NAME": "production-istm689-panels-students-data",
+        "SES_EMAIL_ADDRESS_IDENTITY": "davidgomilliontest@gmail.com",
+        "SES_IS_SANDBOX_ENVIROMENT": "true",
         "JWT_TOKEN_EXPIRATION_DAYS": "1",
         "JWT_SECRET": "dnPrEMmwZzk5qetcZ9Lycm0ct8h137NNww66RSiqj2I9Ve2eFo"
       }
@@ -36,6 +38,8 @@
         "DYNAMODB_METRIC_TABLE_NAME": "dev-metric",
         "DYNAMODB_LOG_TABLE_NAME": "dev-log",
         "S3_PANELS_BUCKET_NAME": "dev-istm689-panels-students-data",
+        "SES_EMAIL_ADDRESS_IDENTITY": "davidgomilliontest@gmail.com",
+        "SES_IS_SANDBOX_ENVIROMENT": "true",
         "JWT_SECRET": "6CLIbiKyCDUKG97qpb5UEjYvD0hfgNnwVO8DvqmEdpDHxv9bEe",
         "JWT_TOKEN_EXPIRATION_DAYS": "3"
       }
@@ -55,6 +59,8 @@
         "DYNAMODB_METRIC_TABLE_NAME": "local-metric",
         "DYNAMODB_LOG_TABLE_NAME": "local-log",
         "S3_PANELS_BUCKET_NAME": "local-istm689-panels-students-data",
+        "SES_EMAIL_ADDRESS_IDENTITY": "davidgomilliontest@gmail.com",
+        "SES_IS_SANDBOX_ENVIROMENT": "true",
         "JWT_SECRET": "I4a9BZImiw6l2Z8Pa2SrfPqFGnJNLa23rI7RTz2ycaQqztvLQz",
         "JWT_TOKEN_EXPIRATION_DAYS": "7"
       }
