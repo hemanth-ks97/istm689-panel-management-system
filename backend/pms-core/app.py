@@ -1684,57 +1684,47 @@ def send_questions_to_panelists(id):
         panelist_id = panel.get("Panelist")
         panel_name = panel.get("PanelName")
 
-        panelist = get_user_db().get_user(panelist_id)
-        panelist_email = panelist.get("Email")
-        panelist_fname = panelist.get("FName")
+        # panelist = get_user_db().get_user(panelist_id)
+        # panelist_email = panelist.get("Email")
+        # panelist_fname = panelist.get("FName")
 
+        # get presentation date and time
         presentation_datetime = datetime.fromisoformat(panel.get("PanelPresentationDate").replace("Z", "+00:00"))
         presentation_date = presentation_datetime.date()
-
         presentation_time = str(presentation_datetime.time())
         time_format = "%H:%M:%S.%f" if '.' in presentation_time else "%H:%M:%S"
         time_object = datetime.strptime(presentation_time, time_format)
         presentation_time_formatted = time_object.strftime("%I:%M %p")
 
-        object_key = f"{id}/sortedCluster.json"
-
-        print(
-            f"Getting questions in Panel ID: {id} for Panelist: {panelist} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}")
-
-        questions_data, error = get_s3_objects(PANELS_BUCKET_NAME, object_key)
-
-        topQuestions = []
-
-        for i in range(min(10, len(questions_data))):
-            topQuestions.append(questions_data[i].get("rep_question"))
+        # get top voted questions
+        top_questions = get_final_question_list(id)
+        top_questions_text = []
+        for i in range(len(top_questions)):
+            top_questions_text.append(top_questions[i]["rep_question"])
 
         html_body = f"""
-            Dear {panelist_fname},
+            Dear Panelist,
             <br>
             <p>We're excited to invite you to join us as a panelist for an upcoming session where you'll have the opportunity to answer questions from our students. </p>
             <p>The session is scheduled for <strong>{presentation_date}</strong> at <strong>{presentation_time_formatted} CT</strong>.</p>
-            <p>Here is the list of questions curated from our students.</p>
-            <br>
+            <p>Here is the list of questions curated from our students:</p>
             <ul>
-                {"".join([f"<li>{question}</li>" for question in topQuestions])}
+                {"".join([f"<li>{question_text}</li>" for question_text in top_questions_text])}
             </ul>
-            <br>
             <p>Please review these at your earliest convenience to prepare for the session.</p>
             <p>Looking forward to your participation!</p>
-            <br>
-            Best regards,
+            <p>Best regards,</p>
             The Panel Management System Team
             """
 
-        # print(html_body)
-
+        # send an email to the panelist
         send_email(
-            destination_addresses=[panelist_email],
-            subject=f"PMS: Questions for {panelist} on {panel_name}",
+            destination_addresses=["davidgomilliontest@gmail.com"],
+            subject=f"PMS: Questions for Panelist on {panel_name}",
             html_body=html_body,
         )
 
-        return 0
+        return top_questions_text
 
     except Exception as e:
         return {"error": str(e)}
