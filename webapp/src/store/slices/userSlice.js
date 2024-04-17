@@ -9,11 +9,14 @@ export const userSlice = createSlice({
   reducers: {
     setUser: (state, action) => {
       const pmsUser = jwtDecode(action.payload);
+
       state.user = {
         name: pmsUser?.name,
         email: pmsUser?.email,
         picture: pmsUser?.picture,
         role: pmsUser?.role,
+        isOwnToken: pmsUser?.iss.endsWith("-pms-core"),
+        expiration: pmsUser?.exp,
         token: action.payload,
       };
     },

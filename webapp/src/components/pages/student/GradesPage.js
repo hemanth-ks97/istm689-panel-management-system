@@ -13,8 +13,9 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Grid,
 } from "@mui/material";
+
+import { isTokenExpired } from "../../../helpers/checkTokenExpiration";
 
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
@@ -90,6 +91,12 @@ const GradesPage = () => {
 
   useEffect(() => {
     setIsLoading(true);
+
+    if (isTokenExpired(user)) {
+      console.log("Token expired");
+      // clear user, navigate to login
+    }
+
     httpClient
       .get("/my/metrics", { headers })
       .then((response) => {

@@ -35,13 +35,18 @@ const LoginCard = () => {
 
     httpClient
       .post("/login/google", data)
-      .then((response) => {
-        dispatch(setUser(response?.data?.token));
+      .then(({ data }) => {
+        if (!data.token) {
+          throw new Error("Did not receive a token");
+        }
 
+        dispatch(setUser(data.token));
         navigate("/");
       })
       .catch((error) => {
         dispatch(clearUser());
+        // Check different types of errors when loggin in.
+
         navigate({
           pathname: "/notfound",
           search: createSearchParams({
