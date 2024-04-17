@@ -42,6 +42,7 @@ const UserForm = ({ currentUser }) => {
       Role: currentUser?.Role,
       CanvasID: currentUser?.CanvasID,
       Section: currentUser?.Section,
+      CreatedAt: currentUser?.CreatedAt,
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {

@@ -55,6 +55,7 @@ const PanelForm = ({ panel }) => {
       NumberOfQuestions: panel?.NumberOfQuestions,
       PanelVideoLink: panel?.PanelVideoLink,
       Visibility: panel?.Visibility,
+      CreatedAt: panel?.CreatedAt,
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {

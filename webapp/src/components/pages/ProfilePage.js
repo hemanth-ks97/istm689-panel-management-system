@@ -34,7 +34,12 @@ const ProfilePage = () => {
       sx={{ minHeight: "100vh" }}
     >
       <Grid spacing={10} item xs={12}>
-        <UserCard name={user.name} email={user.email} picture={user.picture} />
+        <UserCard
+          name={user.name}
+          email={user.email}
+          picture={user.picture}
+          role={user.role}
+        />
       </Grid>
     </Grid>
   );
