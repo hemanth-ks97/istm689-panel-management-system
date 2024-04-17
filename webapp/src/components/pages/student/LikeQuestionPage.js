@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Button, Typography, useTheme, Grid } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import QuestionCard from "../../widgets/QuestionCard";
 import LoadingSpinner from "../../widgets/LoadingSpinner";
 import { httpClient } from "../../../client";
@@ -115,23 +115,8 @@ const LikeQuestionPage = ({ questions, onNext }) => {
     indexOfLastQuestion
   );
 
-  const theme = useTheme();
-
   if (isLoading) {
-    return (
-      <Grid
-        container
-        spacing={0}
-        direction="column"
-        alignItems="center"
-        justifyContent="center"
-        sx={{ minHeight: "100vh" }}
-      >
-        <Grid item xs={3}>
-          <LoadingSpinner />
-        </Grid>
-      </Grid>
-    );
+    return <LoadingSpinner fullScren />;
   }
 
   return (

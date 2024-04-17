@@ -32,7 +32,7 @@ const AdminGradesPage = () => {
           return {
             name: `${panel.PanelName} by ${panel.Panelist} - ${panel.PanelPresentationDate}`,
             value: panel.PanelID,
-            key: panel.PanelID
+            key: panel.PanelID,
           };
         });
         options.unshift({ name: "None", value: "None" });
@@ -50,7 +50,7 @@ const AdminGradesPage = () => {
   };
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner fullScren />;
   }
 
   return (
@@ -67,7 +67,7 @@ const AdminGradesPage = () => {
         label="Panel"
       >
         {panelFilterOptions.map((option) => (
-          <MenuItem key = {option.value} value={option.value}>
+          <MenuItem key={option.value} value={option.value}>
             <em>{option.name}</em>
           </MenuItem>
         ))}
@@ -78,7 +78,9 @@ const AdminGradesPage = () => {
         <MetricList
           key={panelFilter}
           panelId={panelFilter}
-          panelName={panelFilterOptions.find((ele) => ele.value == panelFilter).name}
+          panelName={
+            panelFilterOptions.find((ele) => ele.value == panelFilter).name
+          }
         />
       )}
     </>

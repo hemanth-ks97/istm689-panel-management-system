@@ -13,7 +13,6 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Grid,
 } from "@mui/material";
 
 import { useSelector } from "react-redux";
@@ -41,7 +40,7 @@ const Row = ({ row }) => {
         <TableCell component="th" scope="row">
           {row.name}
         </TableCell>
-        <TableCell>{row.total}</TableCell>
+        <TableCell>{row.total < 0 ? "N/A" : row.total}</TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
@@ -103,20 +102,7 @@ const GradesPage = () => {
   }, []);
 
   if (isLoading) {
-    return (
-      <Grid
-        container
-        spacing={0}
-        direction="column"
-        alignItems="center"
-        justifyContent="center"
-        sx={{ minHeight: "100vh" }}
-      >
-        <Grid item xs={3}>
-          <LoadingSpinner />
-        </Grid>
-      </Grid>
-    );
+    return <LoadingSpinner fullScren />;
   }
 
   if (metrics.length === 0) {

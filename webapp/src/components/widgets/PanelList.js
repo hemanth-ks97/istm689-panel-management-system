@@ -35,7 +35,7 @@ const PanelList = () => {
   }, []);
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner fullScren />;
   }
 
   const columns = Object.keys(DATABASE_ATTRIBUTE_MAPPING.Panel).map((key) => {

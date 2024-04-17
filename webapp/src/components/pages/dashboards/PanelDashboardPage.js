@@ -44,20 +44,7 @@ const PanelDashboardPage = ({ user }) => {
   }, []);
 
   if (isLoading) {
-    return (
-      <Grid
-        container
-        spacing={0}
-        direction="column"
-        alignItems="center"
-        justifyContent="center"
-        sx={{ minHeight: "100vh" }}
-      >
-        <Grid item xs={3}>
-          <LoadingSpinner />
-        </Grid>
-      </Grid>
-    );
+    return <LoadingSpinner fullScren />;
   }
 
   if (!panels || panels.length === 0) {
