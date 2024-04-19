@@ -2,6 +2,12 @@
 # Terraform Project Variables
 ##################################################
 
+variable "deploy_local_enviroment" {
+  description = "Deploys local resources when the dev enviroment is published"
+  type        = bool
+  default     = false
+}
+
 ##################################################
 # AWS
 ##################################################
@@ -21,6 +27,18 @@ variable "budgets_budget_limit_amount" {
   default = {
     dev        = "10"
     production = "20"
+  }
+}
+
+variable "budgets_budget_subscriber_email_addresses" {
+  description = "List of emails to send budget notifications"
+  type = object({
+    dev        = list(string)
+    production = list(string)
+  })
+  default = {
+    dev        = ["joaquin.gimenez@tamu.edu"]
+    production = ["joaquin.gimenez@tamu.edu"]
   }
 }
 
@@ -96,8 +114,6 @@ variable "amplify_domain_association_domain_name" {
   }
 }
 
-# TODO: After creating an API Gateway, we need to use the output values to determine de API URL.
-# Similar to what we did for the DNS zone records
 variable "amplify_branch_environment_variables_REACT_APP_API_BASE_URL" {
   description = "API URL for the webapp"
   type = object({
@@ -107,6 +123,30 @@ variable "amplify_branch_environment_variables_REACT_APP_API_BASE_URL" {
   default = {
     dev        = "https://r23u758nsl.execute-api.us-east-1.amazonaws.com/dev/"
     production = "https://77v6036nsb.execute-api.us-east-1.amazonaws.com/production/"
+  }
+}
+
+variable "amplify_branch_environment_variables_REACT_APP_GOOGLE_CLIENT_ID" {
+  description = "Client ID for Google Sign-In for the webapp"
+  type = object({
+    dev        = string
+    production = string
+  })
+  default = {
+    dev        = "979252554614-0gjt8bjrpkht2n0le6uoo12nhs8pgrv3.apps.googleusercontent.com"
+    production = "979252554614-r05g1fdg6unklck10sjnamb3701r0u88.apps.googleusercontent.com"
+  }
+}
+# amplify_branch_environment_variables_REACT_APP_GOOGLE_RECAPTCHA_KEY
+variable "amplify_branch_environment_variables_REACT_APP_GOOGLE_RECAPTCHA_KEY" {
+  description = "Site Key for Google reCaptcha v2 - Checkbox based"
+  type = object({
+    dev        = string
+    production = string
+  })
+  default = {
+    dev        = "6LdWRKQpAAAAAK7tQCFO5GyxYIyME5dut2zXRZS7"
+    production = "6LdWRKQpAAAAAPuDnSRQfd0vKQhseGsgDhWTiukt"
   }
 }
 
@@ -145,30 +185,3 @@ variable "TF_VAR_GITHUB_TOKEN" {
   type        = string
   sensitive   = true
 }
-
-
-variable "amplify_branch_environment_variables_REACT_APP_GOOGLE_CLIENT_ID" {
-  description = "Client ID for Google Sign-In for the webapp"
-  type = object({
-    dev        = string
-    production = string
-  })
-  default = {
-    dev        = "979252554614-0gjt8bjrpkht2n0le6uoo12nhs8pgrv3.apps.googleusercontent.com"
-    production = "979252554614-r05g1fdg6unklck10sjnamb3701r0u88.apps.googleusercontent.com"
-  }
-}
-# amplify_branch_environment_variables_REACT_APP_GOOGLE_RECAPTCHA_KEY
-variable "amplify_branch_environment_variables_REACT_APP_GOOGLE_RECAPTCHA_KEY" {
-  description = "Site Key for Google reCaptcha v2 - Checkbox based"
-  type = object({
-    dev        = string
-    production = string
-  })
-  default = {
-    dev        = "6LdWRKQpAAAAAK7tQCFO5GyxYIyME5dut2zXRZS7"
-    production = "6LdWRKQpAAAAAPuDnSRQfd0vKQhseGsgDhWTiukt"
-  }
-}
-
-

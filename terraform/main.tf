@@ -48,7 +48,7 @@ resource "aws_budgets_budget" "general-budget" {
     threshold                  = 70
     threshold_type             = "PERCENTAGE"
     notification_type          = "FORECASTED"
-    subscriber_email_addresses = ["joaquin.gimenez@tamu.edu"]
+    subscriber_email_addresses = var.budgets_budget_subscriber_email_addresses[terraform.workspace]
   }
 }
 
@@ -115,28 +115,6 @@ resource "aws_amplify_domain_association" "frontend-domain-association" {
     branch_name = var.amplify_branch_branch_name[terraform.workspace]
     prefix      = ""
   }
-}
-
-##########################
-# Cloudflare resources
-##########################
-resource "cloudflare_record" "custom-domain-verification" {
-  zone_id         = var.cf_zone_id
-  name            = local.custom_domain_verification_parse_output[0]
-  value           = local.custom_domain_verification_parse_output[2]
-  type            = local.custom_domain_verification_parse_output[1]
-  proxied         = false
-  allow_overwrite = true
-  ttl             = 1
-}
-
-resource "cloudflare_record" "custom-domain" {
-  zone_id = var.cf_zone_id
-  name    = var.amplify_domain_association_domain_name[terraform.workspace]
-  value   = local.custom_domain_parse_output[1]
-  type    = local.custom_domain_parse_output[0]
-  proxied = false
-  ttl     = 1
 }
 
 ##########################
@@ -385,4 +363,26 @@ resource "aws_s3_bucket" "bucket-panels-students-questions-data" {
     Name        = "Panels Bucket"
     Environment = "${terraform.workspace}"
   }
+}
+
+##########################
+# Cloudflare resources
+##########################
+resource "cloudflare_record" "custom-domain-verification" {
+  zone_id         = var.cf_zone_id
+  name            = local.custom_domain_verification_parse_output[0]
+  value           = local.custom_domain_verification_parse_output[2]
+  type            = local.custom_domain_verification_parse_output[1]
+  proxied         = false
+  allow_overwrite = true
+  ttl             = 1
+}
+
+resource "cloudflare_record" "custom-domain" {
+  zone_id = var.cf_zone_id
+  name    = var.amplify_domain_association_domain_name[terraform.workspace]
+  value   = local.custom_domain_parse_output[1]
+  type    = local.custom_domain_parse_output[0]
+  proxied = false
+  ttl     = 1
 }
