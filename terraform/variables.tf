@@ -66,14 +66,14 @@ variable "dynamodb_table_write_capacity" {
   }
 }
 
-variable "dynamodb_point_in_time_recovery" {
+variable "dynamodb_enable_point_in_time_recovery" {
   description = "Enable point in time recovery for every enviroment"
   type = object({
     dev        = bool
     production = bool
   })
   default = {
-    dev        = true
+    dev        = false
     production = true
   }
 }

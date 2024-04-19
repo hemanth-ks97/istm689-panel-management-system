@@ -130,7 +130,7 @@ resource "aws_dynamodb_table" "question-table" {
   hash_key       = "QuestionID"
 
   point_in_time_recovery {
-    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
   }
 
   attribute {
@@ -159,7 +159,7 @@ resource "aws_dynamodb_table" "panel-table" {
   hash_key       = "PanelID"
 
   point_in_time_recovery {
-    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
   }
 
   attribute {
@@ -177,7 +177,7 @@ resource "aws_dynamodb_table" "user-table" {
   hash_key       = "UserID"
 
   point_in_time_recovery {
-    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
   }
 
   attribute {
@@ -207,7 +207,7 @@ resource "aws_dynamodb_table" "metric-table" {
   range_key      = "PanelID"
 
   point_in_time_recovery {
-    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
   }
 
   attribute {
@@ -244,7 +244,7 @@ resource "aws_dynamodb_table" "log-table" {
   hash_key       = "LogID"
 
   point_in_time_recovery {
-    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
   }
   attribute {
     name = "LogID"
@@ -263,7 +263,7 @@ resource "aws_dynamodb_table" "local-question-table" {
   hash_key       = "QuestionID"
 
   point_in_time_recovery {
-    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
   }
   attribute {
     name = "QuestionID"
@@ -296,7 +296,7 @@ resource "aws_dynamodb_table" "local-panel-table" {
   }
 
   point_in_time_recovery {
-    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
   }
 }
 
@@ -310,7 +310,7 @@ resource "aws_dynamodb_table" "local-user-table" {
   hash_key       = "UserID"
 
   point_in_time_recovery {
-    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
   }
 
   attribute {
@@ -341,7 +341,7 @@ resource "aws_dynamodb_table" "local-metric-table" {
   range_key      = "PanelID"
 
   point_in_time_recovery {
-    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
   }
 
   attribute {
@@ -380,7 +380,7 @@ resource "aws_dynamodb_table" "local-log-table" {
   hash_key       = "LogID"
 
   point_in_time_recovery {
-    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
   }
 
   attribute {
