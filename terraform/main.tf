@@ -240,11 +240,8 @@ resource "aws_dynamodb_table" "local-question-table" {
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "QuestionID"
 
-
-  # var.dynamodb_point_in_time_recovery
-  # count = var.deploy_local_enviroment == true ? 1 : 0
   point_in_time_recovery {
-    enabled = true
+    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
   }
   attribute {
     name = "QuestionID"
