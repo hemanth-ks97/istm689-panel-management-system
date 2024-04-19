@@ -371,7 +371,7 @@ resource "aws_dynamodb_table" "local-metric-table" {
 
 #log table
 resource "aws_dynamodb_table" "local-log-table" {
-  count          = (false) ? 1 : 0
+  count          = ((var.deploy_local_enviroment == true) && (true == false)) ? 1 : 0
   name           = "local-log"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
