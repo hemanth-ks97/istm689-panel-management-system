@@ -170,7 +170,7 @@ variable "aws_ses_identity_email" {
   })
   default = {
     dev        = "davidgomilliontest@gmail.com"
-    production = "davidgomilliontest@gmail.com"
+    production = "davidgomillionprod@gmail.com"
   }
 }
 
