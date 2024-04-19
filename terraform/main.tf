@@ -121,8 +121,6 @@ resource "aws_amplify_domain_association" "frontend-domain-association" {
 # Database
 ##########################
 
-#### dev ###
-
 #question table
 resource "aws_dynamodb_table" "question-table" {
   name           = "${terraform.workspace}-question"
@@ -130,6 +128,11 @@ resource "aws_dynamodb_table" "question-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "QuestionID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "QuestionID"
     type = "S"
@@ -154,6 +157,11 @@ resource "aws_dynamodb_table" "panel-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "PanelID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "PanelID"
     type = "S"
@@ -167,6 +175,11 @@ resource "aws_dynamodb_table" "user-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "UserID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "UserID"
     type = "S"
@@ -192,6 +205,11 @@ resource "aws_dynamodb_table" "metric-table" {
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "UserID"
   range_key      = "PanelID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "UserID"
     type = "S"
@@ -224,6 +242,10 @@ resource "aws_dynamodb_table" "log-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "LogID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+  }
   attribute {
     name = "LogID"
     type = "S"
@@ -272,6 +294,10 @@ resource "aws_dynamodb_table" "local-panel-table" {
     name = "PanelID"
     type = "S"
   }
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+  }
 }
 
 #user table
@@ -282,6 +308,11 @@ resource "aws_dynamodb_table" "local-user-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "UserID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "UserID"
     type = "S"
@@ -308,6 +339,11 @@ resource "aws_dynamodb_table" "local-metric-table" {
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "UserID"
   range_key      = "PanelID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "UserID"
     type = "S"
@@ -342,6 +378,11 @@ resource "aws_dynamodb_table" "local-log-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "LogID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "LogID"
     type = "S"

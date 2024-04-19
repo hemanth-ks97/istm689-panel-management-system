@@ -73,7 +73,7 @@ variable "dynamodb_point_in_time_recovery" {
     production = bool
   })
   default = {
-    dev        = false
+    dev        = true
     production = true
   }
 }
