@@ -24,8 +24,7 @@ terraform {
 # Local variables are used for interpolation of resource output so we can use it somewhere else
 # Naming of the variable should be the name of the resource without the provider prefix follow by the name of the variable
 locals {
-  custom_domain_parse_output = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))
-
+  custom_domain_parse_output              = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))
   custom_domain_verification_parse_output = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))
 }
 
@@ -48,7 +47,7 @@ resource "aws_budgets_budget" "general-budget" {
     threshold                  = 70
     threshold_type             = "PERCENTAGE"
     notification_type          = "FORECASTED"
-    subscriber_email_addresses = ["joaquin.gimenez@tamu.edu"]
+    subscriber_email_addresses = var.budgets_budget_subscriber_email_addresses[terraform.workspace]
   }
 }
 
@@ -118,32 +117,8 @@ resource "aws_amplify_domain_association" "frontend-domain-association" {
 }
 
 ##########################
-# Cloudflare resources
-##########################
-resource "cloudflare_record" "custom-domain-verification" {
-  zone_id         = var.cf_zone_id
-  name            = local.custom_domain_verification_parse_output[0]
-  value           = local.custom_domain_verification_parse_output[2]
-  type            = local.custom_domain_verification_parse_output[1]
-  proxied         = false
-  allow_overwrite = true
-  ttl             = 1
-}
-
-resource "cloudflare_record" "custom-domain" {
-  zone_id = var.cf_zone_id
-  name    = var.amplify_domain_association_domain_name[terraform.workspace]
-  value   = local.custom_domain_parse_output[1]
-  type    = local.custom_domain_parse_output[0]
-  proxied = false
-  ttl     = 1
-}
-
-##########################
 # Database
 ##########################
-
-#### dev ###
 
 #question table
 resource "aws_dynamodb_table" "question-table" {
@@ -152,6 +127,11 @@ resource "aws_dynamodb_table" "question-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "QuestionID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "QuestionID"
     type = "S"
@@ -176,6 +156,11 @@ resource "aws_dynamodb_table" "panel-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "PanelID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "PanelID"
     type = "S"
@@ -189,6 +174,11 @@ resource "aws_dynamodb_table" "user-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "UserID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "UserID"
     type = "S"
@@ -214,6 +204,11 @@ resource "aws_dynamodb_table" "metric-table" {
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "UserID"
   range_key      = "PanelID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "UserID"
     type = "S"
@@ -246,6 +241,10 @@ resource "aws_dynamodb_table" "log-table" {
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "LogID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
   attribute {
     name = "LogID"
     type = "S"
@@ -255,11 +254,16 @@ resource "aws_dynamodb_table" "log-table" {
 ### local ###
 #question table
 resource "aws_dynamodb_table" "local-question-table" {
+  count          = var.deploy_local_enviroment == true ? 1 : 0
   name           = "local-question"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "QuestionID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
   attribute {
     name = "QuestionID"
     type = "S"
@@ -279,6 +283,7 @@ resource "aws_dynamodb_table" "local-question-table" {
 
 #panel table
 resource "aws_dynamodb_table" "local-panel-table" {
+  count          = var.deploy_local_enviroment == true ? 1 : 0
   name           = "local-panel"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
@@ -288,15 +293,25 @@ resource "aws_dynamodb_table" "local-panel-table" {
     name = "PanelID"
     type = "S"
   }
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
 }
 
 #user table
 resource "aws_dynamodb_table" "local-user-table" {
+  count          = var.deploy_local_enviroment == true ? 1 : 0
   name           = "local-user"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "UserID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "UserID"
     type = "S"
@@ -316,12 +331,18 @@ resource "aws_dynamodb_table" "local-user-table" {
 
 #metric table
 resource "aws_dynamodb_table" "local-metric-table" {
+  count          = var.deploy_local_enviroment == true ? 1 : 0
   name           = "local-metric"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "UserID"
   range_key      = "PanelID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "UserID"
     type = "S"
@@ -350,11 +371,17 @@ resource "aws_dynamodb_table" "local-metric-table" {
 
 #log table
 resource "aws_dynamodb_table" "local-log-table" {
+  count          = true && false ? 1 : 0
   name           = "local-log"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
   hash_key       = "LogID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
   attribute {
     name = "LogID"
     type = "S"
@@ -370,6 +397,7 @@ resource "aws_sesv2_email_identity" "ses-email-identity" {
 ##########################
 
 resource "aws_s3_bucket" "local-bucket-panels-student-data" {
+  count  = var.deploy_local_enviroment == true ? 1 : 0
   bucket = "local-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
 
   tags = {
@@ -385,4 +413,26 @@ resource "aws_s3_bucket" "bucket-panels-students-questions-data" {
     Name        = "Panels Bucket"
     Environment = "${terraform.workspace}"
   }
+}
+
+##########################
+# Cloudflare resources
+##########################
+resource "cloudflare_record" "custom-domain-verification" {
+  zone_id         = var.cf_zone_id
+  name            = local.custom_domain_verification_parse_output[0]
+  value           = local.custom_domain_verification_parse_output[2]
+  type            = local.custom_domain_verification_parse_output[1]
+  proxied         = false
+  allow_overwrite = true
+  ttl             = 1
+}
+
+resource "cloudflare_record" "custom-domain" {
+  zone_id = var.cf_zone_id
+  name    = var.amplify_domain_association_domain_name[terraform.workspace]
+  value   = local.custom_domain_parse_output[1]
+  type    = local.custom_domain_parse_output[0]
+  proxied = false
+  ttl     = 1
 }
