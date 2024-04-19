@@ -56,7 +56,7 @@ resource "aws_amplify_app" "frontend-app" {
   repository  = var.amplify_app_repository
   oauth_token = var.TF_VAR_GITHUB_TOKEN
   # Protect enviroment with simple username and password
-  enable_basic_auth      = true
+  enable_basic_auth      = terraform.workspace == "production" ? false : true
   basic_auth_credentials = base64encode("panel:panel2024")
 
   # The default build_spec added by the Amplify Console for React.
