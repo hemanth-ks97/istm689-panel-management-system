@@ -24,8 +24,7 @@ terraform {
 # Local variables are used for interpolation of resource output so we can use it somewhere else
 # Naming of the variable should be the name of the resource without the provider prefix follow by the name of the variable
 locals {
-  custom_domain_parse_output = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))
-
+  custom_domain_parse_output              = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))
   custom_domain_verification_parse_output = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))
 }
 
@@ -399,6 +398,7 @@ resource "aws_sesv2_email_identity" "ses-email-identity" {
 ##########################
 
 resource "aws_s3_bucket" "local-bucket-panels-student-data" {
+  count  = var.deploy_local_enviroment == true ? 1 : 0
   bucket = "local-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
 
   tags = {
