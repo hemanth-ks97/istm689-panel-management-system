@@ -168,6 +168,9 @@ variable "aws_ses_identity_email" {
     dev        = string
     production = string
   })
+
+  # If both emails are the same it will create a conflict because it will try to
+  # add verify an email that already exists
   default = {
     dev        = "davidgomilliontest@gmail.com"
     production = "davidgomillionprod@gmail.com"
