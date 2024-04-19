@@ -402,7 +402,7 @@ resource "aws_sesv2_email_identity" "ses-email-identity" {
 ##########################
 
 resource "aws_s3_bucket" "local-bucket-panels-student-data" {
-  count  = var.deploy_local_enviroment == true ? 1 : 0
+  count  = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
   bucket = "local-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
 
   tags = {
