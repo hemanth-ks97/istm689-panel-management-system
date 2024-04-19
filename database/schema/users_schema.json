@@ -1,0 +1,14 @@
+{
+  "Users": [
+    {
+      "UserID": "",
+      "CanvasID": "",
+      "EmailID": "user@tamu.edu",
+      "UIN": "",
+      "FName": "FirstName",
+      "LName": "LastName",
+      "Role": "Student/Admin/Moderator/Panelist",
+      "Section": ""
+    }
+  ]
+}

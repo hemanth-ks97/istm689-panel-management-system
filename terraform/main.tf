@@ -24,8 +24,7 @@ terraform {
 # Local variables are used for interpolation of resource output so we can use it somewhere else
 # Naming of the variable should be the name of the resource without the provider prefix follow by the name of the variable
 locals {
-  custom_domain_parse_output = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))
-
+  custom_domain_parse_output              = tolist(split(" ", trimspace(element(aws_amplify_domain_association.frontend-domain-association.sub_domain[*].dns_record, 0))))
   custom_domain_verification_parse_output = tolist(split(" ", aws_amplify_domain_association.frontend-domain-association.certificate_verification_dns_record))
 }
 
@@ -48,7 +47,7 @@ resource "aws_budgets_budget" "general-budget" {
     threshold                  = 70
     threshold_type             = "PERCENTAGE"
     notification_type          = "FORECASTED"
-    subscriber_email_addresses = ["joaquin.gimenez@tamu.edu"]
+    subscriber_email_addresses = var.budgets_budget_subscriber_email_addresses[terraform.workspace]
   }
 }
 
@@ -86,17 +85,18 @@ resource "aws_amplify_app" "frontend-app" {
   # The default rewrites and redirects added by the Amplify Console.
   custom_rule {
     source = "/<*>"
-    status = "404"
+    status = "404-200"
     target = "/index.html"
   }
 
   # This enviroments variables will be pass to the web app!!! 
   # we should use this to pass the API URL, IDs, somethign we need!
   environment_variables = {
-    ENV                        = terraform.workspace
-    REACT_APP_API_BASE_URL     = var.amplify_branch_environment_variables_REACT_APP_API_BASE_URL[terraform.workspace]
-    REACT_APP_ENV              = terraform.workspace
-    REACT_APP_GOOGLE_CLIENT_ID = var.amplify_branch_environment_variables_REACT_APP_GOOGLE_CLIENT_ID[terraform.workspace]
+    ENV                            = terraform.workspace
+    REACT_APP_API_BASE_URL         = var.amplify_branch_environment_variables_REACT_APP_API_BASE_URL[terraform.workspace]
+    REACT_APP_ENV                  = terraform.workspace
+    REACT_APP_GOOGLE_CLIENT_ID     = var.amplify_branch_environment_variables_REACT_APP_GOOGLE_CLIENT_ID[terraform.workspace]
+    REACT_APP_GOOGLE_RECAPTCHA_KEY = var.amplify_branch_environment_variables_REACT_APP_GOOGLE_RECAPTCHA_KEY[terraform.workspace]
   }
 }
 resource "aws_amplify_branch" "frontend-branch" {
@@ -117,20 +117,308 @@ resource "aws_amplify_domain_association" "frontend-domain-association" {
 }
 
 ##########################
-# AWS TEST STUFF
+# Database
 ##########################
-# # Great test table for demo.
-# resource "aws_dynamodb_table" "test-dynamodb-table" {
-#   name           = "${terraform.workspace}-TestTable"
-#   billing_mode   = "PROVISIONED"
-#   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
-#   write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
-#   hash_key       = "UserId"
-#   attribute {
-#     name = "UserId"
-#     type = "S"
-#   }
-# }
+
+#question table
+resource "aws_dynamodb_table" "question-table" {
+  name           = "${terraform.workspace}-question"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "QuestionID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
+  attribute {
+    name = "QuestionID"
+    type = "S"
+  }
+  attribute {
+    name = "PanelID"
+    type = "S"
+  }
+  global_secondary_index {
+    name            = "PanelIDIndex"
+    hash_key        = "PanelID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+}
+
+#panel table
+resource "aws_dynamodb_table" "panel-table" {
+  name           = "${terraform.workspace}-panel"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "PanelID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
+  attribute {
+    name = "PanelID"
+    type = "S"
+  }
+}
+
+#user table
+resource "aws_dynamodb_table" "user-table" {
+  name           = "${terraform.workspace}-user"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "UserID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
+  attribute {
+    name = "UserID"
+    type = "S"
+  }
+  attribute {
+    name = "Role"
+    type = "S"
+  }
+  global_secondary_index {
+    name            = "RoleIndex"
+    hash_key        = "Role"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+}
+
+#metric table
+resource "aws_dynamodb_table" "metric-table" {
+  name           = "${terraform.workspace}-metric"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "UserID"
+  range_key      = "PanelID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
+  attribute {
+    name = "UserID"
+    type = "S"
+  }
+  attribute {
+    name = "PanelID"
+    type = "S"
+  }
+  global_secondary_index {
+    name            = "UserIDIndex"
+    hash_key        = "UserID"
+    range_key       = "PanelID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+  global_secondary_index {
+    name            = "PanelIDIndex"
+    hash_key        = "PanelID"
+    range_key       = "UserID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+}
+
+resource "aws_dynamodb_table" "log-table" {
+  name           = "${terraform.workspace}-log"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "LogID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+  attribute {
+    name = "LogID"
+    type = "S"
+  }
+}
+
+### local ###
+#question table
+resource "aws_dynamodb_table" "local-question-table" {
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
+  name           = "local-question"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "QuestionID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+  attribute {
+    name = "QuestionID"
+    type = "S"
+  }
+  attribute {
+    name = "PanelID"
+    type = "S"
+  }
+  global_secondary_index {
+    name            = "PanelIDIndex"
+    hash_key        = "PanelID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+}
+
+#panel table
+resource "aws_dynamodb_table" "local-panel-table" {
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
+  name           = "local-panel"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "PanelID"
+  attribute {
+    name = "PanelID"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+}
+
+#user table
+resource "aws_dynamodb_table" "local-user-table" {
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
+  name           = "local-user"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "UserID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
+  attribute {
+    name = "UserID"
+    type = "S"
+  }
+  attribute {
+    name = "Role"
+    type = "S"
+  }
+  global_secondary_index {
+    name            = "RoleIndex"
+    hash_key        = "Role"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+}
+
+#metric table
+resource "aws_dynamodb_table" "local-metric-table" {
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
+  name           = "local-metric"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "UserID"
+  range_key      = "PanelID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
+  attribute {
+    name = "UserID"
+    type = "S"
+  }
+  attribute {
+    name = "PanelID"
+    type = "S"
+  }
+  global_secondary_index {
+    name            = "UserIDIndex"
+    hash_key        = "UserID"
+    range_key       = "PanelID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+  global_secondary_index {
+    name            = "PanelIDIndex"
+    hash_key        = "PanelID"
+    range_key       = "UserID"
+    projection_type = "ALL"
+    read_capacity   = var.dynamodb_global_secondary_idx_read_capacity[terraform.workspace]
+    write_capacity  = var.dynamodb_global_secondary_idx_write_capacity[terraform.workspace]
+  }
+}
+
+#log table
+resource "aws_dynamodb_table" "local-log-table" {
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
+  name           = "local-log"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
+  write_capacity = var.dynamodb_table_write_capacity[terraform.workspace]
+  hash_key       = "LogID"
+
+  point_in_time_recovery {
+    enabled = var.dynamodb_enable_point_in_time_recovery[terraform.workspace]
+  }
+
+  attribute {
+    name = "LogID"
+    type = "S"
+  }
+}
+
+resource "aws_sesv2_email_identity" "ses-email-identity" {
+  email_identity = var.aws_ses_identity_email[terraform.workspace]
+}
+
+##########################
+# S3
+##########################
+
+resource "aws_s3_bucket" "local-bucket-panels-student-data" {
+  count  = var.deploy_local_enviroment == true ? 1 : 0
+  bucket = "local-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
+
+  tags = {
+    Name        = "Panels Bucket"
+    Environment = "local"
+  }
+}
+
+resource "aws_s3_bucket" "bucket-panels-students-questions-data" {
+  bucket = "${terraform.workspace}-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
+
+  tags = {
+    Name        = "Panels Bucket"
+    Environment = "${terraform.workspace}"
+  }
+}
 
 ##########################
 # Cloudflare resources

@@ -1,8 +1,8 @@
 import React from "react";
 // MUI
-import { Card, CardHeader, CardContent, Avatar } from "@mui/material";
+import { Card, CardHeader, Avatar, CardContent } from "@mui/material";
 
-const UserCard = ({ name, email, picture }) => {
+const UserCard = ({ name, email, picture, role = "N/A" }) => {
   return (
     <Card elevation={5}>
       <CardHeader
@@ -10,6 +10,7 @@ const UserCard = ({ name, email, picture }) => {
         title={name}
         subheader={email}
       />
+      <CardContent>Role: {role}</CardContent>
     </Card>
   );
 };

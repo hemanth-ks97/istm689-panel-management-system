@@ -8,9 +8,14 @@ export const userSlice = createSlice({
   },
   reducers: {
     setUser: (state, action) => {
-      state.user = jwtDecode(action.payload);
-      // Store raw token too
-      state.user.raw_token = action.payload;
+      const pmsUser = jwtDecode(action.payload);
+      state.user = {
+        name: pmsUser?.name,
+        email: pmsUser?.email,
+        picture: pmsUser?.picture,
+        role: pmsUser?.role,
+        token: action.payload,
+      };
     },
     clearUser: (state) => {
       state.user = null;

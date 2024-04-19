@@ -5,12 +5,19 @@ import reportWebVitals from "./reportWebVitals";
 
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { tamuTheme } from "./themes/tamuTheme";
-
+// Store
 import { PersistGate } from "redux-persist/integration/react";
 import { persistStore } from "redux-persist";
 
+// Notistack
+import { SnackbarProvider } from "notistack";
+
 // Google Provider
 import { GoogleOAuthProvider } from "@react-oauth/google";
+
+// Localization Provider
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 // Enviroment variables
 import { GOOGLE_CLIENT_ID } from "./config";
@@ -25,12 +32,16 @@ root.render(
   <React.StrictMode>
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-          <ThemeProvider theme={tamuTheme}>
-            <CssBaseline enableColorScheme />
-            <App />
-          </ThemeProvider>
-        </GoogleOAuthProvider>
+        <SnackbarProvider>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+              <ThemeProvider theme={tamuTheme}>
+                <CssBaseline enableColorScheme />
+                <App />
+              </ThemeProvider>
+            </GoogleOAuthProvider>
+          </LocalizationProvider>
+        </SnackbarProvider>
       </PersistGate>
     </Provider>
   </React.StrictMode>
