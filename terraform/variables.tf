@@ -66,6 +66,18 @@ variable "dynamodb_table_write_capacity" {
   }
 }
 
+variable "dynamodb_point_in_time_recovery" {
+  description = "Enable point in time recovery for every enviroment"
+  type = object({
+    dev        = bool
+    production = bool
+  })
+  default = {
+    dev        = false
+    production = true
+  }
+}
+
 variable "dynamodb_global_secondary_idx_read_capacity" {
   description = "Read Capacity limit for every enviroment"
   type = object({
