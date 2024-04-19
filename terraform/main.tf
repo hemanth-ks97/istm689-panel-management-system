@@ -254,7 +254,8 @@ resource "aws_dynamodb_table" "log-table" {
 ### local ###
 #question table
 resource "aws_dynamodb_table" "local-question-table" {
-  count          = var.deploy_local_enviroment == true ? 1 : 0
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
   name           = "local-question"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
@@ -283,7 +284,8 @@ resource "aws_dynamodb_table" "local-question-table" {
 
 #panel table
 resource "aws_dynamodb_table" "local-panel-table" {
-  count          = var.deploy_local_enviroment == true ? 1 : 0
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
   name           = "local-panel"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
@@ -301,7 +303,8 @@ resource "aws_dynamodb_table" "local-panel-table" {
 
 #user table
 resource "aws_dynamodb_table" "local-user-table" {
-  count          = var.deploy_local_enviroment == true ? 1 : 0
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
   name           = "local-user"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
@@ -331,7 +334,8 @@ resource "aws_dynamodb_table" "local-user-table" {
 
 #metric table
 resource "aws_dynamodb_table" "local-metric-table" {
-  count          = var.deploy_local_enviroment == true ? 1 : 0
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
   name           = "local-metric"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
@@ -371,7 +375,8 @@ resource "aws_dynamodb_table" "local-metric-table" {
 
 #log table
 resource "aws_dynamodb_table" "local-log-table" {
-  count          = var.deploy_local_enviroment == true && terraform.workspace != "dev" ? 1 : 0
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
   name           = "local-log"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
