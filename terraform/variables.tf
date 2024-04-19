@@ -5,7 +5,7 @@
 variable "deploy_local_enviroment" {
   description = "Deploys local resources when the dev enviroment is published"
   type        = bool
-  default     = false
+  default     = true
 }
 
 ##################################################
