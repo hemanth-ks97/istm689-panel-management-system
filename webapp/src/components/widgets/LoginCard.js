@@ -70,7 +70,7 @@ const LoginCard = () => {
         subheader="Please login using your TAMU email"
       />
       <CardContent>
-        <Typography>Student Login</Typography>
+        {/* <Typography>Student Login</Typography> */}
         <Grid
           container
           spacing={0}
@@ -90,7 +90,7 @@ const LoginCard = () => {
           </Grid>
         </Grid>
       </CardContent>
-      <Divider />
+      {/* <Divider />
       <CardActions>
         <Grid
           container
@@ -105,7 +105,7 @@ const LoginCard = () => {
             </Button>
           </Grid>
         </Grid>
-      </CardActions>
+      </CardActions> */}
     </Card>
   );
 };

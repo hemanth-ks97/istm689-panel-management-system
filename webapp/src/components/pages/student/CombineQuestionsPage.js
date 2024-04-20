@@ -8,7 +8,7 @@ import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
 
 const CombineQuestionsPage = ({ questions, onNext, onBack }) => {
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [groupCounter, setGroupCounter] = useState(0); // Counter to assign unique group IDs
   const [similarGroups, setSimilarGroups] = useState([]);
   const [groupColors] = useState([
@@ -89,7 +89,7 @@ const CombineQuestionsPage = ({ questions, onNext, onBack }) => {
       similar: similarGroups,
     };
     console.log(requestBody);
-    setLoading(true);
+    setIsLoading(true);
 
     httpClient
       .post(`/panel/${panelId}/mark_similar`, requestBody, {
@@ -105,11 +105,11 @@ const CombineQuestionsPage = ({ questions, onNext, onBack }) => {
           variant: "error",
         })
       )
-      .finally(() => setLoading(false));
+      .finally(() => setIsLoading(false));
   };
 
-  if (loading) {
-    return <LoadingSpinner />;
+  if (isLoading) {
+    return <LoadingSpinner fullScren />;
   }
 
   return (

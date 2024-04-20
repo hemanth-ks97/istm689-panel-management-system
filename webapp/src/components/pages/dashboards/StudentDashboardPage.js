@@ -14,6 +14,7 @@ import {
   TableContainer,
   TableRow,
   TableHead,
+  Grid,
   styled,
 } from "@mui/material";
 
@@ -61,7 +62,24 @@ const StudentDashboardPage = ({ user }) => {
   }, []);
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner fullScren />;
+  }
+
+  if (panelDetails.length === 0) {
+    return (
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        sx={{ minHeight: "100vh" }}
+      >
+        <Grid item xs={3}>
+          <Typography variant="h4">No panels found</Typography>
+        </Grid>
+      </Grid>
+    );
   }
 
   return (

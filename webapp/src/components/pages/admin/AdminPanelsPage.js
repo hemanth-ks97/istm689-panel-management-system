@@ -18,12 +18,7 @@ const AdminPanelsPage = () => {
         </Button>
       </ButtonGroup>
 
-      {selectedAction === "create" && (
-        <>
-          <Typography>Add a new panel</Typography>
-          <NewPanelForm />
-        </>
-      )}
+      {selectedAction === "create" && <NewPanelForm />}
       {selectedAction === "list" && (
         <>
           <Typography>List Panels</Typography>

@@ -23,6 +23,7 @@ const PanelPage = () => {
 
   const { user } = useSelector((state) => state.user);
   const [panel, setPanel] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const menus = [
     {
@@ -40,6 +41,7 @@ const PanelPage = () => {
   };
 
   useEffect(() => {
+    setIsLoading(true);
     httpClient
       .get(`/panel/${panelId}`, {
         headers,
@@ -51,11 +53,29 @@ const PanelPage = () => {
         enqueueSnackbar(error.message, {
           variant: "error",
         })
-      );
+      )
+      .finally(() => setIsLoading(false));
   }, []);
 
+  if (isLoading) {
+    return <LoadingSpinner fullScren />;
+  }
+
   if (!panel) {
-    return <LoadingSpinner />;
+    return (
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        sx={{ minHeight: "100vh" }}
+      >
+        <Grid item xs={3}>
+          <Typography>Please select a Panel</Typography>
+        </Grid>
+      </Grid>
+    );
   }
 
   return (

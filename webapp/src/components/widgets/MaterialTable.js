@@ -28,7 +28,7 @@ const MaterialTable = ({ data, columns, type }) => {
 
   return (
     <>
-      <MaterialReactTable table={table} />;
+      <MaterialReactTable table={table} />
       {selectedData && (
         <EditDialog
           isOpen={isDialogOpen}

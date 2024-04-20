@@ -6,6 +6,7 @@ import {
   ListItemButton,
   ListItemText,
   Typography,
+  Grid,
 } from "@mui/material";
 
 import { useNavigate } from "react-router-dom";
@@ -43,7 +44,7 @@ const PanelDashboardPage = ({ user }) => {
   }, []);
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner fullScren />;
   }
 
   if (!panels || panels.length === 0) {

@@ -16,6 +16,8 @@ import MenuIcon from "@mui/icons-material/Menu";
 // React Router
 import { useNavigate } from "react-router-dom";
 
+import { STUDENT, ADMIN } from "../../config/constants";
+
 // Redux
 import { useSelector, useDispatch } from "react-redux";
 import { clearUser } from "../../store/slices/userSlice";
@@ -53,35 +55,17 @@ const TopBar = () => {
         handleCloseNavMenu();
       },
     },
-    // {
-    //   name: "Questions",
-    //   handleOnClick: () => {
-    //     navigate("/questions");
-    //     handleCloseNavMenu();
-    //   },
-    // },
-    // {
-    //   name: "Voting",
-    //   handleOnClick: () => {
-    //     navigate("/voting");
-    //     handleCloseNavMenu();
-    //   },
-    // },
-    // {
-    //   name: "Panels",
-    //   handleOnClick: () => {
-    //     navigate("/panels");
-    //     handleCloseNavMenu();
-    //   },
-    // },
-    {
+  ];
+
+  if (user.role === STUDENT) {
+    navigationOptions.push({
       name: "Grades",
       handleOnClick: () => {
         navigate("/grades");
         handleCloseNavMenu();
       },
-    },
-  ];
+    });
+  }
 
   const settings = [
     {
@@ -100,7 +84,7 @@ const TopBar = () => {
     },
   ];
 
-  if (user.role === "admin") {
+  if (user.role === ADMIN) {
     settings.unshift({
       name: "Admin",
       handleOnClick: () => {
@@ -115,7 +99,7 @@ const TopBar = () => {
       <AppBar
         position="static"
         // Clearly differentiate from prod and dev environments
-        color={ENV === "production" ? "primary" : "secondary"}
+        color={ENV === "local" ? "secondary" : "primary"}
       >
         <Toolbar disableGutters>
           <Typography
@@ -127,7 +111,7 @@ const TopBar = () => {
               fontFamily: "monospace",
               fontWeight: "800",
               letterSpacing: ".1rem",
-              mx: 1
+              mx: 1,
             }}
           >
             Panel Management System

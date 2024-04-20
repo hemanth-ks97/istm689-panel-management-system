@@ -154,6 +154,8 @@ const createDynamoDBMetricObject = (metric) => {
     UserID: { S: metric.UserID },
     UserFName: { S: metric.UserFName },
     UserLName: { S: metric.UserLName },
+    UserCanvasID: { N: metric.UserCanvasID.toString() },
+    UserUIN: { N: metric.UserUIN.toString() },
     QuestionStageScore: { N: metric.QuestionStageScore.toString() },
     TagStageInTime: { S: metric.TagStageInTime },
     TagStageOutTime: { S: metric.TagStageOutTime },
@@ -188,15 +190,16 @@ const createDynamoDBUserObject = (user) => {
 };
 
 const createRandomUser = ({ role = "student" }) => {
+  const internalId = faker.number.int({ min: 100, max: 500 });
   return {
     UserID: `u-${faker.string.uuid()}`,
-    CanvasID: faker.number.int({ min: 100, max: 500 }),
+    CanvasID: internalId,
     EmailID: faker.internet.email(),
     FName: faker.person.firstName(),
     LName: faker.person.lastName(),
     Role: role,
     Section: "ISTM-622-601",
-    UIN: faker.number.int({ min: 1000, max: 5000 }),
+    UIN: internalId * 100,
   };
 };
 
@@ -312,6 +315,8 @@ const createRandomMetric = ({
   userID,
   userFName,
   userLName,
+  userCanvasID,
+  userUIN,
 }) => {
   const metric = {
     PanelID: panelID,
@@ -319,6 +324,8 @@ const createRandomMetric = ({
     UserID: userID,
     UserFName: userFName,
     UserLName: userLName,
+    UserCanvasID: userCanvasID,
+    UserUIN: userUIN,
     QuestionStageScore: faker.number.int({ min: 1, max: 100 }),
     TagStageInTime: faker.date.soon(),
     TagStageOutTime: faker.date.soon(),
@@ -340,6 +347,8 @@ const generateMetrics = ({ panels, users }) => {
   let userID;
   let userFName;
   let userLName;
+  let userCanvasID;
+  let userUIN;
   let newMetrics = [];
 
   // Loop through each generated panel to create questions
@@ -350,12 +359,16 @@ const generateMetrics = ({ panels, users }) => {
       userID = user.PutRequest.Item.UserID.S;
       userFName = user.PutRequest.Item.FName.S;
       userLName = user.PutRequest.Item.LName.S;
+      userCanvasID = user.PutRequest.Item.CanvasID.N;
+      userUIN = user.PutRequest.Item.UIN.N;
       const metric = createRandomMetric({
         panelID,
         panelName,
         userID,
         userFName,
         userLName,
+        userCanvasID,
+        userUIN,
       });
       newMetrics.push({
         PutRequest: { Item: createDynamoDBMetricObject(metric) },
