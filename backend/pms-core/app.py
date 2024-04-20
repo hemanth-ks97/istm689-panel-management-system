@@ -1532,7 +1532,7 @@ def get_questions_for_voting_stage(id):
 
     # Fetch the metrics for the student from the database and check if they have already completed it
     student_metrics = get_metric_db().get_metric(user_id, panel_id)
-    if "TagStageOutTime" in student_metrics:
+    if "VoteStageOutTime" in student_metrics:
         return Response(
             body={
                 "error": "This task has been completed and can no longer be modified"
@@ -1685,10 +1685,10 @@ def get_final_question_list(id):
             PANELS_BUCKET_NAME,
             panel_id,
             "finalQuestions.json",
-            top_questions,
+            top_questions[:10],
         )
 
-        return top_questions
+        return top_questions[:10]
         
     except Exception as e:
         return {"error": str(e)}
