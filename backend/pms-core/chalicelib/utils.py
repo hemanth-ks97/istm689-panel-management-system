@@ -416,6 +416,8 @@ def group_similar_questions(panel_id):
                     "FlaggedBy" not in question_map[rep_id]
                     or len(question_map[rep_id]["FlaggedBy"]) == 0
                 ):
+                    cluster_likes = len(question_map[rep_id]["LikedBy"])
+                    cluster_dislikes = len(question_map[rep_id]["DislikedBy"])
                     filtered_cluster.append(rep_id)
 
             if len(filtered_cluster) > 0:
@@ -435,12 +437,12 @@ def group_similar_questions(panel_id):
             rep_question_clusters, key=lambda x: x["cluster_net_likes"], reverse=True
         )
 
-        # Store top 20 clusters in S3
+        # Store all question clusters in S3
         upload_objects(
             PANELS_BUCKET_NAME,
             panel_id,
             "sortedCluster.json",
-            sorted_by_net_cluster_likes[:20],
+            sorted_by_net_cluster_likes,
         )
 
         return sorted_by_net_cluster_likes
@@ -537,7 +539,7 @@ def grading_script(panel_id):
 
         # Averaging question scores for every student
         for student in metric:
-            student_questions = get_question_db().get_questions_by_user(student["UserID"])
+            student_questions = get_question_db().get_my_questions_by_panel(panel_id, student["UserID"])
             question_scores = []
             for question in student_questions:
                 question_scores.append(question["FinalScore"])

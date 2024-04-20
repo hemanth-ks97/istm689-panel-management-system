@@ -65,6 +65,7 @@ from chalicelib.utils import (
     distribute_tag_questions,
     group_similar_questions,
     grading_script,
+    upload_objects
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -1322,14 +1323,13 @@ def get_questions_per_student(id):
     questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
     tagging_deadline = datetime.fromisoformat(panel["TagStageDeadline"])
 
-    print(present_time, questions_deadline, tagging_deadline)
-    if present_time < questions_deadline + timedelta(minutes=30):
-        return Response(
-            body={
-                "error": f'Action not allowed yet. This stage opens 30 mins after the deadline for the "Submit Questions" stage'
-            },
-            status_code=400,
-        )
+    # if present_time < questions_deadline + timedelta(minutes=30):
+    #     return Response(
+    #         body={
+    #             "error": f'Action not allowed yet. This stage opens 30 mins after the deadline for the "Submit Questions" stage'
+    #         },
+    #         status_code=400,
+    #     )
 
     # Fetch the metrics for the student from the database and check if they have already completed it
     student_metrics = get_metric_db().get_metric(user_id, panel_id)
@@ -1358,7 +1358,7 @@ def get_questions_per_student(id):
     if error:
         app.log.error(f"Error fetching from S3: {error}")
         return Response(
-            body={"error": "Unable to fetch question data"}, status_code=500
+            body={"error": "Unable to fetch question data. Please check back later"}, status_code=500
         )
 
     if questions_data:
@@ -1497,13 +1497,13 @@ def get_questions_for_voting_stage(id):
     voting_deadline = datetime.fromisoformat(panel["VoteStageDeadline"])
 
     # check if the deadline for the tagging stage has sufficiently passed
-    if present_time < tagging_deadline + timedelta(minutes=30):
-        return Response(
-            body={
-                "error": f'Action not allowed yet. This stage opens 30 mins after the deadline for the "Tag Questions" stage'
-            },
-            status_code=400,
-        )
+    # if present_time < tagging_deadline + timedelta(minutes=30):
+    #     return Response(
+    #         body={
+    #             "error": f'Action not allowed yet. This stage opens 30 mins after the deadline for the "Tag Questions" stage'
+    #         },
+    #         status_code=400,
+    #     )
 
     # Fetch the metrics for the student from the database and check if they have already completed it
     student_metrics = get_metric_db().get_metric(user_id, panel_id)
@@ -1550,7 +1550,7 @@ def get_questions_for_voting_stage(id):
     if error:
         app.log.error(f"Error fetching from S3: {error}")
         return Response(
-            body={"error": "Unable to fetch question data"}, status_code=500
+            body={"error": "Unable to fetch question data. Please check back later"}, status_code=500
         )
 
     if not questions_data:
@@ -1561,8 +1561,8 @@ def get_questions_for_voting_stage(id):
     # Initialize question_map
     question_map = {}
 
-    # Iterate through questions_data to fill question_map
-    for item in questions_data:
+    # Iterate through the top 20 questions in questions_data to fill question_map
+    for item in questions_data[:20]:
         rep_id = item["rep_id"]
         rep_question = item["rep_question"]
 
@@ -1602,7 +1602,10 @@ def post_submit_votes(id):
         batch_res = []
         for q_id in request["vote_order"]:
             q_obj = get_question_db().get_question(q_id)
-            q_obj["VoteScore"] += score if "VoteScore" in q_obj else score
+            if "VoteScore" in q_obj:
+                q_obj["VoteScore"] += score
+            else:
+                q_obj["VoteScore"] = score
             batch_res.append(q_obj)
             score -= 1
 
@@ -1621,7 +1624,7 @@ def post_submit_votes(id):
 @app.route(
     "/panel/{id}/questions/final",
     methods=["GET"],
-    authorizer=authorizers,
+    # authorizer=authorizers,
 )
 def get_final_question_list(id):
     try:
@@ -1643,26 +1646,25 @@ def get_final_question_list(id):
 
         # Build question cache of top 20 questions
         question_cache = []
-        for cluster_obj in questions_data:
+        for cluster_obj in questions_data[:20]:
             question_obj = get_question_db().get_question(cluster_obj["rep_id"])
-            question_cache.append(question_obj)
-
+            if "VoteScore" in question_obj:
+                cluster_obj["vote_score"] = int(question_obj["VoteScore"])
+                question_cache.append(cluster_obj)
+        
         top_questions = sorted(
-            question_cache, key=lambda x: x["VoteScore"], reverse=True
+            question_cache, key=lambda x: x["vote_score"], reverse=True
         )
 
-        res = []
-        for obj in top_questions[:10]:
-            res.append(
-                {
-                    "rep_id": obj["QuestionID"],
-                    "rep_question": obj["QuestionText"],
-                    "votes": obj["VoteScore"],
-                }
-            )
+        upload_objects(
+            PANELS_BUCKET_NAME,
+            panel_id,
+            "finalQuestions.json",
+            top_questions,
+        )
 
-        return res
-
+        return top_questions
+        
     except Exception as e:
         return {"error": str(e)}
 
