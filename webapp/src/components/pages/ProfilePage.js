@@ -1,23 +1,47 @@
 import React from "react";
 // MUI
-import { Typography } from "@mui/material";
+import { Grid, Typography } from "@mui/material";
 // Redux
 import { useSelector } from "react-redux";
 // Widgets
 import UserCard from "../widgets/UserCard";
-import RenderJSON from "../utils/RenderJSON";
 
 const ProfilePage = () => {
   const { user } = useSelector((state) => state.user);
 
+  if (!user) {
+    return (
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        sx={{ minHeight: "100vh" }}
+      >
+        <Grid spacing={10} item xs={12}>
+          <Typography>No user information found</Typography>
+        </Grid>
+      </Grid>
+    );
+  }
+
   return (
-    <>
-      <Typography variant="h4">ProfilePage component</Typography>
-      {user && (
-        <UserCard name={user.name} email={user.email} picture={user.picture} />
-      )}
-      <RenderJSON />
-    </>
+    <Grid
+      container
+      spacing={0}
+      direction="column"
+      alignItems="center"
+      sx={{ minHeight: "100vh" }}
+    >
+      <Grid spacing={10} item xs={12}>
+        <UserCard
+          name={user.name}
+          email={user.email}
+          picture={user.picture}
+          role={user.role}
+        />
+      </Grid>
+    </Grid>
   );
 };
 

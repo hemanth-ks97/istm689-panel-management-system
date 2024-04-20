@@ -39,7 +39,7 @@ const QuestionList = ({ panelId }) => {
   }, []);
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner fullScren />;
   }
 
   return (

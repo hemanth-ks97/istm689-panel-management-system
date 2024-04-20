@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-import { Typography, TextField, Button, Box } from "@mui/material";
+import { Typography, TextField, Button, Box, Grid } from "@mui/material";
 import { httpClient } from "../../../client";
 import { useSnackbar } from "notistack";
 import { useSelector } from "react-redux";
@@ -101,7 +101,7 @@ const QuestionsPage = () => {
 
   // Render loading spinner during initialization
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner fullScren />;
   }
 
   // If student already submitted questions, render them, disable eveything

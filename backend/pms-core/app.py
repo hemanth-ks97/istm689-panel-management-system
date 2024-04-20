@@ -1,8 +1,10 @@
 """Main application file for the PMS Core API."""
 
+from decimal import Decimal
 import requests
 import boto3
 import pandas as pd
+import numpy as np
 from io import StringIO
 from urllib.parse import quote
 
@@ -47,6 +49,7 @@ from chalicelib.constants import (
     ADMIN_ROLE_AUTHORIZE_ROUTES,
     STUDENT_ROLE_AUTHORIZE_ROUTES,
     PANELIST_ROLE_AUTHORIZE_ROUTES,
+    submit_score,
 )
 
 from chalicelib.utils import (
@@ -61,6 +64,8 @@ from chalicelib.utils import (
     get_current_time_utc,
     distribute_tag_questions,
     group_similar_questions,
+    grading_script,
+    upload_objects
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -619,11 +624,36 @@ def patch_user(id):
 
 
 @app.route(
+    "/my/metrics",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def get_my_metrics():
+    try:
+        user_id = app.current_request.context["authorizer"]["principalId"]
+
+        public_panels = get_panel_db().get_public_panels()
+        metrics = []
+
+        for panel in public_panels:
+            metric = get_metric_db().get_metric(
+                user_id=user_id, panel_id=panel["PanelID"]
+            )
+            if metric is not None:
+                metrics.append(metric)
+
+    except Exception as e:
+        raise ChaliceViewError("Could not get metrics for user")
+
+    return metrics
+
+
+@app.route(
     "/user/{id}/metrics",
     methods=["GET"],
     authorizer=authorizers,
 )
-def get_user_metrics(id):
+def get_metrics(id):
 
     # Need to check
     # If you are a user, you can only request your grades!
@@ -631,7 +661,7 @@ def get_user_metrics(id):
     try:
         metrics = get_metric_db().get_metrics_by_user(id)
     except Exception as e:
-        return {"error": str(e)}
+        raise ChaliceViewError("Could not get metrics for user")
 
     return metrics
 
@@ -750,7 +780,7 @@ def post_question_batch():
         questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
 
         if present > questions_deadline:
-            raise BadRequestError("Action not allow anymore")
+            raise BadRequestError("Action not allowed anymore")
 
         raw_questions = incoming_json["questions"]
 
@@ -812,6 +842,26 @@ def post_question_batch():
             html_body=html_body,
         )
 
+        # #Check if all questions have been submitted
+        no_of_questions = get_panel_db().get_number_of_questions_by_panel_id(panel_id)
+        # Add score to metrics
+        if no_of_questions == len(new_questions):
+            metric_for_submit = {
+                "UserID": user_id,
+                "PanelID": panel_id,
+                "EnteredQuestionsTotalScore": Decimal(submit_score),
+            }
+        else:
+            sub_score_for_questions = round(
+                (len(new_questions) / no_of_questions[0]) * submit_score
+            )
+            metric_for_submit = {
+                "UserID": user_id,
+                "PanelID": panel_id,
+                "EnteredQuestionsTotalScore": Decimal(sub_score_for_questions),
+            }
+        get_metric_db().add_metric(metric_for_submit)
+
         return {
             "message": "Questions successfully inserted in the DB",
         }
@@ -830,6 +880,7 @@ def post_question_tagging(id):
     # Request Format {"liked":["<id_1>", "<id_2>",..., "<id_n>"], "disliked":["<id_1>", "<id_2>",..., "<id_n>"], "flagged":["<id_1>", "<id_2>",..., "<id_n>"]}
     try:
         user_id = app.current_request.context["authorizer"]["principalId"]
+        panel_id = id
         request = app.current_request.json_body
 
         # Validation first because it is `cheaper` than querying the database
@@ -932,6 +983,16 @@ def post_question_tagging(id):
                 html_body=html_body,
             )
 
+        # Adding total interactions and storing it in metrics table
+        total_interactions = len(liked_list) + len(disliked_list) + len(flagged_list)
+
+        # Add total_interactions, and out_time to metrics db
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["TagStageOutTime"] = get_current_time_utc()
+        student_metrics["TagStageInteractions"] = total_interactions
+
+        get_metric_db().add_metric(student_metrics)
+
         return f"{len(liked_list)} questions liked\n{len(disliked_list)} questions disliked\n{len(flagged_list)} questions flagged !"
     except Exception as e:
         return {"error": str(e)}
@@ -1028,29 +1089,85 @@ def post_panel():
     try:
         incoming_json = app.current_request.json_body
 
+        if "PanelName" not in incoming_json:
+            raise BadRequestError("Key 'PanelName' not found in incoming request")
+        if "Panelist" not in incoming_json:
+            raise BadRequestError("Key 'Panelist' not found in incoming request")
+        if "NumberOfQuestions" not in incoming_json:
+            raise BadRequestError(
+                "Key 'NumberOfQuestions' not found in incoming request"
+            )
+        if "QuestionStageDeadline" not in incoming_json:
+            raise BadRequestError(
+                "Key 'QuestionStageDeadline' not found in incoming request"
+            )
+        if "VoteStageDeadline" not in incoming_json:
+            raise BadRequestError(
+                "Key 'VoteStageDeadline' not found in incoming request"
+            )
+        if "TagStageDeadline" not in incoming_json:
+            raise BadRequestError(
+                "Key 'TagStageDeadline' not found in incoming request"
+            )
+        if "PanelVideoLink" not in incoming_json:
+            raise BadRequestError("Key 'PanelVideoLink' not found in incoming request")
+        if "PanelPresentationDate" not in incoming_json:
+            raise BadRequestError(
+                "Key 'PanelPresentationDate' not found in incoming request"
+            )
+        if "PanelDesc" not in incoming_json:
+            raise BadRequestError("Key 'PanelDesc' not found in incoming request")
+        if "Visibility" not in incoming_json:
+            raise BadRequestError("Key 'Visibility' not found in incoming request")
+        if "PanelStartDate" not in incoming_json:
+            raise BadRequestError("Key 'PanelStartDate' not found in incoming request")
+
+        new_id = generate_panel_id()
         new_panel = {
-            "PanelID": generate_panel_id(),
-            "NumberOfQuestions": incoming_json["numberOfQuestions"],
-            "PanelName": incoming_json["panelName"],
-            "Panelist": incoming_json["panelist"],
-            "QuestionStageDeadline": incoming_json["questionStageDeadline"],
-            "VoteStageDeadline": incoming_json["voteStageDeadline"],
-            "TagStageDeadline": incoming_json["tagStageDeadline"],
-            "PanelVideoLink": incoming_json["panelVideoLink"],
-            "PanelPresentationDate": incoming_json["panelPresentationDate"],
-            "PanelDesc": incoming_json["panelDesc"],
-            "PanelStartDate": incoming_json["panelStartDate"],
-            "Visibility": incoming_json["visibility"],
+            "PanelID": new_id,
+            "PanelName": incoming_json["PanelName"],
+            "PanelDesc": incoming_json["PanelDesc"],
+            "Panelist": incoming_json["Panelist"],
+            "PanelStartDate": incoming_json["PanelStartDate"],
+            "QuestionStageDeadline": incoming_json["QuestionStageDeadline"],
+            "TagStageDeadline": incoming_json["TagStageDeadline"],
+            "VoteStageDeadline": incoming_json["VoteStageDeadline"],
+            "PanelPresentationDate": incoming_json["PanelPresentationDate"],
+            "NumberOfQuestions": incoming_json["NumberOfQuestions"],
+            "PanelVideoLink": incoming_json["PanelVideoLink"],
+            "Visibility": incoming_json["Visibility"],
             "CreatedAt": get_current_time_utc(),
         }
         get_panel_db().add_panel(new_panel)
 
-        # We don't know if we added the panel successfully
-        return Response(
-            body={"message": "Panel added successfully"},
-            status_code=200,
-            headers={"Content-Type": "application/json"},
-        )
+        students = []  
+        students = get_user_db().get_users_by_role(STUDENT_ROLE)
+        print("Outside the loop")
+        print(students[1])
+        for student in students:
+            try:
+                metric_create = {
+                "UserID": student["UserID"],
+                "PanelID": new_id,
+                "CanvasID": Decimal(student["CanvasID"]),
+                "UIN": Decimal(student["UIN"]),
+                "Section": student["Section"],
+                "UserFName": student["FName"],
+                "UserLName": student["LName"],               
+                "PanelName": incoming_json["PanelName"],
+                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "EnteredQuestionsTotalScore": Decimal(-1),
+                "FinalTotalScore": Decimal(-1),
+                "QuestionStageScore": Decimal(-1),
+                "TagStageScore": Decimal(-1),
+                "VoteStageScore": Decimal(-1),
+                }
+                print(metric_create)
+                get_metric_db().add_metric(metric_create)
+            except Exception as e:
+               continue  
+
+        return {"PanelID": new_id}
     except Exception as e:
         return {"error": str(e)}
 
@@ -1222,17 +1339,41 @@ def get_questions_per_student(id):
     # Fetch user id
     user_id = app.current_request.context["authorizer"]["principalId"]
 
+    panel = get_panel_db().get_panel(panel_id)
+    if panel is None:
+        raise NotFoundError("Panel (%s) not found" % panel_id)
+
+    # Deadline checks
+    present_time = datetime.now(timezone.utc)
+    questions_deadline = datetime.fromisoformat(panel["QuestionStageDeadline"])
+    tagging_deadline = datetime.fromisoformat(panel["TagStageDeadline"])
+
+    # if present_time < questions_deadline + timedelta(minutes=30):
+    #     return Response(
+    #         body={
+    #             "error": f'Action not allowed yet. This stage opens 30 mins after the deadline for the "Submit Questions" stage'
+    #         },
+    #         status_code=400,
+    #     )
+
+    # Fetch the metrics for the student from the database and check if they have already completed it
+    student_metrics = get_metric_db().get_metric(user_id, panel_id)
+    if "TagStageOutTime" in student_metrics:
+        return Response(
+            body={
+                "error": "This task has been completed and can no longer be modified"
+            },
+            status_code=400,
+        )
+
+    # Check if the tagging stage deadline has passed
+    if present_time > tagging_deadline:
+        return Response(body={"error": "Action not allowed anymore"}, status_code=400)
+
     if not panel_id or not user_id:
         return Response(body={"error": "Missing panelId or userId"}, status_code=400)
 
     object_key = f"{panel_id}/questions.json"
-
-    # Check cache first!
-
-    # if not cached
-    #  - get s3 object
-    #  - set cache with TTL
-    #  - return object
 
     print(
         f"Getting questions for User ID: {user_id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}"
@@ -1242,13 +1383,17 @@ def get_questions_per_student(id):
     if error:
         app.log.error(f"Error fetching from S3: {error}")
         return Response(
-            body={"error": "Unable to fetch question data"}, status_code=500
+            body={"error": "Unable to fetch question data. Please check back later"}, status_code=500
         )
 
     if questions_data:
         user_question = questions_data.get(user_id)
 
     if user_question:
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["TagStageInTime"] = get_current_time_utc()
+        get_metric_db().add_metric(student_metrics)
+
         return {"question": user_question}
     else:
         return Response(body={"error": "Question not found for user"}, status_code=404)
@@ -1367,6 +1512,48 @@ def get_questions_for_voting_stage(id):
     # Fetch user id
     user_id = app.current_request.context["authorizer"]["principalId"]
 
+    panel = get_panel_db().get_panel(panel_id)
+    if panel is None:
+        raise NotFoundError("Panel (%s) not found" % panel_id)
+
+    # Deadline checks
+    present_time = datetime.now(timezone.utc)
+    tagging_deadline = datetime.fromisoformat(panel["TagStageDeadline"])
+    voting_deadline = datetime.fromisoformat(panel["VoteStageDeadline"])
+
+    # check if the deadline for the tagging stage has sufficiently passed
+    # if present_time < tagging_deadline + timedelta(minutes=30):
+    #     return Response(
+    #         body={
+    #             "error": f'Action not allowed yet. This stage opens 30 mins after the deadline for the "Tag Questions" stage'
+    #         },
+    #         status_code=400,
+    #     )
+
+    # Fetch the metrics for the student from the database and check if they have already completed it
+    student_metrics = get_metric_db().get_metric(user_id, panel_id)
+    if "TagStageOutTime" in student_metrics:
+        return Response(
+            body={
+                "error": "This task has been completed and can no longer be modified"
+            },
+            status_code=400,
+        )
+
+    # Fetch the metrics for the student from the database and check if they have already completed it
+    student_metrics = get_metric_db().get_metric(user_id, panel_id)
+    if "VoteStageOutTime" in student_metrics:
+        return Response(
+            body={
+                "error": "This task has been completed and can no longer be modified"
+            },
+            status_code=400,
+        )
+
+    # Check if the voting stage deadline has passed
+    if present_time > voting_deadline:
+        return Response(body={"error": "Action not allowed anymore"}, status_code=400)
+
     if not panel_id or not user_id:
         return Response(body={"error": "Missing panelId or userId"}, status_code=400)
 
@@ -1388,7 +1575,7 @@ def get_questions_for_voting_stage(id):
     if error:
         app.log.error(f"Error fetching from S3: {error}")
         return Response(
-            body={"error": "Unable to fetch question data"}, status_code=500
+            body={"error": "Unable to fetch question data. Please check back later"}, status_code=500
         )
 
     if not questions_data:
@@ -1399,8 +1586,8 @@ def get_questions_for_voting_stage(id):
     # Initialize question_map
     question_map = {}
 
-    # Iterate through questions_data to fill question_map
-    for item in questions_data:
+    # Iterate through the top 20 questions in questions_data to fill question_map
+    for item in questions_data[:20]:
         rep_id = item["rep_id"]
         rep_question = item["rep_question"]
 
@@ -1411,6 +1598,10 @@ def get_questions_for_voting_stage(id):
 
     if question_map:
         print(f"Question map: {question_map}")
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["VoteStageInTime"] = get_current_time_utc()
+        get_metric_db().add_metric(student_metrics)
+
         return {"question": question_map}
     else:
         # If question_map is empty after processing, it means no questions were found.
@@ -1436,11 +1627,20 @@ def post_submit_votes(id):
         batch_res = []
         for q_id in request["vote_order"]:
             q_obj = get_question_db().get_question(q_id)
-            q_obj["VoteScore"] += score if "VoteScore" in q_obj else score
+            if "VoteScore" in q_obj:
+                q_obj["VoteScore"] += score
+            else:
+                q_obj["VoteScore"] = score
             batch_res.append(q_obj)
             score -= 1
 
         get_question_db().add_questions_batch(batch_res)
+
+        # Record VoteStageOutTime
+        student_metrics = get_metric_db().get_metric(user_id, panel_id)
+        student_metrics["VoteStageOutTime"] = get_current_time_utc()
+        get_metric_db().add_metric(student_metrics)
+
         return f"Voting recorded successfully"
     except Exception as e:
         return {"error": str(e)}
@@ -1471,25 +1671,33 @@ def get_final_question_list(id):
 
         # Build question cache of top 20 questions
         question_cache = []
-        for cluster_obj in questions_data:
+        for cluster_obj in questions_data[:20]:
             question_obj = get_question_db().get_question(cluster_obj["rep_id"])
-            question_cache.append(question_obj)
-
+            if "VoteScore" in question_obj:
+                cluster_obj["vote_score"] = int(question_obj["VoteScore"])
+                question_cache.append(cluster_obj)
+        
         top_questions = sorted(
-            question_cache, key=lambda x: x["VoteScore"], reverse=True
+            question_cache, key=lambda x: x["vote_score"], reverse=True
         )
 
-        res = []
-        for obj in top_questions[:10]:
-            res.append(
-                {
-                    "rep_id": obj["QuestionID"],
-                    "rep_question": obj["QuestionText"],
-                    "votes": obj["VoteScore"],
-                }
-            )
+        upload_objects(
+            PANELS_BUCKET_NAME,
+            panel_id,
+            "finalQuestions.json",
+            top_questions,
+        )
 
-        return res
-
+        return top_questions
+        
     except Exception as e:
         return {"error": str(e)}
+
+
+@app.route(
+    "/panel/{id}/metric/final",
+    methods=["GET"],
+    # authorizer=authorizers,
+)
+def post_grades(id):
+    grading_script(id)

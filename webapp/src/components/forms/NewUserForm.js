@@ -1,3 +1,5 @@
+import React, { useState } from "react";
+
 import {
   TextField,
   Button,
@@ -7,7 +9,6 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-import { useState } from "react";
 import { httpClient } from "../../client";
 import { useSnackbar } from "notistack";
 import LoadingSpinner from "../widgets/LoadingSpinner";
@@ -134,7 +135,7 @@ const NewUserForm = () => {
               value={formik.values.Role}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              error={formik.touched.userType && Boolean(formik.errors.userType)}
+              error={formik.touched.Role && Boolean(formik.errors.Role)}
             >
               <MenuItem value="student">Student</MenuItem>
               <MenuItem value="panelist">Panelist</MenuItem>

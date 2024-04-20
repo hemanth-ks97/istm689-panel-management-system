@@ -80,20 +80,20 @@ const App = () => {
         </Route>
 
         {/* Pages available only to PANELIST */}
-        <Route element={<PrivateRoutes isAllowed={user?.role === PANELIST} />}>
+        {/* <Route element={<PrivateRoutes isAllowed={user?.role === PANELIST} />}>
           <Route element={<Outlet />} path="panelist">
             <Route element={<PanelistPanelsPage />} path="panels" />
             <Route element={<PanelistPanelsPage />} path="panel/:panelId" />
           </Route>
-        </Route>
+        </Route> */}
 
         {/* Pages available to ALL the internet */}
         <Route element={<PublicLayout />}>
           <Route element={<LoginPage />} path="login">
             <Route index element={<StudentLoginPage />} />
-            <Route element={<PanelLoginPage />} path="panel">
+            {/* <Route element={<PanelLoginPage />} path="panel">
               <Route element={<PanelLoginPage />} path="verify" />
-            </Route>
+            </Route> */}
           </Route>
           <Route element={<NotFoundPage />} path="notfound" />
           {/* Privacy and Terms are required to use Google oAuth2 client */}

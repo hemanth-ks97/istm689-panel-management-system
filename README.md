@@ -31,7 +31,7 @@ In order to setup the project from zero we need to follow these steps:
 - Attach `AdministratorAccess` policy (or whatever you want to give it)
 - Generate and store an access key (later to be used)
 - Create two workspace and project on Terraform Cloud
-  - This project **needs** `prod` and `dev` workspaces created
+  - This project **needs** `production` and `dev` workspaces created
 - Link the project to the repository
 - Add environment variables
   - Note: Each workspace have isolated environment variables
