@@ -1624,7 +1624,7 @@ def post_submit_votes(id):
 @app.route(
     "/panel/{id}/questions/final",
     methods=["GET"],
-    # authorizer=authorizers,
+    authorizer=authorizers,
 )
 def get_final_question_list(id):
     try:
