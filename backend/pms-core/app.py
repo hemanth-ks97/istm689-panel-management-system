@@ -849,7 +849,6 @@ def post_question_batch():
             metric_for_submit = {
                 "UserID": user_id,
                 "PanelID": panel_id,
-                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 "EnteredQuestionsTotalScore": Decimal(submit_score),
             }
         else:
@@ -859,7 +858,6 @@ def post_question_batch():
             metric_for_submit = {
                 "UserID": user_id,
                 "PanelID": panel_id,
-                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 "EnteredQuestionsTotalScore": Decimal(sub_score_for_questions),
             }
         get_metric_db().add_metric(metric_for_submit)
@@ -1141,6 +1139,33 @@ def post_panel():
             "CreatedAt": get_current_time_utc(),
         }
         get_panel_db().add_panel(new_panel)
+
+        students = []  
+        students = get_user_db().get_users_by_role(STUDENT_ROLE)
+        print("Outside the loop")
+        print(students[1])
+        for student in students:
+            try:
+                metric_create = {
+                "UserID": student["UserID"],
+                "PanelID": new_id,
+                "CanvasID": Decimal(student["CanvasID"]),
+                "UIN": Decimal(student["UIN"]),
+                "Section": student["Section"],
+                "UserFName": student["FName"],
+                "UserLName": student["LName"],               
+                "PanelName": incoming_json["PanelName"],
+                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "EnteredQuestionsTotalScore": Decimal(-1),
+                "FinalTotalScore": Decimal(-1),
+                "QuestionStageScore": Decimal(-1),
+                "TagStageScore": Decimal(-1),
+                "VoteStageScore": Decimal(-1),
+                }
+                print(metric_create)
+                get_metric_db().add_metric(metric_create)
+            except Exception as e:
+               continue  
 
         return {"PanelID": new_id}
     except Exception as e:
