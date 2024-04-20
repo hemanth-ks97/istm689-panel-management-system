@@ -9,6 +9,9 @@ import {
   Link,
   Paper,
   Grid,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import { useParams, Outlet, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -23,7 +26,8 @@ const PanelPage = () => {
 
   const { user } = useSelector((state) => state.user);
   const [panel, setPanel] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [questions, setQuestions] = useState([]);
+
 
   const menus = [
     {
@@ -41,7 +45,6 @@ const PanelPage = () => {
   };
 
   useEffect(() => {
-    setIsLoading(true);
     httpClient
       .get(`/panel/${panelId}`, {
         headers,
@@ -53,29 +56,31 @@ const PanelPage = () => {
         enqueueSnackbar(error.message, {
           variant: "error",
         })
-      )
-      .finally(() => setIsLoading(false));
+      );
   }, []);
 
-  if (isLoading) {
-    return <LoadingSpinner fullScren />;
-  }
+  useEffect(() => {
+    httpClient
+      .get(`/panel/${panelId}/questions/final`, {
+        headers,
+      })
+      .then((response) => {
+        const formattedQuestions = response.data.map(question => ({
+          id: question.rep_id,
+          question: question.rep_question,
+          votes: question.votes
+        }));
+        setQuestions(formattedQuestions);
+      })
+      .catch((error) => {
+        enqueueSnackbar(error.message, {
+          variant: "error",
+        })
+      });
+}, []);
 
   if (!panel) {
-    return (
-      <Grid
-        container
-        spacing={0}
-        direction="column"
-        alignItems="center"
-        justifyContent="center"
-        sx={{ minHeight: "100vh" }}
-      >
-        <Grid item xs={3}>
-          <Typography>Please select a Panel</Typography>
-        </Grid>
-      </Grid>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
@@ -190,6 +195,28 @@ const PanelPage = () => {
           </Paper>
         </Grid>
       </Grid>
+      {/* New Section for Voting Result Questions */}
+      <br />
+      <Divider />
+      <Typography
+        variant="h5"
+        mt={2}
+        mx={2}
+        mb={2}
+        textAlign="left"
+        sx={{ fontWeight: "bold" }}
+      >
+       Voting Stage Result:
+      </Typography>
+      <Box sx={{ mx: 2, boxShadow: 3, bgcolor: 'background.paper' }}> {/* Added box with shadow */}
+      <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
+        {questions.map((question, index) => (
+          <ListItem key={index}>
+            <ListItemText primary={`${index + 1}. ${question.question}`} />
+          </ListItem>
+        ))}
+      </List>
+      </Box>
     </Box>
   );
 };
