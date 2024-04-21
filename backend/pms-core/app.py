@@ -1694,7 +1694,7 @@ def get_final_question_list(id):
 @app.route(
     "/panel/{id}/metric/final",
     methods=["GET"],
-    # authorizer=authorizers,
+    authorizer=authorizers,
 )
 def post_grades(id):
     return grading_script(id)
