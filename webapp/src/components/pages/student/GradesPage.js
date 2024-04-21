@@ -133,7 +133,7 @@ const Row = ({ row }) => {
                         {gradesRow.min < 0 ? "N/A" : gradesRow.min}
                       </TableCell>
                       <TableCell>
-                      {gradesRow.mean >= 0 && gradesRow.max >= 0 && gradesRow.min >= 0 ? (
+                      {gradesRow.grade >= 0 && gradesRow.mean >= 0 && gradesRow.max >= 0 && gradesRow.min >= 0 ? (
                         <SVGProgressBar
                           grade={gradesRow.grade}
                           mean={gradesRow.mean}
