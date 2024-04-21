@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Box, Paper, Typography, Button } from "@mui/material";
+import { Box, Paper, Typography, Button, Grid } from "@mui/material";
 import { DragDropContext, Draggable } from "react-beautiful-dnd";
 import { httpClient } from "../../../client";
 import LoadingSpinner from "../../widgets/LoadingSpinner";
@@ -41,7 +41,7 @@ const VotingPage = () => {
         if (error.response.data.error) {
           setErrorMessage(error.response.data.error);
           enqueueSnackbar(error.response.data.error, {
-            variant: "error",
+            variant: "info",
           });
         } else {
           setErrorMessage(error.message);
@@ -97,9 +97,20 @@ const VotingPage = () => {
 
   if (errorMessage) {
     return (
-      <Typography variant="h5" mt={3} textAlign="center">
-        {errorMessage}
-      </Typography>
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        sx={{ minHeight: "100vh" }}
+      >
+        <Grid item xs={3}>
+          <Typography variant="h5" mt={3} textAlign="center">
+            {errorMessage}
+          </Typography>
+        </Grid>
+      </Grid>
     );
   }
 

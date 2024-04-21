@@ -56,7 +56,7 @@ resource "aws_amplify_app" "frontend-app" {
   repository  = var.amplify_app_repository
   oauth_token = var.TF_VAR_GITHUB_TOKEN
   # Protect enviroment with simple username and password
-  enable_basic_auth      = true
+  enable_basic_auth      = terraform.workspace == "production" ? false : true
   basic_auth_credentials = base64encode("panel:panel2024")
 
   # The default build_spec added by the Amplify Console for React.
@@ -254,7 +254,8 @@ resource "aws_dynamodb_table" "log-table" {
 ### local ###
 #question table
 resource "aws_dynamodb_table" "local-question-table" {
-  count          = var.deploy_local_enviroment == true ? 1 : 0
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
   name           = "local-question"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
@@ -283,7 +284,8 @@ resource "aws_dynamodb_table" "local-question-table" {
 
 #panel table
 resource "aws_dynamodb_table" "local-panel-table" {
-  count          = var.deploy_local_enviroment == true ? 1 : 0
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
   name           = "local-panel"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
@@ -301,7 +303,8 @@ resource "aws_dynamodb_table" "local-panel-table" {
 
 #user table
 resource "aws_dynamodb_table" "local-user-table" {
-  count          = var.deploy_local_enviroment == true ? 1 : 0
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
   name           = "local-user"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
@@ -331,7 +334,8 @@ resource "aws_dynamodb_table" "local-user-table" {
 
 #metric table
 resource "aws_dynamodb_table" "local-metric-table" {
-  count          = var.deploy_local_enviroment == true ? 1 : 0
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
   name           = "local-metric"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
@@ -371,7 +375,8 @@ resource "aws_dynamodb_table" "local-metric-table" {
 
 #log table
 resource "aws_dynamodb_table" "local-log-table" {
-  count          = true && false ? 1 : 0
+  # Only deploy the resource if the flag is true AND we are not in production
+  count          = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
   name           = "local-log"
   billing_mode   = "PROVISIONED"
   read_capacity  = var.dynamodb_table_read_capacity[terraform.workspace]
@@ -397,7 +402,7 @@ resource "aws_sesv2_email_identity" "ses-email-identity" {
 ##########################
 
 resource "aws_s3_bucket" "local-bucket-panels-student-data" {
-  count  = var.deploy_local_enviroment == true ? 1 : 0
+  count  = var.deploy_local_enviroment == true && terraform.workspace != "production" ? 1 : 0
   bucket = "local-istm689-panels-students-data" # Bucket names must be unique across all existing bucket names in Amazon S3
 
   tags = {
