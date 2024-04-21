@@ -1,5 +1,4 @@
 """Main application file for the PMS Core API."""
-
 from decimal import Decimal
 import requests
 import boto3
@@ -7,6 +6,7 @@ import pandas as pd
 import numpy as np
 from io import StringIO
 from urllib.parse import quote
+from IPython.core.display import HTML
 
 from chalice import (
     Chalice,
@@ -77,7 +77,6 @@ from chalicelib.database.db_provider import (
     get_metric_db,
     get_log_db,
 )
-
 
 app = Chalice(app_name=f"{ENV}-pms-core")
 
@@ -654,7 +653,6 @@ def get_my_metrics():
     authorizer=authorizers,
 )
 def get_metrics(id):
-
     # Need to check
     # If you are a user, you can only request your grades!
     # if you are an admin, you get a free pass
@@ -835,9 +833,11 @@ def post_question_batch():
         html_body += "<p>Best regards,<br/>"
         html_body += "PMS team</p>"
 
+        student_email = get_user_db().get_user(user_id).get("EmailID")
+
         # Returns the result of put_item, kind of metadata and stuff
         send_email(
-            destination_addresses=["davidgomilliontest@gmail.com"],
+            destination_addresses=[student_email],
             subject="Questions submitted",
             html_body=html_body,
         )
@@ -1197,7 +1197,6 @@ def get_panel(id):
     authorizer=authorizers,
 )
 def patch_panel(id):
-
     item = get_panel_db().get_panel(panel_id=id)
 
     if item is None:
@@ -1400,7 +1399,6 @@ def get_questions_per_student(id):
 # 07:00 AM UTC -> 02:00 AM CST or 01:00 AM depeding on daylight saving time
 @app.schedule(Cron(5, 0, "*", "*", "?", "*"))
 def daily_tasks(event):
-
     today = datetime.fromisoformat(get_current_time_utc())
     today_date_string = today.strftime("%Y-%m-%d")
 
@@ -1564,7 +1562,7 @@ def get_questions_for_voting_stage(id):
     #  - return object
 
     print(
-        f"Getting questions for voting stgae for panel ID: {id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}"
+        f"Getting questions for voting stage for panel ID: {id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}"
     )
 
     questions_data, error = get_s3_objects(PANELS_BUCKET_NAME, object_key)
@@ -1605,7 +1603,6 @@ def get_questions_for_voting_stage(id):
         return Response(
             body={"error": "Questions not found for panel"}, status_code=404
         )
-
 
 @app.route(
     "/panel/{id}/questions/voting",
@@ -1690,7 +1687,6 @@ def get_final_question_list(id):
     except Exception as e:
         return {"error": str(e)}
 
-
 @app.route(
     "/panel/{id}/metric/final",
     methods=["GET"],
@@ -1698,4 +1694,82 @@ def get_final_question_list(id):
 )
 def post_grades(id):
     return grading_script(id)
-    
+
+@app.route(
+    "/panel/{id}/questions/send",
+    methods=["GET"],
+    authorizer=authorizers,
+)
+def send_questions_to_panelists(id):
+    try:
+        panel = get_panel_db().get_panel(id)
+        panelists_emails = panel.get("PanelistEmail")
+        panel_name = panel.get("PanelName")
+        users = get_user_db()
+        admins = users.get_users_by_role("admin")
+        moderators = users.get_users_by_role("moderator")
+
+        admin_moderator_emails = []
+        for admin in admins:
+            admin_moderator_emails.append(admin.get("EmailID"))
+        for moderator in moderators:
+            admin_moderator_emails.append(moderator.get("EmailID"))
+
+        # get presentation date and time
+        presentation_datetime = datetime.fromisoformat(panel.get("PanelPresentationDate").replace("Z", "+00:00"))
+        presentation_date = presentation_datetime.date()
+        presentation_time = str(presentation_datetime.time())
+        time_format = "%H:%M:%S.%f" if '.' in presentation_time else "%H:%M:%S"
+        time_object = datetime.strptime(presentation_time, time_format)
+        presentation_time_formatted = time_object.strftime("%I:%M %p")
+
+        # get top voted questions
+        object_key = f"{id}/finalQuestions.json"
+        print(
+            f"Getting final questions for panel ID: {id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}"
+        )
+        top_questions, error = get_s3_objects(PANELS_BUCKET_NAME, object_key)
+
+        # print(top_questions)
+
+        if error:
+            app.log.error(f"Error fetching from S3: {error}")
+            return Response(
+                body={"error": "Unable to fetch question data"}, status_code=500
+            )
+        if not top_questions:
+            return Response(
+                body={"error": "Questions not found for panel"}, status_code=404
+            )
+
+        top_questions_text = []
+        for i in range(len(top_questions)):
+            top_questions_text.append(top_questions[i]["rep_question"])
+
+        html_body = f"""
+            Dear Panelist,
+            <br>
+            <p>We're excited to invite you to join us as a panelist for an upcoming session where you'll have the opportunity to answer questions from our students. </p>
+            <p>The session is scheduled for <strong>{presentation_date}</strong> at <strong>{presentation_time_formatted} CT</strong>.</p>
+            <p>Here is the list of questions curated from our students:</p>
+            <ul>
+                {"".join([f"<li>{question_text}</li>" for question_text in top_questions_text])}
+            </ul>
+            <p>Please review these at your earliest convenience to prepare for the session.</p>
+            <p>Looking forward to your participation!</p>
+            <p>Best regards,</p>
+            The Panel Management System Team
+            """
+
+        # send an email to the panelist
+        send_email(
+            destination_addresses=["davidgomilliontest@gmail.com"],
+            cc_addresses = admin_moderator_emails,
+            subject=f"Panel-G: Questions for panelist on {panel_name}",
+            html_body=html_body,
+        )
+
+        return top_questions_text
+
+    except Exception as e:
+        return {"error": str(e)}

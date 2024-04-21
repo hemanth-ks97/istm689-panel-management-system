@@ -5,6 +5,7 @@ from .constants import BOTO3_SES_TYPE
 
 def send_email(
     destination_addresses=[],
+    cc_addresses=[],
     bcc_addresses=[],
     subject="",
     html_body="",
@@ -15,6 +16,7 @@ def send_email(
     response = ses.send_email(
         Destination={
             "ToAddresses": destination_addresses,
+            'CcAddresses': cc_addresses,
             "BccAddresses": bcc_addresses,
         },
         Message={
