@@ -22,8 +22,8 @@ def send_email(
         # If SES is still in sandbox, we can only send to verified email addresses
         # We added an override to send emails so it does not crash
         final_destination_addresses = [SES_EMAIL_ADDRESS]
-        final_cc_addresses = [SES_EMAIL_ADDRESS]
-        final_bcc_addresses = [SES_EMAIL_ADDRESS]
+        final_cc_addresses = []
+        final_bcc_addresses = []
 
     response = ses.send_email(
         Destination={
