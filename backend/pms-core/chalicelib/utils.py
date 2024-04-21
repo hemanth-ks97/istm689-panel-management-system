@@ -449,6 +449,47 @@ def group_similar_questions(panel_id):
 
     except Exception as e:
         return {"error": str(e)}
+    
+def generate_final_question_list(id):
+    try:
+        panel_id = id
+        object_key = f"{panel_id}/sortedCluster.json"
+
+        questions_data, error = get_s3_objects(PANELS_BUCKET_NAME, object_key)
+
+        if error:
+            return Response(
+                body={"error": "Unable to fetch question data"}, status_code=500
+            )
+
+        if not questions_data:
+            return Response(
+                body={"error": "Questions not found for panel"}, status_code=404
+            )
+
+        # Build question cache of top 20 questions
+        question_cache = []
+        for cluster_obj in questions_data[:20]:
+            question_obj = get_question_db().get_question(cluster_obj["rep_id"])
+            if "VoteScore" in question_obj:
+                cluster_obj["vote_score"] = int(question_obj["VoteScore"])
+                question_cache.append(cluster_obj)
+        
+        top_questions = sorted(
+            question_cache, key=lambda x: x["vote_score"], reverse=True
+        )
+
+        upload_objects(
+            PANELS_BUCKET_NAME,
+            panel_id,
+            "finalQuestions.json",
+            top_questions[:10],
+        )
+
+        return top_questions[:10]
+        
+    except Exception as e:
+        return {"error": str(e)}
 
 def grading_script(panel_id):
     try:
