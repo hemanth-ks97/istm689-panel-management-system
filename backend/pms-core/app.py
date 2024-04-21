@@ -1177,9 +1177,9 @@ def post_panel():
                 new_metric = {
                     "UserID": student["UserID"],
                     "PanelID": new_panel_id,
-                    "CanvasID": Decimal(student["CanvasID"]),
-                    "UIN": Decimal(student["UIN"]),
-                    "Section": student["Section"],
+                    "UserCanvasID": Decimal(student["CanvasID"]),
+                    "UserUIN": Decimal(student["UIN"]),
+                    "UserSection": student["Section"],
                     "UserFName": student["FName"],
                     "UserLName": student["LName"],
                     "PanelName": incoming_json["PanelName"],
