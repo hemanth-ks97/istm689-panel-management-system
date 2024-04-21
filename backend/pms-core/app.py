@@ -1,6 +1,4 @@
 """Main application file for the PMS Core API."""
-from pprint import pprint
-
 from decimal import Decimal
 import requests
 import boto3
@@ -8,8 +6,8 @@ import pandas as pd
 import numpy as np
 from io import StringIO
 from urllib.parse import quote
-
 from IPython.core.display import HTML
+
 from chalice import (
     Chalice,
     CORSConfig,
