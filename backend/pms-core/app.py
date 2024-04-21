@@ -39,6 +39,7 @@ from chalicelib.config import (
     ALLOWED_AUTHORIZATION_TYPES,
     PANELS_BUCKET_NAME,
     GOOGLE_RECAPTCHA_SECRET_KEY,
+    SES_EMAIL_ADDRESS,
 )
 from chalicelib.constants import (
     REQUEST_CONTENT_TYPE_JSON,
@@ -353,7 +354,7 @@ def post_login_panel():
 
     # If so, generate a token and send an email
     send_email(
-        destination_addresses=["davidgomilliontest@gmail.com"],
+        destination_addresses=[panelist_email],
         subject=f"Login URL for {user['FName']}",
         html_body=html_body,
         text_body=text_body,
@@ -977,8 +978,14 @@ def post_question_tagging(id):
 
         html_body += "</ul>"
         if len(flagged_list) > 0:
+            admins = get_user_db().get_users_by_role(ADMIN_ROLE)
+            admin_addresses = []
+            for admin in admins:
+                admin_addresses.append(admin["EmailID"])
+
             send_email(
-                destination_addresses=["davidgomilliontest@gmail.com"],
+                destination_addresses=[SES_EMAIL_ADDRESS],
+                bcc_addresses=admin_addresses,
                 subject="Questions flagged!",
                 html_body=html_body,
             )
@@ -1510,7 +1517,7 @@ def daily_tasks(event):
         admin_addresses.append(admin["EmailID"])
 
     send_email(
-        destination_addresses=["davidgomilliontest@gmail.com"],
+        destination_addresses=[SES_EMAIL_ADDRESS],
         bcc_addresses=admin_addresses,
         subject=f"Daily tasks for {today_date_string}",
         html_body=html_message,
@@ -1700,7 +1707,8 @@ def send_questions_to_panelists(id):
         panelists_emails = panel.get("PanelistEmail")
         panel_name = panel.get("PanelName")
         users = get_user_db()
-        admins = users.get_users_by_role("admin")
+        admins = users.get_users_by_role(ADMIN_ROLE)
+        # We don't have a moderator role!
         moderators = users.get_users_by_role("moderator")
 
         admin_moderator_emails = []
@@ -1759,7 +1767,7 @@ def send_questions_to_panelists(id):
 
         # send an email to the panelist
         send_email(
-            destination_addresses=["davidgomilliontest@gmail.com"],
+            destination_addresses=[SES_EMAIL_ADDRESS],
             cc_addresses=admin_moderator_emails,
             subject=f"Panel-G: Questions for panelist on {panel_name}",
             html_body=html_body,
