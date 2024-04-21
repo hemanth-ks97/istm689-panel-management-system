@@ -834,9 +834,11 @@ def post_question_batch():
         html_body += "<p>Best regards,<br/>"
         html_body += "PMS team</p>"
 
+        student_email = get_user_db().get_user(user_id).get("EmailID")
+
         # Returns the result of put_item, kind of metadata and stuff
         send_email(
-            destination_addresses=["davidgomilliontest@gmail.com"],
+            destination_addresses=[student_email],
             subject="Questions submitted",
             html_body=html_body,
         )
@@ -1540,7 +1542,7 @@ def get_questions_for_voting_stage(id):
     #  - return object
 
     print(
-        f"Getting questions for voting stgae for panel ID: {id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}"
+        f"Getting questions for voting stage for panel ID: {id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}"
     )
 
     questions_data, error = get_s3_objects(PANELS_BUCKET_NAME, object_key)
@@ -1581,7 +1583,6 @@ def get_questions_for_voting_stage(id):
         return Response(
             body={"error": "Questions not found for panel"}, status_code=404
         )
-
 
 @app.route(
     "/panel/{id}/questions/voting",
@@ -1680,13 +1681,17 @@ def post_grades(id):
 def send_questions_to_panelists(id):
     try:
         panel = get_panel_db().get_panel(id)
-
-        panelist_id = panel.get("Panelist")
+        panelists_emails = panel.get("PanelistEmail")
         panel_name = panel.get("PanelName")
+        users = get_user_db()
+        admins = users.get_users_by_role("admin")
+        moderators = users.get_users_by_role("moderator")
 
-        # panelist = get_user_db().get_user(panelist_id)
-        # panelist_email = panelist.get("Email")
-        # panelist_fname = panelist.get("FName")
+        admin_moderator_emails = []
+        for admin in admins:
+            admin_moderator_emails.append(admin.get("EmailID"))
+        for moderator in moderators:
+            admin_moderator_emails.append(moderator.get("EmailID"))
 
         # get presentation date and time
         presentation_datetime = datetime.fromisoformat(panel.get("PanelPresentationDate").replace("Z", "+00:00"))
@@ -1697,7 +1702,24 @@ def send_questions_to_panelists(id):
         presentation_time_formatted = time_object.strftime("%I:%M %p")
 
         # get top voted questions
-        top_questions = get_final_question_list(id)
+        object_key = f"{id}/finalQuestions.json"
+        print(
+            f"Getting final questions for panel ID: {id} from S3 Bucket Name: {PANELS_BUCKET_NAME} and object name: {object_key}"
+        )
+        top_questions, error = get_s3_objects(PANELS_BUCKET_NAME, object_key)
+
+        # print(top_questions)
+
+        if error:
+            app.log.error(f"Error fetching from S3: {error}")
+            return Response(
+                body={"error": "Unable to fetch question data"}, status_code=500
+            )
+        if not top_questions:
+            return Response(
+                body={"error": "Questions not found for panel"}, status_code=404
+            )
+
         top_questions_text = []
         for i in range(len(top_questions)):
             top_questions_text.append(top_questions[i]["rep_question"])
@@ -1720,7 +1742,8 @@ def send_questions_to_panelists(id):
         # send an email to the panelist
         send_email(
             destination_addresses=["davidgomilliontest@gmail.com"],
-            subject=f"PMS: Questions for Panelist on {panel_name}",
+            cc_addresses = admin_moderator_emails,
+            subject=f"Panel-G: Questions for panelist on {panel_name}",
             html_body=html_body,
         )
 
