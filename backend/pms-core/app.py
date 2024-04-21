@@ -1,4 +1,5 @@
 """Main application file for the PMS Core API."""
+
 from decimal import Decimal
 import requests
 import boto3
@@ -64,7 +65,7 @@ from chalicelib.utils import (
     distribute_tag_questions,
     group_similar_questions,
     grading_script,
-    generate_final_question_list
+    generate_final_question_list,
 )
 from google.auth import exceptions
 from datetime import datetime, timezone, timedelta
@@ -1139,33 +1140,33 @@ def post_panel():
         }
         get_panel_db().add_panel(new_panel)
 
-        students = []  
+        students = []
         students = get_user_db().get_users_by_role(STUDENT_ROLE)
         for student in students:
             try:
                 metric_create = {
-                "UserID": student["UserID"],
-                "PanelID": new_id,
-                "CanvasID": Decimal(student["CanvasID"]),
-                "UIN": Decimal(student["UIN"]),
-                "Section": student["Section"],
-                "UserFName": student["FName"],
-                "UserLName": student["LName"],               
-                "PanelName": incoming_json["PanelName"],
-                "CreatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                "EnteredQuestionsTotalScore": Decimal(-1),
-                "FinalTotalScore": Decimal(-1),
-                "QuestionStageScore": Decimal(-1),
-                "TagStageScore": Decimal(-1),
-                "VoteStageScore": Decimal(-1),
+                    "UserID": student["UserID"],
+                    "PanelID": new_id,
+                    "CanvasID": Decimal(student["CanvasID"]),
+                    "UIN": Decimal(student["UIN"]),
+                    "Section": student["Section"],
+                    "UserFName": student["FName"],
+                    "UserLName": student["LName"],
+                    "PanelName": incoming_json["PanelName"],
+                    "CreatedAt": get_current_time_utc(),
+                    "EnteredQuestionsTotalScore": Decimal(-1),
+                    "FinalTotalScore": Decimal(-1),
+                    "QuestionStageScore": Decimal(-1),
+                    "TagStageScore": Decimal(-1),
+                    "VoteStageScore": Decimal(-1),
                 }
                 get_metric_db().add_metric(metric_create)
             except Exception as e:
-               continue  
+                continue
 
         return {"PanelID": new_id}
     except Exception as e:
-        return {"error": str(e)}
+        raise BadRequestError(str(e))
 
 
 @app.route(
@@ -1378,7 +1379,8 @@ def get_questions_per_student(id):
     if error:
         app.log.error(f"Error fetching from S3: {error}")
         return Response(
-            body={"error": "Unable to fetch question data. Please check back later"}, status_code=500
+            body={"error": "Unable to fetch question data. Please check back later"},
+            status_code=500,
         )
 
     if questions_data:
@@ -1394,41 +1396,30 @@ def get_questions_per_student(id):
         return Response(body={"error": "Question not found for user"}, status_code=404)
 
 
-# It will run every day at 07:00 AM UTC
-# 07:00 AM UTC -> 02:00 AM CST or 01:00 AM depeding on daylight saving time
+# It will run every day at 00:05 AM UTC
 @app.schedule(Cron(5, 0, "*", "*", "?", "*"))
 def daily_tasks(event):
     today = datetime.fromisoformat(get_current_time_utc())
+    yesterday = today - timedelta(days=1)
+    tomorrow = today + timedelta(days=1)
+
     today_date_string = today.strftime("%Y-%m-%d")
+    yesterday_date_string = yesterday.strftime("%Y-%m-%d")
+    tomorrow_date_string = tomorrow.strftime("%Y-%m-%d")
 
     html_message = f"<h3>Scheduled tasks for {today_date_string}</h3>"
 
     if ENV != "production":
         html_message += f"<h3 style='color: #FCE300'>Enviroment: {ENV}</h3>"
 
-    # Tasks after PanelStartDate
-    #   - Nothing
-    #   - Notify which panels are starting
-    panels = get_panel_db().get_panels_by_deadline(
-        stage_name="PanelStartDate", deadline_date=today_date_string
-    )
-
-    html_message += "<h4>Panels starting today</h4>"
-    html_message += "<ul>"
-    if not panels:
-        html_message += "<li>None</li>"
-    else:
-        for panel in panels:
-            html_message += f"<li>{panel['PanelName']} by {panel['Panelist']} (ID: {panel['PanelID']})</li>"
-    html_message += "</ul>"
-
+    # Tasks for Yesterday
     # Tasks after QuestionStageDeadline
     #   - Distributing questions (generates and stores s3 file)
     panels = get_panel_db().get_panels_by_deadline(
-        stage_name="QuestionStageDeadline", deadline_date=today_date_string
+        stage_name="QuestionStageDeadline", deadline_date=yesterday_date_string
     )
 
-    html_message += "<h4>Panels with Questions stage today</h4>"
+    html_message += "<h4>Panels with Questions stage yesterday</h4>"
     html_message += "<ul>"
     if not panels:
         html_message += "<li>None</p>"
@@ -1442,10 +1433,10 @@ def daily_tasks(event):
     # Tasks after TagStageDeadline
     #   - Grouping similar questions
     panels = get_panel_db().get_panels_by_deadline(
-        stage_name="TagStageDeadline", deadline_date=today_date_string
+        stage_name="TagStageDeadline", deadline_date=yesterday_date_string
     )
 
-    html_message += "<h4>Panels with Tag stage today</h4>"
+    html_message += "<h4>Panels with Tag stage yesterday</h4>"
     html_message += "<ul>"
     if not panels:
         html_message += "<li>None</li>"
@@ -1460,7 +1451,7 @@ def daily_tasks(event):
     # Tasks after VoteStageDeadline
     #   - Grading
     panels = get_panel_db().get_panels_by_deadline(
-        stage_name="VoteStageDeadline", deadline_date=today_date_string
+        stage_name="VoteStageDeadline", deadline_date=yesterday_date_string
     )
 
     html_message += "<h4>Panels with Vote today:</h4>"
@@ -1469,14 +1460,47 @@ def daily_tasks(event):
         html_message += "<li>None</li>"
     else:
         for panel in panels:
-            # Run grading script
-            # Something like this
-            # graded = grade_panel(panel['PanelID'])
+            generate_final_question_list(panel["PanelID"])
+            grading_script(panel_id=panel["PanelID"])
             html_message += f"<li>{panel['PanelName']} by {panel['Panelist']} (ID: {panel['PanelID']})</li>"  # Add if distribute question script ran succesfully
     html_message += "</ul>"
 
-    # Tasks after PanelPresentationDate
-    #   - Nothing
+    # Tasks for Today
+
+    # Tasks on PanelStartDate
+    #   - Notify which panels are starting
+    panels = get_panel_db().get_panels_by_deadline(
+        stage_name="PanelStartDate", deadline_date=today_date_string
+    )
+
+    html_message += "<h4>Panels starting today</h4>"
+    html_message += "<ul>"
+    if not panels:
+        html_message += "<li>None</li>"
+    else:
+        for panel in panels:
+            html_message += f"<li>{panel['PanelName']} by {panel['Panelist']} (ID: {panel['PanelID']})</li>"
+    html_message += "</ul>"
+
+    # Tasks for Tomorrow
+
+    # Tasks before PanelPresentationDate
+    #   - Sent email to Panelist
+    panels = get_panel_db().get_panels_by_deadline(
+        stage_name="PanelPresentationDate", deadline_date=tomorrow_date_string
+    )
+
+    html_message += "<h4>Panels presenting tomorrow</h4>"
+    html_message += "<ul>"
+    if not panels:
+        html_message += "<li>None</li>"
+    else:
+        for panel in panels:
+            html_message += f"<li>{panel['PanelName']} by {panel['Panelist']} (ID: {panel['PanelID']})</li>"
+            # Send email to each panelist!!!! with questions???
+            # panelist_emails = panel['PanelistEmail']
+
+    html_message += "</ul>"
 
     # Query all admins and send email
     admins = get_user_db().get_users_by_role(ADMIN_ROLE)
@@ -1487,7 +1511,7 @@ def daily_tasks(event):
 
     send_email(
         destination_addresses=["davidgomilliontest@gmail.com"],
-        # bcc_addresses=admin_addresses,
+        bcc_addresses=admin_addresses,
         subject=f"Daily tasks for {today_date_string}",
         html_body=html_message,
     )
@@ -1569,7 +1593,8 @@ def get_questions_for_voting_stage(id):
     if error:
         app.log.error(f"Error fetching from S3: {error}")
         return Response(
-            body={"error": "Unable to fetch question data. Please check back later"}, status_code=500
+            body={"error": "Unable to fetch question data. Please check back later"},
+            status_code=500,
         )
 
     if not questions_data:
@@ -1602,6 +1627,7 @@ def get_questions_for_voting_stage(id):
         return Response(
             body={"error": "Questions not found for panel"}, status_code=404
         )
+
 
 @app.route(
     "/panel/{id}/questions/voting",
@@ -1646,9 +1672,10 @@ def post_submit_votes(id):
 )
 def get_final_question_list(id):
     try:
-       return generate_final_question_list(id)
+        return generate_final_question_list(id)
     except Exception as e:
-        return {"error": str(e)}
+        raise BadRequestError(str(e))
+
 
 @app.route(
     "/panel/{id}/metric/final",
@@ -1656,7 +1683,11 @@ def get_final_question_list(id):
     authorizer=authorizers,
 )
 def post_grades(id):
-    return grading_script(id)
+    try:
+        return grading_script(id)
+    except Exception as e:
+        raise BadRequestError(str(e))
+
 
 @app.route(
     "/panel/{id}/questions/send",
@@ -1679,10 +1710,12 @@ def send_questions_to_panelists(id):
             admin_moderator_emails.append(moderator.get("EmailID"))
 
         # get presentation date and time
-        presentation_datetime = datetime.fromisoformat(panel.get("PanelPresentationDate").replace("Z", "+00:00"))
+        presentation_datetime = datetime.fromisoformat(
+            panel.get("PanelPresentationDate").replace("Z", "+00:00")
+        )
         presentation_date = presentation_datetime.date()
         presentation_time = str(presentation_datetime.time())
-        time_format = "%H:%M:%S.%f" if '.' in presentation_time else "%H:%M:%S"
+        time_format = "%H:%M:%S.%f" if "." in presentation_time else "%H:%M:%S"
         time_object = datetime.strptime(presentation_time, time_format)
         presentation_time_formatted = time_object.strftime("%I:%M %p")
 
@@ -1727,7 +1760,7 @@ def send_questions_to_panelists(id):
         # send an email to the panelist
         send_email(
             destination_addresses=["davidgomilliontest@gmail.com"],
-            cc_addresses = admin_moderator_emails,
+            cc_addresses=admin_moderator_emails,
             subject=f"Panel-G: Questions for panelist on {panel_name}",
             html_body=html_body,
         )
