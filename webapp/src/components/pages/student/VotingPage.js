@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Box, Paper, Typography, Button, Grid } from "@mui/material";
 import { DragDropContext, Draggable } from "react-beautiful-dnd";
@@ -16,7 +16,7 @@ const VotingPage = () => {
   const { panelId } = useParams();
   const { user } = useSelector((state) => state.user);
   const { enqueueSnackbar } = useSnackbar();
-
+  const navigate = useNavigate()
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${user?.token}`,
@@ -84,6 +84,7 @@ const VotingPage = () => {
       )
       .then((response) => {
         console.log("Submission successful:", response.data);
+        navigate(`/panel/${panelId}`);
       })
       .catch((error) => {
         console.error("Submission error:", error.message);

@@ -3,7 +3,7 @@ import { Box, Button, Grid, Checkbox, FormControlLabel } from "@mui/material";
 import QuestionCard from "../../widgets/QuestionCard";
 import LoadingSpinner from "../../widgets/LoadingSpinner";
 import { httpClient } from "../../../client";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useSnackbar } from "notistack";
 
@@ -20,7 +20,7 @@ const CombineQuestionsPage = ({ questions, onNext, onBack }) => {
   ]); // Color array
   const [similarGroupsHistory, setSimilarGroupsHistory] = useState([]);
   const [allQuestionsHistory, setAllQuestionsHistory] = useState([]);
-
+  const navigate = useNavigate();
   const initialQuestions = Object.entries(questions).map(([id, text]) => ({
     id,
     text,
@@ -99,6 +99,7 @@ const CombineQuestionsPage = ({ questions, onNext, onBack }) => {
         enqueueSnackbar("Activity recorded", {
           variant: "success",
         });
+        navigate(`/panel/${panelId}`);
       })
       .catch((error) =>
         enqueueSnackbar(error.message, {
