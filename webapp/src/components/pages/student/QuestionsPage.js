@@ -4,7 +4,7 @@ import { Typography, TextField, Button, Box, Grid } from "@mui/material";
 import { httpClient } from "../../../client";
 import { useSnackbar } from "notistack";
 import { useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../widgets/LoadingSpinner";
 
 const QuestionsPage = () => {
@@ -15,6 +15,7 @@ const QuestionsPage = () => {
   const [submittedQuestions, setSubmittedQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${user?.token}`,
@@ -91,6 +92,8 @@ const QuestionsPage = () => {
           });
           const filteredQuestions = questions.filter((q) => q.trim() !== "");
           setSubmittedQuestions(filteredQuestions);
+          navigate(`/panel/${panelId}`);
+
         }
         // Reset questions after submitting
       })
