@@ -1142,8 +1142,6 @@ def post_panel():
 
         students = []  
         students = get_user_db().get_users_by_role(STUDENT_ROLE)
-        print("Outside the loop")
-        print(students[1])
         for student in students:
             try:
                 metric_create = {
@@ -1162,7 +1160,6 @@ def post_panel():
                 "TagStageScore": Decimal(-1),
                 "VoteStageScore": Decimal(-1),
                 }
-                print(metric_create)
                 get_metric_db().add_metric(metric_create)
             except Exception as e:
                continue  
@@ -1700,4 +1697,5 @@ def get_final_question_list(id):
     # authorizer=authorizers,
 )
 def post_grades(id):
-    grading_script(id)
+    return grading_script(id)
+    
