@@ -157,7 +157,7 @@ def get_base_url(request):
 def create_token(user_id, email_id, name, picture, role):
     current_time = datetime.now(tz=timezone.utc)
     expiration = datetime.now(tz=timezone.utc) + timedelta(
-        days=int(JWT_TOKEN_EXPIRATION_DAYS)
+        days=JWT_TOKEN_EXPIRATION_DAYS
     )
 
     payload_data = {

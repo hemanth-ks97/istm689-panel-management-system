@@ -28,9 +28,23 @@ PANELS_BUCKET_NAME = environ.get(
     "S3_PANELS_BUCKET_NAME", "local-istm689-panels-students-data"
 )
 
+# Need to cast string to bool, it is weird in python but it works
+SES_IS_SANDBOX = (
+    True
+    if environ.get("SES_IS_SANDBOX_ENVIROMENT", "true").lower() == "true"
+    else False
+)
+
+SES_EMAIL_ADDRESS = environ.get(
+    "SES_EMAIL_ADDRESS_IDENTITY", "davidgomilliontest@gmail.com"
+)
+
+JWT_SECRET = environ.get("JWT_SECRET", "8iCGu6XmF1OyWoR9v4WZ3gMQnX9HW7Sk")
+
 # JWT secret key
 JWT_SECRET = environ.get("JWT_SECRET", "8iCGu6XmF1OyWoR9v4WZ3gMQnX9HW7Sk")
-JWT_TOKEN_EXPIRATION_DAYS = environ.get("JWT_TOKEN_EXPIRATION_DAYS", "1")
+JWT_TOKEN_EXPIRATION_DAYS = int(environ.get("JWT_TOKEN_EXPIRATION_DAYS", "1"))
+
 # FIND BETTER VALUES FOR THESE TWO THINGS
 JWT_AUDIENCE = f"{ENV}-pms-core"
 JWT_ISSUER = f"{ENV}-pms-core"
