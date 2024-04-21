@@ -832,7 +832,7 @@ def post_question_batch():
         html_body += "</ul>"
         html_body += "<p>Remember that your questions will be reviewed.</p>"
         html_body += "<p>Best regards,<br/>"
-        html_body += "PMS team</p>"
+        html_body += "Panel-G team</p>"
 
         student_email = get_user_db().get_user(user_id).get("EmailID")
 
@@ -986,7 +986,7 @@ def post_question_tagging(id):
             send_email(
                 destination_addresses=[SES_EMAIL_ADDRESS],
                 bcc_addresses=admin_addresses,
-                subject="Questions flagged!",
+                subject="PANEL-G: Questions flagged!",
                 html_body=html_body,
             )
 
@@ -1054,6 +1054,28 @@ def post_question_mark_similar(id):
         student_metrics = get_metric_db().get_metric(user_id, panel_id)
         student_metrics["TagStageOutTime"] = get_current_time_utc()
         get_metric_db().add_metric(student_metrics)
+
+        panel_name = panel.get("PanelName")
+        pretty_time = datetime.now(timezone.utc).strftime("%m/%d/%Y at %H:%M:%S UTC")
+
+        html_body = "<h4>Questions Tagging Completed Successfully</h4>"
+        html_body += "<p>Thank you for tagging the questions assigned to you. We appreciate your engagement.</p>"
+        html_body += "<p>Submission details:</p>"
+        html_body += "<ul>"
+        html_body += f"<li>{panel_name}</li>"
+        html_body += f"<li>Submission: {pretty_time}</li>"
+        html_body += "</ul>"
+        html_body += "<p>Best regards,<br/>"
+        html_body += "PANEL-G team</p>"
+
+        student_email = get_user_db().get_user(user_id).get("EmailID")
+
+        # Returns the result of put_item, kind of metadata and stuff
+        send_email(
+            destination_addresses=[student_email],
+            subject="Questions tagged",
+            html_body=html_body,
+        )
 
         return f"{len(similar_list)} sets of questions marked as similar"
     except Exception as e:
@@ -1666,6 +1688,28 @@ def post_submit_votes(id):
         student_metrics = get_metric_db().get_metric(user_id, panel_id)
         student_metrics["VoteStageOutTime"] = get_current_time_utc()
         get_metric_db().add_metric(student_metrics)
+
+        panel_name = get_panel_db().get_panel(id).get("PanelName")
+        pretty_time = datetime.now(timezone.utc).strftime("%m/%d/%Y at %H:%M:%S UTC")
+
+        html_body = "<h4>Questions Voting Completed Successfully</h4>"
+        html_body += "<p>Thank you for voting the questions assigned to you. We appreciate your engagement.</p>"
+        html_body += "<p>Submission details:</p>"
+        html_body += "<ul>"
+        html_body += f"<li>{panel_name}</li>"
+        html_body += f"<li>Submission: {pretty_time}</li>"
+        html_body += "</ul>"
+        html_body += "<p>Best regards,<br/>"
+        html_body += "PANEL-G team</p>"
+
+        student_email = get_user_db().get_user(user_id).get("EmailID")
+
+        # Returns the result of put_item, kind of metadata and stuff
+        send_email(
+            destination_addresses=[student_email],
+            subject="Questions tagged",
+            html_body=html_body,
+        )
 
         return f"Voting recorded successfully"
     except Exception as e:
