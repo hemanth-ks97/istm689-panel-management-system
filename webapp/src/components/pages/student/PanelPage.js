@@ -27,7 +27,7 @@ const PanelPage = () => {
   const { user } = useSelector((state) => state.user);
   const [panel, setPanel] = useState(null);
   const [questions, setQuestions] = useState([]);
-
+  const [isVotingComplete, setIsVotingComplete] = useState(false);
 
   const menus = [
     {
@@ -71,13 +71,12 @@ const PanelPage = () => {
           votes: question.votes
         }));
         setQuestions(formattedQuestions);
+        setIsVotingComplete(formattedQuestions.length > 0); // Set true if questions exist
       })
       .catch((error) => {
-        enqueueSnackbar(error.message, {
-          variant: "error",
-        })
+        setIsVotingComplete(false); // Set false on error
       });
-}, []);
+}, [panelId, httpClient]);
 
   if (!panel) {
     return <LoadingSpinner />;
@@ -198,26 +197,49 @@ const PanelPage = () => {
       {/* New Section for Voting Result Questions */}
       <br />
       <Divider />
-      <Typography
-        variant="h5"
-        mt={2}
-        mx={2}
-        mb={2}
-        textAlign="left"
-        sx={{ fontWeight: "bold" }}
-      >
-       Voting Stage Result:
-      </Typography>
-      <Box sx={{ mx: 2, boxShadow: 3, bgcolor: 'background.paper' }}> {/* Added box with shadow */}
-      <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-        {questions.map((question, index) => (
-          <ListItem key={index}>
-            <ListItemText primary={`${index + 1}. ${question.question}`} />
-          </ListItem>
-        ))}
-      </List>
-      </Box>
-    </Box>
+        {isVotingComplete ? (
+        <>
+        <Typography
+          variant="h5"
+          mt={2}
+          mx={2}
+          mb={2}
+          textAlign="left"
+          sx={{ fontWeight: "bold" }}
+        >
+          Voting Stage Result:
+        </Typography>
+        <Box sx={{ mx: 2, boxShadow: 3, bgcolor: 'background.paper' }}>
+          <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
+            {questions.map((question, index) => (
+              <ListItem key={index}>
+                <ListItemText primary={`${index + 1}. ${question.question}`} />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+        </>
+        ) : (
+        <>
+        <Typography
+          variant="h5"
+          mt={2}
+          mx={2}
+          mb={2}
+          textAlign="left"
+          sx={{ fontWeight: "bold" }}
+        >
+          Voting Stage Result:
+        </Typography>
+        <Typography 
+          mt={2}
+          mx={2}
+          mb={2}>
+          The results of the voting stage have not yet been published. Please check back after the voting stage deadline has passed.        
+        </Typography>
+        </> 
+      )}
+  </Box>
   );
 };
 
