@@ -1151,9 +1151,9 @@ def post_panel():
         if "PanelStartDate" not in incoming_json:
             raise BadRequestError("Key 'PanelStartDate' not found in incoming request")
 
-        new_id = generate_panel_id()
+        new_panel_id = generate_panel_id()
         new_panel = {
-            "PanelID": new_id,
+            "PanelID": new_panel_id,
             "PanelName": incoming_json["PanelName"],
             "PanelDesc": incoming_json["PanelDesc"],
             "Panelist": incoming_json["Panelist"],
@@ -1171,11 +1171,12 @@ def post_panel():
 
         students = []
         students = get_user_db().get_users_by_role(STUDENT_ROLE)
+        new_metrics = []
         for student in students:
             try:
-                metric_create = {
+                new_metric = {
                     "UserID": student["UserID"],
-                    "PanelID": new_id,
+                    "PanelID": new_panel_id,
                     "CanvasID": Decimal(student["CanvasID"]),
                     "UIN": Decimal(student["UIN"]),
                     "Section": student["Section"],
@@ -1189,11 +1190,11 @@ def post_panel():
                     "TagStageScore": Decimal(-1),
                     "VoteStageScore": Decimal(-1),
                 }
-                get_metric_db().add_metric(metric_create)
+                new_metrics.append(new_metric)
             except Exception as e:
                 continue
-
-        return {"PanelID": new_id}
+        get_metric_db().add_metrics_batch(new_metrics)
+        return {"PanelID": new_panel_id}
     except Exception as e:
         raise BadRequestError(str(e))
 
