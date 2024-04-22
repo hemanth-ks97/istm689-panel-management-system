@@ -117,7 +117,7 @@ const VotingPage = () => {
         Voting Page
       </Typography>
       <Typography variant="h5" gutterBottom>
-        Guidelines: Drag and drop to rank the questions in order of your
+        Instruction: Drag and drop to rank the questions in order of your
         preference, then click submit.
       </Typography>
       <DragDropContext onDragEnd={onDragEnd}>
