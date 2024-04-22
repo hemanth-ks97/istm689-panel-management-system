@@ -88,7 +88,6 @@ const CombineQuestionsPage = ({ questions, onNext, onBack }) => {
     const requestBody = {
       similar: similarGroups,
     };
-    console.log(requestBody);
     setIsLoading(true);
 
     httpClient

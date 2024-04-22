@@ -91,9 +91,7 @@ const PanelLogin = () => {
 
       dispatch(setUser(token));
       navigate("/");
-    } catch (error) {
-      console.log("An error occured", error.message);
-    }
+    } catch (error) {}
     return <></>;
   }
 
