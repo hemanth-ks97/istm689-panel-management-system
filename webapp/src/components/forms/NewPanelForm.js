@@ -63,11 +63,31 @@ const NewPanelForm = () => {
       PanelName: "",
       PanelDesc: "",
       Panelist: "",
-      PanelStartDate: dayjs(Date.now()),
-      QuestionStageDeadline: dayjs(Date.now()),
-      TagStageDeadline: dayjs(Date.now()),
-      VoteStageDeadline: dayjs(Date.now()),
-      PanelPresentationDate: dayjs(Date.now()),
+
+      PanelStartDate: dayjs()
+        .set("hour", 23)
+        .set("minute", 55)
+        .startOf("minute"),
+      QuestionStageDeadline: dayjs()
+        .set("hour", 23)
+        .set("minute", 55)
+        .startOf("minute")
+        .add(2, "day"),
+      TagStageDeadline: dayjs()
+        .set("hour", 23)
+        .set("minute", 55)
+        .startOf("minute")
+        .add(4, "day"),
+      VoteStageDeadline: dayjs()
+        .set("hour", 23)
+        .set("minute", 55)
+        .startOf("minute")
+        .add(6, "day"),
+      PanelPresentationDate: dayjs()
+        .set("hour", 23)
+        .set("minute", 55)
+        .startOf("minute")
+        .add(8, "day"),
       NumberOfQuestions: 10,
       PanelVideoLink: "",
       Visibility: "internal",

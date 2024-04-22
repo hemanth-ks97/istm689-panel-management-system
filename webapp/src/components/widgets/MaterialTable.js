@@ -26,7 +26,6 @@ const MaterialTable = ({ data, columns, type }) => {
     }),
   });
 
-  console.log(selectedData);
   return (
     <>
       <MaterialReactTable table={table} />

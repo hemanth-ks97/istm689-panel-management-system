@@ -16,7 +16,7 @@ const VotingPage = () => {
   const { panelId } = useParams();
   const { user } = useSelector((state) => state.user);
   const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${user?.token}`,
@@ -37,7 +37,6 @@ const VotingPage = () => {
         setQuestions(questionsArray);
       })
       .catch((error) => {
-        console.log("HTTP ERROR", error);
         if (error.response.data.error) {
           setErrorMessage(error.response.data.error);
           enqueueSnackbar(error.response.data.error, {
@@ -72,8 +71,6 @@ const VotingPage = () => {
 
     const id_order = questions.map((item) => item.id);
 
-    console.log(orderedQuestions);
-
     // TODO Send the ordered list to a backend server
 
     httpClient
@@ -83,7 +80,6 @@ const VotingPage = () => {
         { headers }
       )
       .then((response) => {
-        console.log("Submission successful:", response.data);
         navigate(`/panel/${panelId}`);
       })
       .catch((error) => {

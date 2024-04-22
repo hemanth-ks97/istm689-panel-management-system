@@ -97,7 +97,6 @@ const TaggingPage = () => {
       })
       .then((response) => {
         setQuestionList(response.data.question);
-        console.log(response.data.question);
       })
       .catch((error) => {
         if (error.response.data.error) {
