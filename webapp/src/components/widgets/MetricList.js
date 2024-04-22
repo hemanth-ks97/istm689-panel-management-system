@@ -58,6 +58,7 @@ const MetricList = ({ panelId, panelName }) => {
         UserLName,
         UserCanvasID,
         UserUIN,
+        UserSection,
         QuestionStageScore,
         TagStageScore,
         VoteStageScore,
@@ -67,6 +68,7 @@ const MetricList = ({ panelId, panelName }) => {
       exportMetric["Student"] = `${UserFName}, ${UserLName}`;
       exportMetric["ID"] = UserCanvasID;
       exportMetric["SIS Login ID"] = UserUIN;
+      exportMetric["Section"] = UserSection;
       // Need to dynamically change the header name!
       exportMetric[`${panelName} - Question Stage`] = QuestionStageScore;
       exportMetric[`${panelName} - Vote Stage`] = VoteStageScore;
@@ -79,6 +81,7 @@ const MetricList = ({ panelId, panelName }) => {
     canvasCSVHeader["Student"] = "    Points Possible";
     canvasCSVHeader["ID"] = null;
     canvasCSVHeader["SIS Login ID"] = null;
+    canvasCSVHeader["Section"] = null;
     // Need to dynamically change the header name!
     canvasCSVHeader[`${panelName} - Question Stage`] = 100;
     canvasCSVHeader[`${panelName} - Vote Stage`] = 100;

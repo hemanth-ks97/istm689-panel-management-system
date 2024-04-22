@@ -1,10 +1,12 @@
 from json import dumps
 from boto3 import client
 from .constants import BOTO3_SES_TYPE
+from .config import SES_EMAIL_ADDRESS, SES_IS_SANDBOX
 
 
 def send_email(
     destination_addresses=[],
+    cc_addresses=[],
     bcc_addresses=[],
     subject="",
     html_body="",
@@ -12,10 +14,22 @@ def send_email(
 ):
     ses = client(BOTO3_SES_TYPE)
 
+    final_destination_addresses = destination_addresses
+    final_cc_addresses = cc_addresses
+    final_bcc_addresses = bcc_addresses
+
+    if SES_IS_SANDBOX:
+        # If SES is still in sandbox, we can only send to verified email addresses
+        # We added an override to send emails so it does not crash
+        final_destination_addresses = [SES_EMAIL_ADDRESS]
+        final_cc_addresses = []
+        final_bcc_addresses = []
+
     response = ses.send_email(
         Destination={
-            "ToAddresses": destination_addresses,
-            "BccAddresses": bcc_addresses,
+            "ToAddresses": final_destination_addresses,
+            "CcAddresses": final_cc_addresses,
+            "BccAddresses": final_bcc_addresses,
         },
         Message={
             "Body": {
@@ -33,7 +47,7 @@ def send_email(
                 "Data": subject,
             },
         },
-        Source="davidgomilliontest@gmail.com",
+        Source=SES_EMAIL_ADDRESS,
     )
 
     return {

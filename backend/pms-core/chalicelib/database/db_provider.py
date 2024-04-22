@@ -380,6 +380,9 @@ class MetricDB(object):
     def list_metrics(self):
         pass
 
+    def add_metrics_batch(self, metrics):
+        pass
+
     def delete_metric(self, user_id, panel_id):
         pass
 
@@ -396,6 +399,11 @@ class DynamoMetricDB(MetricDB):
 
     def add_metric(self, metric):
         return self._table.put_item(Item=metric)
+
+    def add_metrics_batch(self, metrics):
+        with self._table.batch_writer() as batch:
+            for metric in metrics:
+                batch.put_item(Item=metric)
 
     def get_metric(self, user_id, panel_id):
         response = self._table.get_item(
