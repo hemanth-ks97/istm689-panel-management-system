@@ -863,6 +863,22 @@ def post_question_batch():
             }
         get_metric_db().add_metric(metric_for_submit)
 
+        source_ip = app.current_request.context["identity"]["sourceIp"]
+        user_agent = app.current_request.headers["user-agent"]
+        path = app.current_request.path
+
+        new_log = {
+            "LogID": generate_log_id(),
+            "PanelID": panel_id,
+            "UserID": user_id,
+            "SourceIP": source_ip,
+            "UserAgent": user_agent,
+            "Action": path,
+            "Result": f"User submited {len(new_questions)} questions",
+            "CreatedAt": get_current_time_utc(),
+        }
+        get_log_db().add_log(new_log)
+
         return {
             "message": "Questions successfully inserted in the DB",
         }
@@ -1000,7 +1016,25 @@ def post_question_tagging(id):
 
         get_metric_db().add_metric(student_metrics)
 
-        return f"{len(liked_list)} questions liked\n{len(disliked_list)} questions disliked\n{len(flagged_list)} questions flagged !"
+        source_ip = app.current_request.context["identity"]["sourceIp"]
+        user_agent = app.current_request.headers["user-agent"]
+        path = app.current_request.path
+
+        message = f"{len(liked_list)} questions liked\n{len(disliked_list)} questions disliked\n{len(flagged_list)} questions flagged !"
+
+        new_log = {
+            "LogID": generate_log_id(),
+            "PanelID": panel_id,
+            "UserID": user_id,
+            "SourceIP": source_ip,
+            "UserAgent": user_agent,
+            "Action": path,
+            "Result": f"User tagged questions completed successfully, {message}",
+            "CreatedAt": get_current_time_utc(),
+        }
+        get_log_db().add_log(new_log)
+
+        return message
     except Exception as e:
         return {"error": str(e)}
 
@@ -1712,7 +1746,25 @@ def post_submit_votes(id):
             html_body=html_body,
         )
 
-        return f"Voting recorded successfully"
+        source_ip = app.current_request.context["identity"]["sourceIp"]
+        user_agent = app.current_request.headers["user-agent"]
+        path = app.current_request.path
+
+        message = "Voting recorded successfully"
+
+        new_log = {
+            "LogID": generate_log_id(),
+            "PanelID": panel_id,
+            "UserID": user_id,
+            "SourceIP": source_ip,
+            "UserAgent": user_agent,
+            "Action": path,
+            "Result": f"User voting completed successfully, {message}",
+            "CreatedAt": get_current_time_utc(),
+        }
+        get_log_db().add_log(new_log)
+
+        return message
     except Exception as e:
         return {"error": str(e)}
 
