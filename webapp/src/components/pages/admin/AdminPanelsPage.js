@@ -19,12 +19,7 @@ const AdminPanelsPage = () => {
       </ButtonGroup>
 
       {selectedAction === "create" && <NewPanelForm />}
-      {selectedAction === "list" && (
-        <>
-          <Typography>List Panels</Typography>
-          <PanelList />
-        </>
-      )}
+      {selectedAction === "list" && <PanelList />}
     </>
   );
 };
