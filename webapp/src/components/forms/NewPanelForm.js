@@ -26,6 +26,7 @@ const validationSchema = yup.object({
   PanelName: yup.string().required("Panel Name is required"),
   PanelDesc: yup.string().required("Panel Description is required"),
   Panelist: yup.string().required("Panelist is required"),
+  PanelistEmail: yup.string().required("Panelist Email is required"),
   PanelStartDate: yup.string().required("PanelStart Date is required"),
   QuestionStageDeadline: yup
     .string()
@@ -63,7 +64,7 @@ const NewPanelForm = () => {
       PanelName: "",
       PanelDesc: "",
       Panelist: "",
-
+      PanelistEmail: "",
       PanelStartDate: dayjs()
         .set("hour", 23)
         .set("minute", 55)
@@ -171,12 +172,24 @@ const NewPanelForm = () => {
               fullWidth
               id="Panelist"
               name="Panelist"
-              label="Panelist Name"
+              label="Panelist Name (comma separated)"
               value={formik.values.Panelist}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               error={formik.touched.Panelist && Boolean(formik.errors.Panelist)}
               helperText={formik.touched.Panelist && formik.errors.Panelist}
+            />
+            <TextField
+              style={{ margin: "5px" }}
+              fullWidth
+              id="PanelistEmail"
+              name="PanelistEmail"
+              label="Panelist Email ID (comma separated)"
+              value={formik.values.PanelistEmail}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.Panelist && Boolean(formik.errors.PanelistEmail)}
+              helperText={formik.touched.Panelist && formik.errors.PanelistEmail}
             />
 
             <TextField

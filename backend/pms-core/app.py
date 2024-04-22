@@ -1156,6 +1156,8 @@ def post_panel():
             raise BadRequestError("Key 'PanelName' not found in incoming request")
         if "Panelist" not in incoming_json:
             raise BadRequestError("Key 'Panelist' not found in incoming request")
+        if "PanelistEmail" not in incoming_json:
+            raise BadRequestError("Key 'Panelist' not found in incoming request")
         if "NumberOfQuestions" not in incoming_json:
             raise BadRequestError(
                 "Key 'NumberOfQuestions' not found in incoming request"
@@ -1191,6 +1193,7 @@ def post_panel():
             "PanelName": incoming_json["PanelName"],
             "PanelDesc": incoming_json["PanelDesc"],
             "Panelist": incoming_json["Panelist"],
+            "PanelistEmail": incoming_json["PanelistEmail"].split(","),
             "PanelStartDate": incoming_json["PanelStartDate"],
             "QuestionStageDeadline": incoming_json["QuestionStageDeadline"],
             "TagStageDeadline": incoming_json["TagStageDeadline"],
