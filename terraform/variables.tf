@@ -173,7 +173,7 @@ variable "aws_ses_identity_email" {
   # add verify an email that already exists
   default = {
     dev        = "davidgomilliontest@gmail.com"
-    production = "davidgomillionprod@gmail.com"
+    production = "davidgomilliontest+prod@gmail.com"
   }
 }
 
