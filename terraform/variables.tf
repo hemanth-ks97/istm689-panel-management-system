@@ -50,7 +50,7 @@ variable "dynamodb_table_read_capacity" {
   })
   default = {
     dev        = 2
-    production = 1
+    production = 5
   }
 }
 
@@ -62,7 +62,7 @@ variable "dynamodb_table_write_capacity" {
   })
   default = {
     dev        = 2
-    production = 1
+    production = 5
   }
 }
 
@@ -86,7 +86,7 @@ variable "dynamodb_global_secondary_idx_read_capacity" {
   })
   default = {
     dev        = 1
-    production = 1
+    production = 5
   }
 }
 
@@ -98,7 +98,7 @@ variable "dynamodb_global_secondary_idx_write_capacity" {
   })
   default = {
     dev        = 1
-    production = 1
+    production = 5
   }
 }
 
@@ -134,7 +134,7 @@ variable "amplify_branch_environment_variables_REACT_APP_API_BASE_URL" {
   })
   default = {
     dev        = "https://r23u758nsl.execute-api.us-east-1.amazonaws.com/dev/"
-    production = "https://77v6036nsb.execute-api.us-east-1.amazonaws.com/production/"
+    production = "https://ixxpnshg9j.execute-api.us-east-1.amazonaws.com/production/"
   }
 }
 
