@@ -50,7 +50,7 @@ variable "dynamodb_table_read_capacity" {
   })
   default = {
     dev        = 2
-    production = 5
+    production = 1
   }
 }
 
@@ -62,7 +62,7 @@ variable "dynamodb_table_write_capacity" {
   })
   default = {
     dev        = 2
-    production = 5
+    production = 1
   }
 }
 
@@ -86,7 +86,7 @@ variable "dynamodb_global_secondary_idx_read_capacity" {
   })
   default = {
     dev        = 1
-    production = 5
+    production = 1
   }
 }
 
@@ -98,7 +98,7 @@ variable "dynamodb_global_secondary_idx_write_capacity" {
   })
   default = {
     dev        = 1
-    production = 5
+    production = 1
   }
 }
 
