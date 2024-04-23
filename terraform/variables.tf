@@ -191,12 +191,26 @@ variable "cf_zone_id" {
 # Terraform Cloud
 ##################################################
 
-variable "TFC_CONFIGURATION_VERSION_GIT_TAG" {
-  description = "Enviroment variable provided by Terraform Cloud"
-}
-
 variable "TF_VAR_GITHUB_TOKEN" {
   description = "Enviroment variable with access to the project repository"
+  type        = string
+  sensitive   = true
+}
+
+variable "AWS_ACCESS_KEY_ID" {
+  description = "Enviroment variable with access to the AWS Account"
+  type        = string
+  sensitive   = true
+}
+
+variable "AWS_SECRET_ACCESS_KEY" {
+  description = "Enviroment variable with secret to the AWS Account"
+  type        = string
+  sensitive   = true
+}
+
+variable "CLOUDFLARE_API_TOKEN" {
+  description = "Enviroment variable with access DNS zone in Cloudflare"
   type        = string
   sensitive   = true
 }
