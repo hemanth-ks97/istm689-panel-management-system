@@ -53,7 +53,7 @@ const QuestionCard = ({
     <Card
       sx={{
         minWidth: 300,
-        height: "120px",
+        minHeight: "120px",
         width: "100%",
         maxWidth: { xs: 400, sm: 600, md: 600, lg: 950 },
         mb: 2,

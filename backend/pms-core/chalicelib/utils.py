@@ -157,7 +157,7 @@ def get_base_url(request):
 def create_token(user_id, email_id, name, picture, role):
     current_time = datetime.now(tz=timezone.utc)
     expiration = datetime.now(tz=timezone.utc) + timedelta(
-        days=int(JWT_TOKEN_EXPIRATION_DAYS)
+        days=JWT_TOKEN_EXPIRATION_DAYS
     )
 
     payload_data = {
@@ -416,6 +416,8 @@ def group_similar_questions(panel_id):
                     "FlaggedBy" not in question_map[rep_id]
                     or len(question_map[rep_id]["FlaggedBy"]) == 0
                 ):
+                    cluster_likes = len(question_map[rep_id]["LikedBy"])
+                    cluster_dislikes = len(question_map[rep_id]["DislikedBy"])
                     filtered_cluster.append(rep_id)
 
             if len(filtered_cluster) > 0:
@@ -435,27 +437,68 @@ def group_similar_questions(panel_id):
             rep_question_clusters, key=lambda x: x["cluster_net_likes"], reverse=True
         )
 
-        # Store top 20 clusters in S3
+        # Store all question clusters in S3
         upload_objects(
             PANELS_BUCKET_NAME,
             panel_id,
             "sortedCluster.json",
-            sorted_by_net_cluster_likes[:20],
+            sorted_by_net_cluster_likes,
         )
 
         return sorted_by_net_cluster_likes
 
     except Exception as e:
         return {"error": str(e)}
+    
+def generate_final_question_list(id):
+    try:
+        panel_id = id
+        object_key = f"{panel_id}/sortedCluster.json"
+
+        questions_data, error = get_s3_objects(PANELS_BUCKET_NAME, object_key)
+
+        if error:
+            return Response(
+                body={"error": "Unable to fetch question data"}, status_code=500
+            )
+
+        if not questions_data:
+            return Response(
+                body={"error": "Questions not found for panel"}, status_code=404
+            )
+
+        # Build question cache of top 20 questions
+        question_cache = []
+        for cluster_obj in questions_data[:20]:
+            question_obj = get_question_db().get_question(cluster_obj["rep_id"])
+            if "VoteScore" in question_obj:
+                cluster_obj["vote_score"] = int(question_obj["VoteScore"])
+                question_cache.append(cluster_obj)
+        
+        top_questions = sorted(
+            question_cache, key=lambda x: x["vote_score"], reverse=True
+        )
+
+        upload_objects(
+            PANELS_BUCKET_NAME,
+            panel_id,
+            "finalQuestions.json",
+            top_questions[:10],
+        )
+
+        return top_questions[:10]
+        
+    except Exception as e:
+        return {"error": str(e)}
 
 def grading_script(panel_id):
     try:
-        panel_id = id       
         metric = get_metric_db().get_metrics_by_panel(panel_id)
         student_grades = {}
 
         total_questions = get_panel_db().get_number_of_questions_by_panel_id(panel_id)
-        time_format = "%Y-%m-%dT%H:%M:%S.%fZ"
+        print(total_questions)
+        time_format = "%Y-%m-%dT%H:%M:%SZ"
         time_spent_tag=[]
         time_spent_vote = []
         interactions_tag=[]
@@ -486,7 +529,6 @@ def grading_script(panel_id):
         mean_like_ques = np.mean(net_like_counts)
         std_like_ques = np.std(net_like_counts)
 
-
         """
         Calculate student time delta
         """
@@ -498,15 +540,15 @@ def grading_script(panel_id):
             """
             Check if student has completed assignment using taggingTimeOut 
             """
-            if student["TagStageOutTime"] is not None:
+            if "TagStageOutTime" in student and student["TagStageOutTime"] is not None:
                 time1 = datetime.strptime(student["TagStageOutTime"], time_format)
                 time2 = datetime.strptime(student["TagStageInTime"], time_format)
                 student_time = (time1 - time2).total_seconds()
                 time_spent_tag.append(student_time)
-                interactions_tag.append(student["TagStageInteractions"])
+                interactions_tag.append(int(student["TagStageInteractions"]))
             else:
                 student_grades[student["UserID"]]["TagStageScore"] = Decimal(0)
-            if student["VoteStageOutTime"] is not None:
+            if "VoteStageOutTime" in student and student["VoteStageOutTime"] is not None:
                 time1 = datetime.strptime(student["VoteStageOutTime"], time_format)
                 time2 = datetime.strptime(student["VoteStageInTime"], time_format)
                 student_time = (time1 - time2).total_seconds()
@@ -528,41 +570,45 @@ def grading_script(panel_id):
                 penalty = round(min(performance_score, abs(1 - abs(deviation)) * penalty_rate),2)    
                 question_perf_score = max(0, round(performance_score - penalty,2))
             question_obj = get_question_db().get_question(question["rep_id"])
-            question_obj["FinalScore"] =  Decimal(question_perf_score) + Decimal(question_bonus_score)
+            question_obj["FinalScore"] =  round(Decimal(question_perf_score) + Decimal(question_bonus_score),2)
             get_question_db().add_question(question_obj)
             for cluster_id in question["cluster"]:
                 question_obj = get_question_db().get_question(cluster_id)
-                question_obj["FinalScore"] = Decimal(question_perf_score) + Decimal(question_bonus_score)
+                question_obj["FinalScore"] = round(Decimal(question_perf_score) + Decimal(question_bonus_score),2)
                 get_question_db().add_question(question_obj)
+
 
         # Averaging question scores for every student
         for student in metric:
-            student_questions = get_question_db().get_questions_by_user(student["UserID"])
-            question_scores = []
-            for question in student_questions:
-                question_scores.append(question["FinalScore"])
-            student_question_score = round(np.sum(question_scores)/int(total_questions),2)
-            question_stage_score = Decimal( ((student_question_score + student["EnteredQuestionsTotalScore"]) / total_question_score) * 100)
-            student_grades[student["UserID"]]["QuestionStageScore"] = question_stage_score
+            if student["EnteredQuestionsTotalScore"] != -1:
+                student_questions = get_question_db().get_my_questions_by_panel(panel_id, student["UserID"])
+                question_scores = []
+                for question in student_questions:
+                    question_scores.append(question["FinalScore"])
+                student_question_score = round(np.sum(question_scores)/int(total_questions[0]),2)           
+                question_stage_score = Decimal( ((student_question_score + Decimal(student["EnteredQuestionsTotalScore"])) / total_question_score) * 100)
+                student_grades[student["UserID"]]["QuestionStageScore"] = question_stage_score
+            else:
+                student_grades[student["UserID"]]["QuestionStageScore"] = Decimal(0)  
         # Giving bonus scores for cray cray questions
         # +5 for getting to voting stage
         for question in questions_data[:20]:
             question_obj = get_question_db().get_question(question["rep_id"])
             student_id = question_obj["UserID"]
-            student_grades[student_id]["TagStageScore"] = extra_voting_score
+            student_grades[student_id]["TagStageScore"] = Decimal(extra_voting_score)
             for cluster_id in question["cluster"]:
                 question_obj = get_question_db().get_question(question["rep_id"])
                 student_id = question_obj["UserID"]
-                student_grades[student_id]["TagStageScore"] = extra_voting_score
+                student_grades[student_id]["TagStageScore"] = Decimal(extra_voting_score)
         # +5 for getting to final stage        
         for question in final_questions_data:
             question_obj = get_question_db().get_question(question["rep_id"])
             student_id = question_obj["UserID"]
-            student_grades[student_id]["VoteStageScore"] = top_questions_score
+            student_grades[student_id]["VoteStageScore"] = Decimal(top_questions_score)
             for cluster_id in question["cluster"]:
                 question_obj = get_question_db().get_question(question["rep_id"])
                 student_id = question_obj["UserID"]
-                student_grades[student_id]["VoteStageScore"] = top_questions_score
+                student_grades[student_id]["VoteStageScore"] = Decimal(top_questions_score)
 
         mean_time_tag = np.mean(time_spent_tag)
         std_time_tag = np.std(time_spent_tag)
@@ -572,14 +618,18 @@ def grading_script(panel_id):
         mean_inter_tag = np.mean(interactions_tag)
         std_inter_tag = np.std(interactions_tag)
 
+        print(mean_inter_tag)   
+        print(std_inter_tag)
         mean_time_vote = np.mean(time_spent_vote)
         std_time_vote = np.std(time_spent_vote)
-
+        
+        print(mean_time_vote)
+        print(std_time_vote)
         for student in metric:
             """
             Tagging Stage Grading
             """
-            if student["TagStageOutTime"] is not None:
+            if "TagStageOutTime" in student and student["TagStageOutTime"] is not None:
                 """
                 Calculate deviation  for student 
                 """
@@ -596,7 +646,7 @@ def grading_script(panel_id):
                 """
                 Check SD for how many votes each student has made and check if the student is doing the same.
                 """               
-                deviation_inter = (student["TagStageInteractions"] - mean_inter_tag) / std_inter_tag
+                deviation_inter = (Decimal(student["TagStageInteractions"]) - Decimal(mean_inter_tag)) / Decimal(std_inter_tag)
 
                 if -1 <= deviation_inter:
                     tag_score = tagging_score
@@ -606,7 +656,9 @@ def grading_script(panel_id):
             """
             Multiply both for final tagging points
             """
-            final_tag_score = eng_score + tag_score + student_grades[student_id]["TagStageScore"]
+            if "TagStageScore" not in student_grades[student["UserID"]]:
+                student_grades[student["UserID"]]["TagStageScore"] = Decimal(0)
+            final_tag_score = Decimal(eng_score) + Decimal(tag_score) + Decimal(student_grades[student["UserID"]]["TagStageScore"])
             tag_stage_score = Decimal((final_tag_score/tagging_score + engagement_score_tag) * 100) 
             student_grades[student["UserID"]]["TagStageScore"] = min(Decimal(total_score),tag_stage_score)
 
@@ -614,7 +666,7 @@ def grading_script(panel_id):
             """
             Voting Stage Grading
             """
-            if student["VoteStageOutTime"] is not None:
+            if "VoteStageOutTime" in student and student["VoteStageOutTime"] is not None:
                 """
                 Calculate deviation  for student 
                 """
@@ -631,19 +683,48 @@ def grading_script(panel_id):
             """
             Multiply both for final tagging points
             """
-            final_vote_score = eng_score + voting_score + student_grades[student["UserID"]]["VoteStageScore"]
+            if "VoteStageScore" not in student_grades[student["UserID"]]:
+                student_grades[student["UserID"]]["VoteStageScore"] = Decimal(0)           
+            final_vote_score = Decimal(eng_score) + Decimal(voting_score) + Decimal(student_grades[student["UserID"]]["VoteStageScore"])
             vote_stage_score = Decimal((final_vote_score/(voting_score + engagement_score_vote)) * 100)
             student_grades[student["UserID"]]["VoteStageScore"] = min(Decimal(total_score),vote_stage_score)
 
-            final_total_score = ( (student_grades[student["UserID"]]["QuestionStageScore"] + student_grades[student["UserID"]]["TagStageScore"] + student_grades[student["UserID"]]["VoteStageScore"])/(total_score*3)) *100
-            student_grades[student["UserID"]]["FinalTotalScore"] = min(Decimal(total_score),final_total_score)
+            final_total_score = Decimal(( (student_grades[student["UserID"]]["QuestionStageScore"] + student_grades[student["UserID"]]["TagStageScore"] + student_grades[student["UserID"]]["VoteStageScore"])/(total_score*3)) *100)
+            student_grades[student["UserID"]]["FinalTotalScore"] = round(min(Decimal(total_score),final_total_score),2)
 
         #get_metric_db().add_metric(metric_for_submit)
-       
-        return Response(
-            body={"message": "Grades posted successfully"},
-            status_code=200,
-            headers={"Content-Type": "application/json"},
-        )
+        all_question_stage_scores = []
+        all_tag_stage_scores = []
+        all_vote_stage_scores = []
+
+        for grade_obj in student_grades.values():
+            all_question_stage_scores.append(grade_obj["QuestionStageScore"])
+            all_tag_stage_scores.append(grade_obj["TagStageScore"])
+            all_vote_stage_scores.append(grade_obj["VoteStageScore"])
+        
+        question_stage_min, question_stage_max, question_stage_mean = min(all_question_stage_scores), max(all_question_stage_scores), np.mean(all_question_stage_scores)
+        tag_stage_min, tag_stage_max, tag_stage_mean = min(all_tag_stage_scores), max(all_tag_stage_scores), np.mean(all_tag_stage_scores)
+        vote_stage_min, vote_stage_max, vote_stage_mean = min(all_vote_stage_scores), max(all_vote_stage_scores), np.mean(all_vote_stage_scores)
+
+        metric_batch_update = []
+
+        for _, grade_obj in student_grades.items():
+            metric_obj = get_metric_db().get_metric(grade_obj["UserID"], grade_obj["PanelID"])
+            metric_obj["QuestionStageMin"] = question_stage_min
+            metric_obj["QuestionStageMax"] = question_stage_max
+            metric_obj["QuestionStageMean"] = question_stage_mean
+            metric_obj["TagStageMin"] = tag_stage_min
+            metric_obj["TagStageMax"] = tag_stage_max
+            metric_obj["TagStageMean"] = tag_stage_mean
+            metric_obj["VoteStageMin"] = vote_stage_min
+            metric_obj["VoteStageMax"] = vote_stage_max
+            metric_obj["VoteStageMean"] = vote_stage_mean
+            metric_batch_update.append(metric_obj)
+        
+        for metric_obj in metric_batch_update:
+            get_metric_db().add_metric(metric_obj)
+
+
+        return student_grades
     except Exception as e:
         return {"error": str(e)}

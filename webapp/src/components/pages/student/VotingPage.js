@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Box, Paper, Typography, Button } from "@mui/material";
+import { Box, Paper, Typography, Button, Grid } from "@mui/material";
 import { DragDropContext, Draggable } from "react-beautiful-dnd";
 import { httpClient } from "../../../client";
 import LoadingSpinner from "../../widgets/LoadingSpinner";
@@ -16,7 +16,7 @@ const VotingPage = () => {
   const { panelId } = useParams();
   const { user } = useSelector((state) => state.user);
   const { enqueueSnackbar } = useSnackbar();
-
+  const navigate = useNavigate();
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${user?.token}`,
@@ -37,11 +37,10 @@ const VotingPage = () => {
         setQuestions(questionsArray);
       })
       .catch((error) => {
-        console.log("HTTP ERROR", error);
         if (error.response.data.error) {
           setErrorMessage(error.response.data.error);
           enqueueSnackbar(error.response.data.error, {
-            variant: "error",
+            variant: "info",
           });
         } else {
           setErrorMessage(error.message);
@@ -72,8 +71,6 @@ const VotingPage = () => {
 
     const id_order = questions.map((item) => item.id);
 
-    console.log(orderedQuestions);
-
     // TODO Send the ordered list to a backend server
 
     httpClient
@@ -83,7 +80,7 @@ const VotingPage = () => {
         { headers }
       )
       .then((response) => {
-        console.log("Submission successful:", response.data);
+        navigate(`/panel/${panelId}`);
       })
       .catch((error) => {
         console.error("Submission error:", error.message);
@@ -97,9 +94,20 @@ const VotingPage = () => {
 
   if (errorMessage) {
     return (
-      <Typography variant="h5" mt={3} textAlign="center">
-        {errorMessage}
-      </Typography>
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        sx={{ minHeight: "100vh" }}
+      >
+        <Grid item xs={3}>
+          <Typography variant="h5" mt={3} textAlign="center">
+            {errorMessage}
+          </Typography>
+        </Grid>
+      </Grid>
     );
   }
 
@@ -109,7 +117,7 @@ const VotingPage = () => {
         Voting Page
       </Typography>
       <Typography variant="h5" gutterBottom>
-        Guidelines: Drag and drop to rank the questions in order of your
+        Instruction: Drag and drop to rank the questions in order of your
         preference, then click submit.
       </Typography>
       <DragDropContext onDragEnd={onDragEnd}>

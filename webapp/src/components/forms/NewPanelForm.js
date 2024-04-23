@@ -9,8 +9,10 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-import { DatePicker, DateTimePicker } from "@mui/x-date-pickers";
+import { DateTimePicker } from "@mui/x-date-pickers";
 import LoadingSpinner from "../widgets/LoadingSpinner";
+
+import dayjs from "dayjs";
 
 import { httpClient } from "../../client";
 import { useSnackbar } from "notistack";
@@ -24,6 +26,7 @@ const validationSchema = yup.object({
   PanelName: yup.string().required("Panel Name is required"),
   PanelDesc: yup.string().required("Panel Description is required"),
   Panelist: yup.string().required("Panelist is required"),
+  PanelistEmail: yup.string().required("Panelist Email is required"),
   PanelStartDate: yup.string().required("PanelStart Date is required"),
   QuestionStageDeadline: yup
     .string()
@@ -61,11 +64,31 @@ const NewPanelForm = () => {
       PanelName: "",
       PanelDesc: "",
       Panelist: "",
-      PanelStartDate: new Date().toISOString(),
-      QuestionStageDeadline: new Date().toISOString(),
-      TagStageDeadline: new Date().toISOString(),
-      VoteStageDeadline: new Date().toISOString(),
-      PanelPresentationDate: new Date().toISOString(),
+      PanelistEmail: "",
+      PanelStartDate: dayjs()
+        .set("hour", 23)
+        .set("minute", 55)
+        .startOf("minute"),
+      QuestionStageDeadline: dayjs()
+        .set("hour", 23)
+        .set("minute", 55)
+        .startOf("minute")
+        .add(2, "day"),
+      TagStageDeadline: dayjs()
+        .set("hour", 23)
+        .set("minute", 55)
+        .startOf("minute")
+        .add(4, "day"),
+      VoteStageDeadline: dayjs()
+        .set("hour", 23)
+        .set("minute", 55)
+        .startOf("minute")
+        .add(6, "day"),
+      PanelPresentationDate: dayjs()
+        .set("hour", 23)
+        .set("minute", 55)
+        .startOf("minute")
+        .add(8, "day"),
       NumberOfQuestions: 10,
       PanelVideoLink: "",
       Visibility: "internal",
@@ -149,12 +172,24 @@ const NewPanelForm = () => {
               fullWidth
               id="Panelist"
               name="Panelist"
-              label="Panelist Name"
+              label="Panelist Name (comma separated)"
               value={formik.values.Panelist}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               error={formik.touched.Panelist && Boolean(formik.errors.Panelist)}
               helperText={formik.touched.Panelist && formik.errors.Panelist}
+            />
+            <TextField
+              style={{ margin: "5px" }}
+              fullWidth
+              id="PanelistEmail"
+              name="PanelistEmail"
+              label="Panelist Email ID (comma separated)"
+              value={formik.values.PanelistEmail}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.Panelist && Boolean(formik.errors.PanelistEmail)}
+              helperText={formik.touched.Panelist && formik.errors.PanelistEmail}
             />
 
             <TextField
@@ -193,87 +228,97 @@ const NewPanelForm = () => {
                 formik.touched.PanelVideoLink && formik.errors.PanelVideoLink
               }
             />
-            <TextField
-              style={{ margin: "5px" }}
-              fullWidth
+
+            <DateTimePicker
+              sx={{ margin: "5px", width: "100%" }}
               id="PanelStartDate"
               name="PanelStartDate"
               label="Panel Start Date"
               value={formik.values.PanelStartDate}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
+              minDateTime={dayjs(Date.now())}
+              helperText={
+                formik.touched.PanelStartDate && formik.errors.PanelStartDate
+              }
               error={
                 formik.touched.PanelStartDate &&
                 Boolean(formik.errors.PanelStartDate)
               }
-              helperText={
-                formik.touched.PanelStartDate && formik.errors.PanelStartDate
-              }
+              onChange={(newValue) => {
+                formik.setFieldValue("PanelStartDate", newValue);
+                formik.setFieldTouched("PanelStartDate", true);
+              }}
             />
 
-            <TextField
-              style={{ margin: "5px" }}
-              fullWidth
+            <DateTimePicker
+              sx={{ margin: "5px", width: "100%" }}
               id="QuestionStageDeadline"
               name="QuestionStageDeadline"
               label="Question Stage Deadline"
+              minDateTime={formik.values.PanelStartDate}
               value={formik.values.QuestionStageDeadline}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={
-                formik.touched.QuestionStageDeadline &&
-                Boolean(formik.errors.QuestionStageDeadline)
-              }
               helperText={
                 formik.touched.QuestionStageDeadline &&
                 formik.errors.QuestionStageDeadline
               }
+              error={
+                formik.touched.QuestionStageDeadline &&
+                Boolean(formik.errors.QuestionStageDeadline)
+              }
+              onChange={(newValue) => {
+                formik.setFieldValue("QuestionStageDeadline", newValue);
+                formik.setFieldTouched("QuestionStageDeadline", true);
+              }}
             />
-            <TextField
-              style={{ margin: "5px" }}
-              fullWidth
+
+            <DateTimePicker
+              sx={{ margin: "5px", width: "100%" }}
               id="TagStageDeadline"
               name="TagStageDeadline"
               label="Tag Stage Deadline"
+              minDateTime={formik.values.QuestionStageDeadline}
               value={formik.values.TagStageDeadline}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={
-                formik.touched.TagStageDeadline &&
-                Boolean(formik.errors.TagStageDeadline)
-              }
               helperText={
                 formik.touched.TagStageDeadline &&
                 formik.errors.TagStageDeadline
               }
+              error={
+                formik.touched.TagStageDeadline &&
+                Boolean(formik.errors.TagStageDeadline)
+              }
+              onChange={(newValue) => {
+                formik.setFieldValue("TagStageDeadline", newValue);
+                formik.setFieldTouched("TagStageDeadline", true);
+              }}
             />
-            <TextField
-              style={{ margin: "5px" }}
-              fullWidth
+
+            <DateTimePicker
+              sx={{ margin: "5px", width: "100%" }}
               id="VoteStageDeadline"
               name="VoteStageDeadline"
               label="Vote Stage Deadline"
+              minDateTime={formik.values.TagStageDeadline}
               value={formik.values.VoteStageDeadline}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={
-                formik.touched.VoteStageDeadline &&
-                Boolean(formik.errors.VoteStageDeadline)
-              }
               helperText={
                 formik.touched.VoteStageDeadline &&
                 formik.errors.VoteStageDeadline
               }
+              error={
+                formik.touched.VoteStageDeadline &&
+                Boolean(formik.errors.VoteStageDeadline)
+              }
+              onChange={(newValue) => {
+                formik.setFieldValue("VoteStageDeadline", newValue);
+                formik.setFieldTouched("VoteStageDeadline", true);
+              }}
             />
-            <TextField
-              style={{ margin: "5px" }}
-              fullWidth
+
+            <DateTimePicker
+              sx={{ margin: "5px", width: "100%" }}
               id="PanelPresentationDate"
               name="PanelPresentationDate"
               label="Panel Presentation Date"
+              minDateTime={formik.values.VoteStageDeadline}
               value={formik.values.PanelPresentationDate}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
               error={
                 formik.touched.PanelPresentationDate &&
                 Boolean(formik.errors.PanelPresentationDate)
@@ -282,6 +327,10 @@ const NewPanelForm = () => {
                 formik.touched.PanelPresentationDate &&
                 formik.errors.PanelPresentationDate
               }
+              onChange={(newValue) => {
+                formik.setFieldValue("PanelPresentationDate", newValue);
+                formik.setFieldTouched("PanelPresentationDate", true);
+              }}
             />
 
             <Button
