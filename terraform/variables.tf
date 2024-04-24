@@ -163,10 +163,12 @@ variable "amplify_branch_environment_variables_REACT_APP_GOOGLE_CLIENT_ID" {
   type = object({
     dev        = string
     production = string
+    demo       = string
   })
   default = {
     dev        = "979252554614-0gjt8bjrpkht2n0le6uoo12nhs8pgrv3.apps.googleusercontent.com"
     production = "979252554614-r05g1fdg6unklck10sjnamb3701r0u88.apps.googleusercontent.com"
+    demo       = "979252554614-r05g1fdg6unklck10sjnamb3701r0u88.apps.googleusercontent.com"
   }
 }
 # amplify_branch_environment_variables_REACT_APP_GOOGLE_RECAPTCHA_KEY
@@ -175,10 +177,12 @@ variable "amplify_branch_environment_variables_REACT_APP_GOOGLE_RECAPTCHA_KEY" {
   type = object({
     dev        = string
     production = string
+    demo       = string
   })
   default = {
     dev        = "6LdWRKQpAAAAAK7tQCFO5GyxYIyME5dut2zXRZS7"
     production = "6LdWRKQpAAAAAPuDnSRQfd0vKQhseGsgDhWTiukt"
+    demo       = "6LdWRKQpAAAAAPuDnSRQfd0vKQhseGsgDhWTiukt"
   }
 }
 
@@ -187,6 +191,7 @@ variable "aws_ses_identity_email" {
   type = object({
     dev        = string
     production = string
+    demo       = string
   })
 
   # If both emails are the same it will create a conflict because it will try to
@@ -194,6 +199,7 @@ variable "aws_ses_identity_email" {
   default = {
     dev        = "davidgomilliontest@gmail.com"
     production = "davidgomilliontest+prod@gmail.com"
+    demo       = "davidgomilliontest+demo@gmail.com"
   }
 }
 
