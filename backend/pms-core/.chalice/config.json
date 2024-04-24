@@ -23,6 +23,27 @@
         "JWT_SECRET": "dnPrEMmwZzk5qetcZ9Lycm0ct8h137NNww66RSiqj2I9Ve2eFo"
       }
     },
+    "demo": {
+      "api_gateway_stage": "demo",
+      "api_gateway_endpoint_type": "REGIONAL",
+      "lambda_timeout": 90,
+      "environment_variables": {
+        "ENV": "demo",
+        "GOOGLE_AUTH_CLIENT_ID": "979252554614-r05g1fdg6unklck10sjnamb3701r0u88.apps.googleusercontent.com",
+        "GOOGLE_RECAPTCHA_SECRET_KEY":"6LdxRKQpAAAAAEOM3Iw2AkqnKuSHGzeW4vjFWu3a",
+        "ALLOW_ORIGIN": "https://demo-istm689.joaquingimenez.com",
+        "DYNAMODB_USER_TABLE_NAME": "demo-user",
+        "DYNAMODB_QUESTION_TABLE_NAME": "demo-question",
+        "DYNAMODB_PANEL_TABLE_NAME": "demo-panel",
+        "DYNAMODB_METRIC_TABLE_NAME": "demo-metric",
+        "DYNAMODB_LOG_TABLE_NAME": "demo-log",
+        "S3_PANELS_BUCKET_NAME": "demo-istm689-panels-students-data",
+        "SES_EMAIL_ADDRESS_IDENTITY": "davidgomilliontest+demo@gmail.com",
+        "SES_IS_SANDBOX_ENVIROMENT": "true",
+        "JWT_TOKEN_EXPIRATION_DAYS": "1",
+        "JWT_SECRET": "aeSFtl0wgsJIcky8UUi3eEPDj4vo6oqLyAK4H9W25ETWlIomZ1"
+      }
+    },
     "dev": {
       "api_gateway_stage": "dev",
       "api_gateway_endpoint_type": "REGIONAL",

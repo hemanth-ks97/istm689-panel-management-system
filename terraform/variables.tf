@@ -23,10 +23,12 @@ variable "budgets_budget_limit_amount" {
   type = object({
     dev        = string
     production = string
+    demo       = string
   })
   default = {
     dev        = "10"
     production = "20"
+    demo       = "20"
   }
 }
 
@@ -35,10 +37,12 @@ variable "budgets_budget_subscriber_email_addresses" {
   type = object({
     dev        = list(string)
     production = list(string)
+    demo       = list(string)
   })
   default = {
     dev        = ["joaquin.gimenez@tamu.edu"]
     production = ["joaquin.gimenez@tamu.edu"]
+    demo       = ["joaquin.gimenez@tamu.edu"]
   }
 }
 
@@ -47,10 +51,12 @@ variable "dynamodb_table_read_capacity" {
   type = object({
     dev        = number
     production = number
+    demo       = number
   })
   default = {
     dev        = 2
-    production = 5
+    production = 3
+    demo       = 1
   }
 }
 
@@ -59,10 +65,12 @@ variable "dynamodb_table_write_capacity" {
   type = object({
     dev        = number
     production = number
+    demo       = number
   })
   default = {
     dev        = 2
-    production = 5
+    production = 3
+    demo       = 1
   }
 }
 
@@ -71,10 +79,12 @@ variable "dynamodb_enable_point_in_time_recovery" {
   type = object({
     dev        = bool
     production = bool
+    demo       = bool
   })
   default = {
     dev        = true
     production = true
+    demo       = false
   }
 }
 
@@ -83,10 +93,12 @@ variable "dynamodb_global_secondary_idx_read_capacity" {
   type = object({
     dev        = number
     production = number
+    demo       = number
   })
   default = {
     dev        = 1
-    production = 5
+    production = 3
+    demo       = 2
   }
 }
 
@@ -95,10 +107,12 @@ variable "dynamodb_global_secondary_idx_write_capacity" {
   type = object({
     dev        = number
     production = number
+    demo       = number
   })
   default = {
     dev        = 1
-    production = 5
+    production = 3
+    demo       = 2
   }
 }
 
@@ -107,10 +121,12 @@ variable "amplify_branch_branch_name" {
   type = object({
     dev        = string
     production = string
+    demo       = string
   })
   default = {
     dev        = "dev"
     production = "main"
+    demo       = "demo"
   }
 }
 
@@ -119,10 +135,12 @@ variable "amplify_domain_association_domain_name" {
   type = object({
     dev        = string
     production = string
+    demo       = string
   })
   default = {
     dev        = "istm689-dev.joaquingimenez.com"
     production = "istm689.joaquingimenez.com"
+    demo       = "demo-istm689.joaquingimenez.com"
   }
 }
 
@@ -131,10 +149,12 @@ variable "amplify_branch_environment_variables_REACT_APP_API_BASE_URL" {
   type = object({
     dev        = string
     production = string
+    demo       = string
   })
   default = {
     dev        = "https://r23u758nsl.execute-api.us-east-1.amazonaws.com/dev/"
     production = "https://ixxpnshg9j.execute-api.us-east-1.amazonaws.com/production/"
+    demo       = "https://g1tnagdqe4.execute-api.us-east-1.amazonaws.com/demo/"
   }
 }
 
