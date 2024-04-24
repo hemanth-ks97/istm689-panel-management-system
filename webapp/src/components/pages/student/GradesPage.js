@@ -278,7 +278,7 @@ const GradesPage = () => {
     return {
       name: metric?.PanelName || "Could not determine panel name",
       total:
-        metric?.FinalTotalScore === undefined ? -1 : metric.FinalFinalScore,
+        metric?.FinalTotalScore === undefined ? -1 : metric.FinalTotalScore,
       grades: [
         {
           type: "Submit Questions Stage",
