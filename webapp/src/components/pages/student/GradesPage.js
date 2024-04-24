@@ -277,28 +277,43 @@ const GradesPage = () => {
   const grades = metrics.map((metric) => {
     return {
       name: metric?.PanelName || "Could not determine panel name",
-      total: metric?.FinalTotalScore || -1,
+      total:
+        metric?.FinalTotalScore === undefined ? -1 : metric.FinalFinalScore,
       grades: [
         {
           type: "Submit Questions Stage",
-          grade: metric?.QuestionStageScore || -1,
-          mean: metric?.QuestionStageMean || -1,
-          max: metric?.QuestionStageMax || -1,
-          min: metric.QuestionStageMin || -1,
+          grade:
+            metric?.QuestionStageScore === undefined
+              ? -1
+              : metric.QuestionStageScore,
+          mean:
+            metric?.QuestionStageMean === undefined
+              ? -1
+              : metric.QuestionStageMean,
+          max:
+            metric?.QuestionStageMax === undefined
+              ? -1
+              : metric.QuestionStageMax,
+          min:
+            metric?.QuestionStageMin === undefined
+              ? -1
+              : metric.QuestionStageMin,
         },
         {
           type: "Tagging Questions Stage",
-          grade: metric?.TagStageScore || -1,
-          mean: metric?.TagStageMean || -1,
-          max: metric?.TagStageMax || -1,
-          min: metric?.TagStageMin || -1,
+          grade:
+            metric?.TagStageScore === undefined ? -1 : metric.TagStageScore,
+          mean: metric?.TagStageMean === undefined ? -1 : metric.TagStageMean,
+          max: metric?.TagStageMax === undefined ? -1 : metric.TagStageMax,
+          min: metric?.TagStageMin === undefined ? -1 : metric.TagStageMin,
         },
         {
           type: "Voting Questions Stage",
-          grade: metric?.VoteStageScore || -1,
-          mean: metric?.VoteStageMean || -1,
-          max: metric?.VoteStageMax || -1,
-          min: metric?.VoteStageMin || -1,
+          grade:
+            metric?.VoteStageScore === undefined ? -1 : metric.VoteStageScore,
+          mean: metric?.VoteStageMean === undefined ? -1 : metric.VoteStageMean,
+          max: metric?.VoteStageMax === undefined ? -1 : metric.VoteStageMax,
+          min: metric?.VoteStageMin === undefined ? -1 : metric.VoteStageMin,
         },
       ],
     };
