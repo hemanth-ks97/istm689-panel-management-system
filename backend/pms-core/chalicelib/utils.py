@@ -709,9 +709,9 @@ def grading_script(panel_id):
             all_tag_stage_scores.append(grade_obj["TagStageScore"])
             all_vote_stage_scores.append(grade_obj["VoteStageScore"])
         
-        question_stage_min, question_stage_max, question_stage_mean = min(all_question_stage_scores), max(all_question_stage_scores), np.mean(all_question_stage_scores)
-        tag_stage_min, tag_stage_max, tag_stage_mean = min(all_tag_stage_scores), max(all_tag_stage_scores), np.mean(all_tag_stage_scores)
-        vote_stage_min, vote_stage_max, vote_stage_mean = min(all_vote_stage_scores), max(all_vote_stage_scores), np.mean(all_vote_stage_scores)
+        question_stage_min, question_stage_max, question_stage_mean = min(all_question_stage_scores), max(all_question_stage_scores), round(np.mean(all_question_stage_scores),2)
+        tag_stage_min, tag_stage_max, tag_stage_mean = min(all_tag_stage_scores), max(all_tag_stage_scores), round(np.mean(all_tag_stage_scores),2)
+        vote_stage_min, vote_stage_max, vote_stage_mean = min(all_vote_stage_scores), max(all_vote_stage_scores), round(np.mean(all_vote_stage_scores), 2)
 
         metric_batch_update = []
 
@@ -726,6 +726,10 @@ def grading_script(panel_id):
             metric_obj["VoteStageMin"] = vote_stage_min
             metric_obj["VoteStageMax"] = vote_stage_max
             metric_obj["VoteStageMean"] = vote_stage_mean
+            metric_obj["QuestionStageScore"] = grade_obj["QuestionStageScore"]
+            metric_obj["TagStageScore"] = grade_obj["TagStageScore"]
+            metric_obj["VoteStageScore"] = grade_obj["VoteStageScore"]
+            metric_obj["FinalTotalScore"] = grade_obj["FinalTotalScore"]
             metric_batch_update.append(metric_obj)
         
         for metric_obj in metric_batch_update:
