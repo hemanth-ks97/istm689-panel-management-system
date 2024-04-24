@@ -931,10 +931,10 @@ def post_question_tagging(id):
             question = get_question_db().get_question(q_id)
             if "LikedBy" in question:
                 if user_id not in question["LikedBy"]:
-                    if len(question["LikedBy"]) > 0:
-                        question["LikedBy"].extend(user_id)
-                    else:
-                        question["LikedBy"].append(user_id)
+                    # if len(question["LikedBy"]) > 0:
+                    #     question["LikedBy"].extend(user_id)
+                    # else:
+                    question["LikedBy"].append(user_id)
             else:
                 question["LikedBy"] = [user_id]
             batch_update_request[q_id] = question
@@ -947,10 +947,10 @@ def post_question_tagging(id):
             )
             if "DislikedBy" in question:
                 if user_id not in question["DislikedBy"]:
-                    if len(question["DislikedBy"]) > 0:
-                        question["DislikedBy"].extend(user_id)
-                    else:
-                        question["DislikedBy"].append(user_id)
+                    # if len(question["DislikedBy"]) > 0:
+                    #     question["DislikedBy"].extend(user_id)
+                    # else:
+                    question["DislikedBy"].append(user_id)
             else:
                 question["DislikedBy"] = [user_id]
             batch_update_request[q_id] = question
@@ -963,10 +963,10 @@ def post_question_tagging(id):
             )
             if "FlaggedBy" in question:
                 if user_id not in question["FlaggedBy"]:
-                    if len(question["FlaggedBy"]) > 0:
-                        question["FlaggedBy"].extend(user_id)
-                    else:
-                        question["FlaggedBy"].append(user_id)
+                    # if len(question["FlaggedBy"]) > 0:
+                    #     question["FlaggedBy"].extend(user_id)
+                    # else:
+                    question["FlaggedBy"].append(user_id)
             else:
                 question["FlaggedBy"] = [user_id]
             batch_update_request[q_id] = question

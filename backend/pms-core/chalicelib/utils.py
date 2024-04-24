@@ -353,7 +353,7 @@ def distribute_tag_questions(panel_id):
                 distribute_tag_questions(panel_id)
 
             # Add the student_question_map to an S3 bucket
-            upload_objects(PANELS_BUCKET_NAME, id, student_id_questions_map)
+            upload_objects(PANELS_BUCKET_NAME, panel_id, "questions.json", student_id_questions_map)
 
         return student_id_questions_map
     except Exception as e:
@@ -629,7 +629,10 @@ def grading_script(panel_id):
             """
             Tagging Stage Grading
             """
-            if "TagStageOutTime" in student and student["TagStageOutTime"] is not None:
+            eng_score = 0
+            tag_score = 0
+            voting_score = 0
+            if "TagStageOutTime" in student:
                 """
                 Calculate deviation  for student 
                 """
@@ -653,13 +656,15 @@ def grading_script(panel_id):
                 else:
                     penalty = round(min(tagging_score, abs(1 - abs(deviation_inter)) * penalty_rate),2)    
                     tag_score = max(0, round(tagging_score - penalty,2))
+            else:
+                student_grades[student["UserID"]]["TagStageScore"] = Decimal(0)        
             """
             Multiply both for final tagging points
             """
             if "TagStageScore" not in student_grades[student["UserID"]]:
-                student_grades[student["UserID"]]["TagStageScore"] = Decimal(0)
+                student_grades[student["UserID"]]["TagStageScore"] = Decimal(0)   
             final_tag_score = Decimal(eng_score) + Decimal(tag_score) + Decimal(student_grades[student["UserID"]]["TagStageScore"])
-            tag_stage_score = Decimal((final_tag_score/tagging_score + engagement_score_tag) * 100) 
+            tag_stage_score = Decimal((final_tag_score/(tagging_score + engagement_score_tag)) * 100) 
             student_grades[student["UserID"]]["TagStageScore"] = min(Decimal(total_score),tag_stage_score)
 
 
@@ -680,11 +685,13 @@ def grading_script(panel_id):
                 else:
                     penalty = round(min(engagement_score_vote, abs(1 - abs(deviation)) * penalty_rate),2)    
                     eng_score = max(0, round(engagement_score_vote - penalty,2))
+            else:
+                student_grades[student["UserID"]]["VoteStageScore"] = Decimal(0)
             """
             Multiply both for final tagging points
             """
             if "VoteStageScore" not in student_grades[student["UserID"]]:
-                student_grades[student["UserID"]]["VoteStageScore"] = Decimal(0)           
+                student_grades[student["UserID"]]["VoteStageScore"] = Decimal(0)             
             final_vote_score = Decimal(eng_score) + Decimal(voting_score) + Decimal(student_grades[student["UserID"]]["VoteStageScore"])
             vote_stage_score = Decimal((final_vote_score/(voting_score + engagement_score_vote)) * 100)
             student_grades[student["UserID"]]["VoteStageScore"] = min(Decimal(total_score),vote_stage_score)
