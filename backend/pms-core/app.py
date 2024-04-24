@@ -355,7 +355,7 @@ def post_login_panel():
     # If so, generate a token and send an email
     send_email(
         destination_addresses=[panelist_email],
-        subject=f"Login URL for {user['FName']}",
+        subject=f"Panel-G: Login URL for {user['FName']}",
         html_body=html_body,
         text_body=text_body,
     )
@@ -839,7 +839,7 @@ def post_question_batch():
         # Returns the result of put_item, kind of metadata and stuff
         send_email(
             destination_addresses=[student_email],
-            subject="Questions submitted",
+            subject="Panel-G: Questions submitted successfully",
             html_body=html_body,
         )
 
@@ -1002,7 +1002,7 @@ def post_question_tagging(id):
             send_email(
                 destination_addresses=[SES_EMAIL_ADDRESS],
                 bcc_addresses=admin_addresses,
-                subject="PANEL-G: Questions flagged!",
+                subject="Panel-G: Questions flagged!",
                 html_body=html_body,
             )
 
@@ -1107,7 +1107,7 @@ def post_question_mark_similar(id):
         # Returns the result of put_item, kind of metadata and stuff
         send_email(
             destination_addresses=[student_email],
-            subject="Questions tagged",
+            subject="Panel-G: Questions tagged successfully",
             html_body=html_body,
         )
 
@@ -1579,7 +1579,7 @@ def daily_tasks(event):
     send_email(
         destination_addresses=[SES_EMAIL_ADDRESS],
         bcc_addresses=admin_addresses,
-        subject=f"Daily tasks for {today_date_string}",
+        subject=f"Panel-G: Daily tasks for {today_date_string}",
         html_body=html_message,
     )
 
@@ -1745,7 +1745,7 @@ def post_submit_votes(id):
         # Returns the result of put_item, kind of metadata and stuff
         send_email(
             destination_addresses=[student_email],
-            subject="Questions tagged",
+            subject="Panel-G: Voting Stage Complete",
             html_body=html_body,
         )
 
