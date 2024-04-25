@@ -55,7 +55,7 @@ variable "dynamodb_table_read_capacity" {
   })
   default = {
     dev        = 2
-    production = 3
+    production = 1
     demo       = 1
   }
 }
@@ -69,7 +69,7 @@ variable "dynamodb_table_write_capacity" {
   })
   default = {
     dev        = 2
-    production = 3
+    production = 1
     demo       = 1
   }
 }
@@ -82,7 +82,7 @@ variable "dynamodb_enable_point_in_time_recovery" {
     demo       = bool
   })
   default = {
-    dev        = true
+    dev        = false
     production = true
     demo       = false
   }
@@ -96,9 +96,9 @@ variable "dynamodb_global_secondary_idx_read_capacity" {
     demo       = number
   })
   default = {
-    dev        = 1
-    production = 3
-    demo       = 2
+    dev        = 2
+    production = 1
+    demo       = 1
   }
 }
 
@@ -110,9 +110,9 @@ variable "dynamodb_global_secondary_idx_write_capacity" {
     demo       = number
   })
   default = {
-    dev        = 1
-    production = 3
-    demo       = 2
+    dev        = 2
+    production = 1
+    demo       = 1
   }
 }
 
