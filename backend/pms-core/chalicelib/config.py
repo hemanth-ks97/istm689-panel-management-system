@@ -35,7 +35,7 @@ SES_IS_SANDBOX = (
 )
 
 SES_EMAIL_ADDRESS = environ.get(
-    "SES_EMAIL_ADDRESS_IDENTITY", "davidgomilliontest@gmail.com"
+    "SES_EMAIL_ADDRESS_IDENTITY"
 )
 
 JWT_SECRET = environ.get("JWT_SECRET")
