@@ -7,11 +7,10 @@ from .constants import AUTH_BEARER_TYPE, AUTH_BASIC_TYPE
 # Fetches form enviroment variables or sets default local development values
 ENV = environ.get("ENV", "local")
 GOOGLE_AUTH_CLIENT_ID = environ.get(
-    "GOOGLE_AUTH_CLIENT_ID",
-    "370940936724-4qh7n4qh6vrgli6bsf3je6kbe2lsotef.apps.googleusercontent.com",
+    "GOOGLE_AUTH_CLIENT_ID"
 )
 GOOGLE_RECAPTCHA_SECRET_KEY = environ.get(
-    "GOOGLE_RECAPTCHA_SECRET_KEY", "6Lc9QaQpAAAAACzBOfcpse-XaJra-0tD9W1uvwzB"
+    "GOOGLE_RECAPTCHA_SECRET_KEY"
 )
 
 ALLOW_ORIGIN = environ.get("ALLOW_ORIGIN", "http://localhost:3000")
@@ -39,10 +38,10 @@ SES_EMAIL_ADDRESS = environ.get(
     "SES_EMAIL_ADDRESS_IDENTITY", "davidgomilliontest@gmail.com"
 )
 
-JWT_SECRET = environ.get("JWT_SECRET", "8iCGu6XmF1OyWoR9v4WZ3gMQnX9HW7Sk")
+JWT_SECRET = environ.get("JWT_SECRET")
 
 # JWT secret key
-JWT_SECRET = environ.get("JWT_SECRET", "8iCGu6XmF1OyWoR9v4WZ3gMQnX9HW7Sk")
+JWT_SECRET = environ.get("JWT_SECRET")
 JWT_TOKEN_EXPIRATION_DAYS = int(environ.get("JWT_TOKEN_EXPIRATION_DAYS", "1"))
 
 # FIND BETTER VALUES FOR THESE TWO THINGS
